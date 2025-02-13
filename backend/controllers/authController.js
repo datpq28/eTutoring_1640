@@ -1,68 +1,114 @@
-const mongoose = require("mongoose");
-const User = require("../models/User");
-const crypto = require("crypto");
+const bcrypt = require("bcryptjs");
+const Student = require("../models/StudentModel");
+const Tutor = require("../models/TutorStudent");
+const OTP = require("../models/OtpModel");
+const { sendOTP } = require("../controllers/otpService/otpService");
 const jwt = require("jsonwebtoken");
-const nodemailer = require("nodemailer");
 
-require("dotenv").config();
+const registerSendOTP = async (req, res) => {
+  const { email, password, role, description, filed, blogId } = req.body;
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USERNAME,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-});
+  const hashedPassword = await bcrypt.hash(password, 10);
 
-exports.sendOTP = async (req, res) => {
-  const { email } = req.body;
-  try {
-    let user = await User.findOne({ email });
+  if (role === "student") {
+    const tutor = await Tutor.findOne().exec();
 
-    if (!user) {
-      user = new User({ email });
+    if (!tutor) {
+      return res.status(400).json({ error: "No tutors available" });
     }
 
-    const otp = crypto.randomInt(100000, 999999).toString();
-    const otpExpires = new Date(Date.now() + 5 * 60 * 1000);
-
-    user.otp = otp;
-    user.otpExpires = otpExpires;
-    await user.save();
-
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: "Your OTP Code",
-      text: `Your OTP is: ${otp}. It expires in 5 minutes.`,
+    const student = new Student({
+      email,
+      password: hashedPassword,
+      description,
+      filed,
+      blogId,
+      tutorId: tutor._id,
     });
-    res.status(200).json({ message: "OTP sent successfully!" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error sending OTP" });
+
+    await student.save();
+
+    tutor.studentId.push(student._id);
+    await tutor.save();
+
+    await sendOTP(email);
+
+    res
+      .status(201)
+      .json({ message: "Student registered successfully, OTP sent to email." });
+  } else if (role === "tutor") {
+    const tutor = new Tutor({
+      email,
+      password: hashedPassword,
+      description,
+      filed,
+      blog: blogId,
+    });
+
+    await tutor.save();
+
+    await sendOTP(email);
+    res
+      .status(201)
+      .json({ message: "Tutor registered successfully, OTP sent to email." });
+  } else {
+    res.status(400).json({ error: "Invalid role" });
   }
 };
 
-exports.verifyOTP = async (req, res) => {
+const registerVerifyOTP = async (req, res) => {
   const { email, otp } = req.body;
-  try {
-    const user = await User.findOne({ email });
 
-    if (!user || user.otp !== otp || new Date() > user.otpExpires) {
-      return res.status(400).json({ message: "Invalid or expired OTP" });
-    }
+  const otpRecord = await OTP.findOne({ email }).exec();
 
-    const token = jwt.sign({ email: user.email }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
-
-    user.otp = null;
-    user.otpExpires = null;
-    await user.save();
-
-    res.status(200).json({ message: "OTP verified successfully!", token });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error verifying OTP" });
+  if (!otpRecord) {
+    return res.status(400).json({ error: "OTP not found" });
   }
+
+  if (otpRecord.verified) {
+    return res.status(400).json({ error: "OTP already verified" });
+  }
+
+  if (otpRecord.otp !== otp) {
+    return res.status(400).json({ error: "Invalid OTP" });
+  }
+
+  if (new Date() > otpRecord.expiry) {
+    return res.status(400).json({ error: "OTP expired" });
+  }
+
+  otpRecord.verified = true;
+  await otpRecord.save();
+
+  res.status(200).json({ message: "OTP verified successfully" });
 };
+
+const loginUser = async (req, res) => {
+  const { email, password } = req.body;
+
+  let user = await Student.findOne({ email }).exec();
+  if (!user) {
+    user = await Tutor.findOne({ email }).exec();
+  }
+
+  if (!user) {
+    return res.status(400).json({ error: "User not found" });
+  }
+
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    return res.status(400).json({ error: "Invalid credentials" });
+  }
+  const token = jwt.sign(
+    { userId: user._id, role: user instanceof Student ? "student" : "tutor" },
+    JWT_SECRET,
+    { expiresIn: "1h" }
+  );
+
+  res.status(200).json({
+    message: "Login successful",
+    token,
+  });
+};
+
+module.exports = { registerSendOTP, registerVerifyOTP, loginUser };
