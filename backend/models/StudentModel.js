@@ -5,8 +5,9 @@ const studentSchema = new mongoose.Schema({
   password: { type: String, required: true },
   description: String,
   field: String,
-  blogId: String,
+  blogIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "Blog" }],
   tutorId: { type: mongoose.Schema.Types.ObjectId, ref: "Tutor" },
+  isLocked: { type: Boolean, default: false }
 });
 
 const Student = mongoose.model("Student", studentSchema);

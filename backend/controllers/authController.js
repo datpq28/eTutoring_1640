@@ -33,6 +33,35 @@ const registerSendOTP = async (req, res) => {
 
     await sendOTP(email);
 
+    setTimeout(async () => {
+      try {
+        const otpRecord = await OTP.findOne({ email }).exec();
+        if (otpRecord && !otpRecord.verified) {
+          console.log(`Deleting unverified user ${email}...`);
+
+          if (role === "student") {
+            const student = await Student.findOne({ email });
+            if (student) {
+              await Student.findByIdAndDelete(student._id);
+              await Tutor.findByIdAndUpdate(student.tutorId, {
+                $pull: { studentId: student._id },
+              });
+            }
+          } else if (role === "tutor") {
+            const tutor = await Tutor.findOne({ email });
+            if (tutor) {
+              await Tutor.findByIdAndDelete(tutor._id);
+            }
+          }
+
+          await OTP.deleteMany({ email });
+          console.log(`User ${email} deleted successfully.`);
+        }
+      } catch (error) {
+        console.error(`Error deleting unverified user ${email}:`, error);
+      }
+    }, 5 * 60 * 1000);
+
     res
       .status(201)
       .json({ message: "Student registered successfully, OTP sent to email." });
@@ -59,28 +88,33 @@ const registerSendOTP = async (req, res) => {
 const registerVerifyOTP = async (req, res) => {
   const { email, otp } = req.body;
 
-  const otpRecord = await OTP.findOne({ email }).exec();
+  try {
+    const otpRecord = await OTP.findOne({ email }).exec();
 
-  if (!otpRecord) {
-    return res.status(400).json({ error: "OTP not found" });
+    if (!otpRecord) {
+      return res.status(400).json({ error: "OTP not found" });
+    }
+
+    if (otpRecord.verified) {
+      return res.status(400).json({ error: "OTP already verified" });
+    }
+
+    if (otpRecord.otp !== otp) {
+      return res.status(400).json({ error: "Invalid OTP" });
+    }
+
+    if (new Date() > otpRecord.expiry) {
+      return res.status(400).json({ error: "OTP expired" });
+    }
+
+    otpRecord.verified = true;
+    await otpRecord.save();
+
+    res.status(200).json({ message: "OTP verified successfully" });
+  } catch (error) {
+    console.error("OTP verification error:", error);
+    return res.status(500).json({ error: "OTP verification failed" });
   }
-
-  if (otpRecord.verified) {
-    return res.status(400).json({ error: "OTP already verified" });
-  }
-
-  if (otpRecord.otp !== otp) {
-    return res.status(400).json({ error: "Invalid OTP" });
-  }
-
-  if (new Date() > otpRecord.expiry) {
-    return res.status(400).json({ error: "OTP expired" });
-  }
-
-  otpRecord.verified = true;
-  await otpRecord.save();
-
-  res.status(200).json({ message: "OTP verified successfully" });
 };
 
 const loginUser = async (req, res) => {
