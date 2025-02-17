@@ -1,11 +1,12 @@
-const { default: mongoose } = require("mongoose");
+const mongoose = require("mongoose");
 
 const MeetingCommentsSchema = new mongoose.Schema({
-    commenterId: {type: mongoose.Schema.Types.ObjectId, required: true},
-    content: String,
-    createAt: { type: Date, default: Date.now },
-    meetingId: {type: mongoose.Schema.Types.ObjectId, ref: "Meeting"}
-})
+    commenterId: { type: mongoose.Schema.Types.ObjectId, required: true, refPath: "commenterType" },
+    content: { type: String, required: true },
+    createdAt: { type: Date, default: Date.now },
+    meetingId: { type: mongoose.Schema.Types.ObjectId, ref: "Meeting" },
+    commenterType: { type: String, enum: ["Student", "Tutor"], required: true } 
+});
 
-const MeetingComments = mongoose.Model("MeetingComments", MeetingCommentsSchema);
+const MeetingComments = mongoose.model("MeetingComments", MeetingCommentsSchema);
 module.exports = MeetingComments;

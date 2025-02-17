@@ -1,15 +1,17 @@
 const mongoose = require("mongoose");
 
 const MeetingSchema = new mongoose.Schema({
-    name: {type: string, require: true},
-    type: {type: string},
-    description: {type: string},
-    startTime: {type: Date},
-    endTime: {type: Date},
-    studentId: {type: mongoose.Schema.Types.ObjectId, ref: "Student"},
-    tutorId: {type: mongoose.Schema.Types.ObjectId, ref: "Tutor"},
-    commentId: {type: mongoose.Schema.Types.ObjectId, ref: "MeetingComments"}
-})
+    name: { type: String, required: true },
+    type: { type: String, enum: ["group", "private"], required: true },
+    description: { type: String },
+    startTime: { type: Date },
+    endTime: { type: Date },
+    studentIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "Student" }],
+    tutorId: { type: mongoose.Schema.Types.ObjectId, ref: "Tutor" },
+    meetingLink: { type: String },
+    joinedUsers: [{ type: mongoose.Schema.Types.ObjectId, refPath: "participantType" }],
+    participantType: { type: String, enum: ["Student", "Tutor"] },
+});
 
-const Meeting = mongoose.Model("Meeting", MeetingSchema);
+const Meeting = mongoose.model("Meeting", MeetingSchema);
 module.exports = Meeting;
