@@ -1,6 +1,7 @@
 const Meeting = require("../../models/MeetingModel");
 const Tutor = require("../../models/TutorStudent");
 const Student = require("../../models/StudentModel");
+const MeetingComments = require("../../models/MeetingCommentsModel")
 
 const createMeeting = async (req, res) => {
   try {
@@ -119,6 +120,21 @@ const addCommentToMeeting = async (req, res) => {
   try {
     const { meetingId, userId, userType, content } = req.body;
 
+    // Kiểm tra meeting có tồn tại không
+    const meeting = await Meeting.findById(meetingId);
+    if (!meeting) {
+      return res.status(404).json({ error: "Cuộc họp không tồn tại" });
+    }
+
+    const isTutor = meeting.tutorId.toString() === userId;
+    const isStudent = meeting.studentIds.some(
+      (studentId) => studentId.toString() === userId
+    );
+
+    if (!isTutor && !isStudent) {
+      return res.status(403).json({ error: "Bạn không có quyền bình luận" });
+    }
+
     const newComment = new MeetingComments({
       commenterId: userId,
       content,
@@ -128,20 +144,26 @@ const addCommentToMeeting = async (req, res) => {
 
     await newComment.save();
 
-    res.status(201).json({ message: "Bình luận đã được gửi", newComment });
+    res.status(201).json({
+      message: "Bình luận đã được gửi",
+      newComment: {
+        ...newComment.toObject(),
+        createdAt: newComment.createdAt,
+      },
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
+
 const getCommentsForMeeting = async (req, res) => {
   try {
     const { meetingId } = req.params;
 
-    // Lấy các bình luận cho cuộc họp theo meetingId
     const comments = await MeetingComments.find({ meetingId })
-      .populate("commenterId", "email description") // Lấy thông tin người gửi bình luận
-      .sort({ createdAt: 1 }); // Sắp xếp theo thời gian tạo
+      .populate("commenterId", "email description") 
+      .sort({ createdAt: 1 }); 
 
     res.status(200).json(comments);
   } catch (error) {
