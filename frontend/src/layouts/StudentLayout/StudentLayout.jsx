@@ -1,5 +1,5 @@
 import { Avatar, Badge, Dropdown, Layout, Menu, Space, Typography } from "antd";
-import Logo from "../../components/student/Logo/Logo";
+import Logo from "../../components/Logo/Logo";
 import styles from "./StudentLayout.module.css";
 import MenuList from "../../components/student/MenuList/MenuList";
 import { Outlet, useLocation, useNavigate } from "react-router";
