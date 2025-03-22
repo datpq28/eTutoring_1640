@@ -11,6 +11,9 @@ import AuthButton from "../../components/auth/AuthButton";
 import CascaderGroup from "../../components/auth/CascaderGroup";
 import { useReducer } from "react";
 import AssistanceLink from "../../components/auth/AssistanceLink";
+import {registerSendOTP} from "../../../api_service/auth_service";
+import { useNavigate } from "react-router-dom";
+
 const { Text, Link } = Typography;
 
 function formReducer(state, action) {
@@ -74,6 +77,7 @@ const initialValue = {
 };
 
 export default function RegisterPage() {
+  const navigate = useNavigate();
   const [dataForm, dispatch] = useReducer(formReducer, initialValue);
   const {
     ["first-name"]: firstName,
@@ -116,6 +120,26 @@ export default function RegisterPage() {
       value: value[0],
     };
     dispatch(action);
+  }
+  async function handleRegister() {
+    try {
+      const response = await registerSendOTP(
+        firstName.value,
+        lastName.value,
+        email.value,
+        password.value,
+        role.value,
+        "",
+        "",
+        null
+      );
+      console.log("Register response:", response);
+      alert("OTP sent to your email!");
+      navigate("/auth/verify-otp", { state: { email: email.value } });
+    } catch (error) {
+      console.error("Error during registration:", error);
+      alert("Failed to register. Please try again.");
+    }
   }
 
   return (
@@ -201,8 +225,7 @@ export default function RegisterPage() {
             </Text>
           </AuthCheckBox>
         </Flex>
-        <AuthButton style={stylesInline.button}>Register</AuthButton>
-
+        <AuthButton style={stylesInline.button} onClick={handleRegister}> Register </AuthButton>
         <AssistanceLink
           text="Already have an account?"
           link="Login"

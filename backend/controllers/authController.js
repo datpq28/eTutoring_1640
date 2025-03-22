@@ -6,7 +6,7 @@ const { sendOTP } = require("../controllers/otpService/otpService");
 const jwt = require("jsonwebtoken");
 
 const registerSendOTP = async (req, res) => {
-  const { email, password, role, description, filed, blogId } = req.body;
+  const { firstname, lastname, email, password, role, description, filed, blogId } = req.body;
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -18,6 +18,8 @@ const registerSendOTP = async (req, res) => {
     }
 
     const student = new Student({
+      firstname,
+      lastname,
       email,
       password: hashedPassword,
       description,
@@ -68,11 +70,14 @@ const registerSendOTP = async (req, res) => {
       .json({ message: "Student registered successfully, OTP sent to email." });
   } else if (role === "tutor") {
     const tutor = new Tutor({
+      firstname,
+      lastname,
       email,
       password: hashedPassword,
       description,
       filed,
       blog: blogId,
+      isLocked: true,
     });
 
     await tutor.save();
