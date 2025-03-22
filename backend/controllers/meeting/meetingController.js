@@ -1,7 +1,7 @@
 const Meeting = require("../../models/MeetingModel");
 const Tutor = require("../../models/TutorStudent");
 const Student = require("../../models/StudentModel");
-const MeetingComments = require("../../models/MeetingCommentsModel")
+const MeetingComments = require("../../models/MeetingCommentsModel");
 
 const createMeeting = async (req, res) => {
   try {
@@ -21,6 +21,8 @@ const createMeeting = async (req, res) => {
         .json({ error: "Cuộc họp riêng tư chỉ có 1 học sinh" });
     }
 
+    const meetingLink = `http://localhost:5080/meeting/${tutorId}-${Date.now()}`;
+
     const newMeeting = new Meeting({
       name,
       type,
@@ -29,12 +31,12 @@ const createMeeting = async (req, res) => {
       studentIds,
       startTime,
       endTime,
-      meetingLink: `http://localhost:5080/meeting/${tutorId}-${Date.now()}`,
+      meetingLink,
       joinedUsers: [],
     });
 
     await newMeeting.save();
-    res.status(201).json(newMeeting);
+    res.status(201).json({ message: "Cuộc họp đã được tạo", meeting: newMeeting });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -105,6 +107,7 @@ const joinMeeting = async (req, res) => {
       meeting.joinedUsers.push(userId);
       await meeting.save();
     }
+
     res.json({
       message: `${isTutor ? "Giáo viên" : "Học sinh"} đã tham gia cuộc họp.`,
       meeting,
@@ -116,11 +119,33 @@ const joinMeeting = async (req, res) => {
   }
 };
 
+// Xóa user khỏi danh sách khi rời khỏi meeting
+const leaveMeeting = async (req, res) => {
+  try {
+    const { meetingId } = req.params;
+    const { userId } = req.body;
+
+    const meeting = await Meeting.findById(meetingId);
+    if (!meeting) {
+      return res.status(404).json({ error: "Cuộc họp không tồn tại" });
+    }
+
+    meeting.joinedUsers = meeting.joinedUsers.filter((id) => id !== userId);
+    await meeting.save();
+
+    res.json({
+      message: "User đã rời cuộc họp",
+      joinedUsers: meeting.joinedUsers,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 const addCommentToMeeting = async (req, res) => {
   try {
     const { meetingId, userId, userType, content } = req.body;
 
-    // Kiểm tra meeting có tồn tại không
     const meeting = await Meeting.findById(meetingId);
     if (!meeting) {
       return res.status(404).json({ error: "Cuộc họp không tồn tại" });
@@ -156,7 +181,6 @@ const addCommentToMeeting = async (req, res) => {
   }
 };
 
-
 const getCommentsForMeeting = async (req, res) => {
   try {
     const { meetingId } = req.params;
@@ -175,6 +199,7 @@ module.exports = {
   createMeeting,
   getMeetingsByUser,
   joinMeeting,
+  leaveMeeting,
   getCommentsForMeeting,
   addCommentToMeeting,
 };
