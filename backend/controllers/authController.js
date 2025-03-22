@@ -24,6 +24,7 @@ const registerSendOTP = async (req, res) => {
       filed,
       blogId,
       tutorId: tutor._id,
+      isLocked: true,
     });
 
     await student.save();
@@ -129,13 +130,18 @@ const loginUser = async (req, res) => {
     return res.status(400).json({ error: "User not found" });
   }
 
+  if (user.isLocked) {
+    return res.status(403).json({ error: "Account is locked. Please message the training department." });
+  }
+
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
     return res.status(400).json({ error: "Invalid credentials" });
   }
+
   const token = jwt.sign(
     { userId: user._id, role: user instanceof Student ? "student" : "tutor" },
-    JWT_SECRET,
+    process.env.JWT_SECRET,
     { expiresIn: "1h" }
   );
 
@@ -144,5 +150,6 @@ const loginUser = async (req, res) => {
     token,
   });
 };
+
 
 module.exports = { registerSendOTP, registerVerifyOTP, loginUser };
