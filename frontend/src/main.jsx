@@ -24,7 +24,17 @@ import TutorCalendarPage from "./pages/tutor/CalendarPage/CalendarPage";
 import TutorDocumentsPage from "./pages/tutor/DocumentPage/DocumentsPage";
 import TutorBlogPage from "./pages/tutor/BlogPage/BlogPage";
 import TutorMessagePage from "./pages/tutor/MessagePage/MessagePage";
-import TutorMeetingPage from "./pages/tutor/MettingPage/MeetingPage";
+import TutorMeetingPage from "./pages/tutor/MeetingPage/MeetingPage";
+
+//Admin
+import AdminLayout from "./layouts/AdminLayout/AdminLayout";
+import AdminDashboardPage from "./pages/admin/DashboardPage/DashboardPage";
+import AdminCalendarPage from "./pages/admin/CalendarPage/CalendarPage";
+import StudentManagementPage from "./pages/admin/StudentManagementPage/StudentManagementPage";
+import TutorManagementPage from "./pages/admin/TutorManagementPage/TutorManagementPage";
+import BlogManagementPage from "./pages/admin/BlogManagementPage/BlogManagementPage";
+import DocumentManagementPage from "./pages/admin/DocumentManagementPage/DocumentManagementPage";
+import MeetingManagementPage from "./pages/admin/MeetingManagementPage/MeetingManagementPage";
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
@@ -48,6 +58,24 @@ createRoot(document.getElementById("root")).render(
           <Route path="blog" element={<TutorBlogPage />} />
           <Route path="messages" element={<TutorMessagePage />} />
           <Route path="meeting" element={<TutorMeetingPage />} />
+        </Route>
+        <Route path="admin" element={<AdminLayout />}>
+          <Route path="dashboard" element={<AdminDashboardPage />} />
+          <Route path="calendar" element={<AdminCalendarPage />} />
+          <Route
+            path="student-management"
+            element={<StudentManagementPage />}
+          />
+          <Route path="tutor-management" element={<TutorManagementPage />} />
+          <Route path="blog-management" element={<BlogManagementPage />} />
+          <Route
+            path="document-management"
+            element={<DocumentManagementPage />}
+          />
+          <Route
+            path="meeting-management"
+            element={<MeetingManagementPage />}
+          />
         </Route>
       </Routes>
     </BrowserRouter>
