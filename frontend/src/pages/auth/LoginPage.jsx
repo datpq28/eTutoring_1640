@@ -1,5 +1,5 @@
 import { useReducer } from "react";
-import { Link as LinkRouter } from "react-router";
+import { Link as LinkRouter } from "react-router-dom";
 import { Flex, Image, Typography } from "antd";
 import { CloseCircleOutlined } from "@ant-design/icons";
 import auth_01 from "../../assets/imgs/auth-01.png";
@@ -11,27 +11,10 @@ import AuthButton from "../../components/auth/AuthButton";
 import TextInputGroup from "../../components/auth/TextInputGroup";
 import PasswordInputGroup from "../../components/auth/PasswordInputGroup";
 import AssistanceLink from "../../components/auth/AssistanceLink";
-const { Link } = Typography;
+import loginUser from "../../../api_service/auth_service";
+import { useNavigate } from "react-router-dom";
 
-function formReducer(state, action) {
-  switch (action.type) {
-    case "CHANGE_VALUE_INPUT": {
-      return {
-        ...state,
-        [action.field]: { value: action.value, error: "" },
-      };
-    }
-    case "CHECKED": {
-      return {
-        ...state,
-        [action.field]: { checked: action.checked },
-      };
-    }
-    default: {
-      return state;
-    }
-  }
-}
+const { Link } = Typography;
 
 const initialState = {
   email: { value: "", error: "" },
@@ -39,51 +22,66 @@ const initialState = {
   remember: { checked: false },
 };
 
-export default function LoginPage() {
-  const [dataForm, dispatch] = useReducer(formReducer, initialState);
+function formReducer(state, action) {
+  switch (action.type) {
+    case "CHANGE_VALUE_INPUT":
+      return { ...state, [action.field]: { value: action.value, error: "" } };
+    case "CHECKED":
+      return { ...state, [action.field]: { checked: action.checked } };
+    default:
+      return state;
+  }
+}
 
+export default function LoginPage() {
+  const navigate = useNavigate();
+  const [dataForm, dispatch] = useReducer(formReducer, initialState);
   const { email, password, remember } = dataForm;
-  // console.log(">>>email : ", email.value);
-  // console.log(">>>password : ", password.value);
-  function handleChangeInputValue(e) {
+
+  const handleChangeInputValue = (e) => {
     dispatch({
       type: "CHANGE_VALUE_INPUT",
       field: e.target.name,
       value: e.target.value,
     });
-  }
-  function handleCheckedValue(e) {
+  };
+
+  const handleCheckedValue = (e) => {
     dispatch({
       type: "CHECKED",
       field: e.target.name,
       checked: e.target.checked,
     });
-  }
-  function handleSubmitForm() {
-    console.log("handle submit form");
-  }
+  };
+
+  const handleSubmitForm = () => {
+    if (!email.value || !password.value) {
+      console.log("Please fill in all fields");
+      return;
+    }
+
+    loginUser(email.value, password.value)
+  .then((response) => {
+    console.log("Login successful", response);
+    navigate("/student/dashboard");
+  })
+  .catch((error) => {
+    console.error("Login failed", error);
+    alert(error.response?.data?.message || "Login Failed");
+  });
+ 
+  };
+
   return (
-    <Flex
-      justify="space-between"
-      align="center"
-      className={styles.screenContainer}
-    >
-      <Flex vertical={true} style={stylesInline.form}>
+    <Flex justify="space-between" align="center" className={styles.screenContainer}>
+      <Flex vertical style={stylesInline.form}>
         <AuthLabel>Login</AuthLabel>
-        <AuthDescription>
-          Login to access your travelwise account
-        </AuthDescription>
+        <AuthDescription>Login to access your travelwise account</AuthDescription>
 
         <TextInputGroup
-          style={{
-            marginTop: "2.68rem",
-          }}
-          inputStyle={{
-            borderColor: email.error ? "red" : "#000",
-          }}
-          allowClear={{
-            clearIcon: <CloseCircleOutlined style={stylesInline.clearIcon} />,
-          }}
+          style={{ marginTop: "2.68rem" }}
+          inputStyle={{ borderColor: email.error ? "red" : "#000" }}
+          allowClear={{ clearIcon: <CloseCircleOutlined style={stylesInline.clearIcon} /> }}
           placeholder="Email"
           value={email.value}
           name="email"
@@ -92,41 +90,29 @@ export default function LoginPage() {
         />
 
         <PasswordInputGroup
-          style={{
-            marginTop: "3rem",
-          }}
-          inputStyle={{
-            borderColor: password.error ? "red" : "#000",
-          }}
-          allowClear={{
-            clearIcon: <CloseCircleOutlined style={stylesInline.clearIcon} />,
-          }}
+          style={{ marginTop: "3rem" }}
+          inputStyle={{ borderColor: password.error ? "red" : "#000" }}
+          allowClear={{ clearIcon: <CloseCircleOutlined style={stylesInline.clearIcon} /> }}
           placeholder="Password"
           value={password.value}
           name="password"
           onChange={handleChangeInputValue}
         />
-        <Flex
-          justify="space-between"
-          align="center"
-          style={{ marginTop: "2.3rem" }}
-        >
+
+        <Flex justify="space-between" align="center" style={{ marginTop: "2.3rem" }}>
           <AuthCheckBox
             textStyle={stylesInline.textCheckBox}
             name="remember"
-            checked={remember.value}
+            checked={remember.checked}
             onChange={handleCheckedValue}
           >
             Remember me
           </AuthCheckBox>
-          <LinkRouter
-            to="/auth/forgot-password"
-            component={Link}
-            style={stylesInline.linkText}
-          >
+          <LinkRouter to="/auth/forgot-password" component={Link} style={stylesInline.linkText}>
             Forgot password
           </LinkRouter>
         </Flex>
+
         <AuthButton onClick={handleSubmitForm} style={{ marginTop: "4.4rem" }}>
           Login
         </AuthButton>
@@ -163,5 +149,8 @@ const stylesInline = {
   },
   link: {
     textAlign: "center",
+  },
+  clearIcon: {
+    color: "rgba(0, 0, 0, 0.25)",
   },
 };
