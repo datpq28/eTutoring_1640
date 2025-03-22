@@ -11,7 +11,7 @@ import AuthButton from "../../components/auth/AuthButton";
 import TextInputGroup from "../../components/auth/TextInputGroup";
 import PasswordInputGroup from "../../components/auth/PasswordInputGroup";
 import AssistanceLink from "../../components/auth/AssistanceLink";
-import loginUser from "../../../api_service/auth_service";
+import { loginUser } from "../../../api_service/auth_service";
 import { useNavigate } from "react-router-dom";
 
 const { Link } = Typography;
