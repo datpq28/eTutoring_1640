@@ -3,16 +3,7 @@ import {
   UnorderedListOutlined,
   UploadOutlined,
 } from "@ant-design/icons";
-import {
-  Button,
-  Card,
-  Flex,
-  Input,
-  Radio,
-  Segmented,
-  Select,
-  Space,
-} from "antd";
+import { Button, Card, Flex, Input, Segmented, Select, Space } from "antd";
 const selectTypeFile = [
   {
     value: "empty",

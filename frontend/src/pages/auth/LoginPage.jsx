@@ -1,5 +1,5 @@
 import { useReducer } from "react";
-import { Link as LinkRouter } from "react-router-dom";
+import { Link as LinkRouter } from "react-router";
 import { Flex, Image, Typography } from "antd";
 import { CloseCircleOutlined } from "@ant-design/icons";
 import auth_01 from "../../assets/imgs/auth-01.png";
@@ -12,7 +12,7 @@ import TextInputGroup from "../../components/auth/TextInputGroup";
 import PasswordInputGroup from "../../components/auth/PasswordInputGroup";
 import AssistanceLink from "../../components/auth/AssistanceLink";
 import { loginUser } from "../../../api_service/auth_service";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 
 const { Link } = Typography;
 
@@ -61,27 +61,34 @@ export default function LoginPage() {
     }
 
     loginUser(email.value, password.value)
-  .then((response) => {
-    console.log("Login successful", response);
-    navigate("/student/dashboard");
-  })
-  .catch((error) => {
-    console.error("Login failed", error);
-    alert(error.response?.data?.message || "Login Failed");
-  });
- 
+      .then((response) => {
+        console.log("Login successful", response);
+        navigate("/student/dashboard");
+      })
+      .catch((error) => {
+        console.error("Login failed", error);
+        alert(error.response?.data?.message || "Login Failed");
+      });
   };
 
   return (
-    <Flex justify="space-between" align="center" className={styles.screenContainer}>
+    <Flex
+      justify="space-between"
+      align="center"
+      className={styles.screenContainer}
+    >
       <Flex vertical style={stylesInline.form}>
         <AuthLabel>Login</AuthLabel>
-        <AuthDescription>Login to access your travelwise account</AuthDescription>
+        <AuthDescription>
+          Login to access your travelwise account
+        </AuthDescription>
 
         <TextInputGroup
           style={{ marginTop: "2.68rem" }}
           inputStyle={{ borderColor: email.error ? "red" : "#000" }}
-          allowClear={{ clearIcon: <CloseCircleOutlined style={stylesInline.clearIcon} /> }}
+          allowClear={{
+            clearIcon: <CloseCircleOutlined style={stylesInline.clearIcon} />,
+          }}
           placeholder="Email"
           value={email.value}
           name="email"
@@ -92,14 +99,20 @@ export default function LoginPage() {
         <PasswordInputGroup
           style={{ marginTop: "3rem" }}
           inputStyle={{ borderColor: password.error ? "red" : "#000" }}
-          allowClear={{ clearIcon: <CloseCircleOutlined style={stylesInline.clearIcon} /> }}
+          allowClear={{
+            clearIcon: <CloseCircleOutlined style={stylesInline.clearIcon} />,
+          }}
           placeholder="Password"
           value={password.value}
           name="password"
           onChange={handleChangeInputValue}
         />
 
-        <Flex justify="space-between" align="center" style={{ marginTop: "2.3rem" }}>
+        <Flex
+          justify="space-between"
+          align="center"
+          style={{ marginTop: "2.3rem" }}
+        >
           <AuthCheckBox
             textStyle={stylesInline.textCheckBox}
             name="remember"
@@ -108,7 +121,11 @@ export default function LoginPage() {
           >
             Remember me
           </AuthCheckBox>
-          <LinkRouter to="/auth/forgot-password" component={Link} style={stylesInline.linkText}>
+          <LinkRouter
+            to="/auth/forgot-password"
+            component={Link}
+            style={stylesInline.linkText}
+          >
             Forgot password
           </LinkRouter>
         </Flex>
