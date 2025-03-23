@@ -112,7 +112,7 @@ const columns = [
       const deleteButton = (
         <Button color="red" variant="filled">
           <Space size="small">
-            <LockTwoTone twoToneColor="#ff4d4f" />
+            <DeleteTwoTone twoToneColor="#ff4d4f" />
             <Text type="danger">Delete</Text>
           </Space>
         </Button>
@@ -131,6 +131,8 @@ const columns = [
   },
 ];
 const data = [
+  //name thì kết hợp cả First name và Last name lại
+
   {
     key: "1",
     name: "John Brown",
