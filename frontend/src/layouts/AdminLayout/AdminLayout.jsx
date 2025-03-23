@@ -22,8 +22,7 @@ export default function AdminLayout() {
   const titles = {
     "/admin/dashboard": "🏠 Dashboard",
     "/admin/calendar": "📅 Calendar",
-    "/admin/student-management": "💬 Student Management",
-    "/admin/tutor-management": " Tutor Management",
+    "/admin/accounts-management": "Accounts Management",
     "/admin/blog-management": "📁 Blog Management",
     "/admin/document-management": "📁 Document Management",
     "/admin/meeting-management": "Meeting Management",

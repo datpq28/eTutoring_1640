@@ -8,7 +8,6 @@ import {
   LogoutOutlined,
   VideoCameraOutlined,
   TeamOutlined,
-  UserOutlined,
   FolderOpenOutlined,
 } from "@ant-design/icons";
 
@@ -16,14 +15,9 @@ const menuItems = [
   { key: "dashboard", label: "Dashboard", icon: <HomeOutlined /> },
   { key: "calendar", label: "Calendar", icon: <CalendarOutlined /> },
   {
-    key: "student-management",
-    label: "Student management",
+    key: "accounts-management",
+    label: "Accounts management",
     icon: <TeamOutlined />,
-  },
-  {
-    key: "tutor-management",
-    label: "Tutor management",
-    icon: <UserOutlined />,
   },
   { key: "blog-management", label: "Blog management", icon: <FileOutlined /> },
   {

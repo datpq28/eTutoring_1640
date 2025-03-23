@@ -11,8 +11,8 @@ import AuthButton from "../../components/auth/AuthButton";
 import CascaderGroup from "../../components/auth/CascaderGroup";
 import { useReducer } from "react";
 import AssistanceLink from "../../components/auth/AssistanceLink";
-import {registerSendOTP} from "../../../api_service/auth_service";
-import { useNavigate } from "react-router-dom";
+import { registerSendOTP } from "../../../api_service/auth_service";
+import { useNavigate } from "react-router";
 
 const { Text, Link } = Typography;
 
@@ -225,7 +225,10 @@ export default function RegisterPage() {
             </Text>
           </AuthCheckBox>
         </Flex>
-        <AuthButton style={stylesInline.button} onClick={handleRegister}> Register </AuthButton>
+        <AuthButton style={stylesInline.button} onClick={handleRegister}>
+          {" "}
+          Register{" "}
+        </AuthButton>
         <AssistanceLink
           text="Already have an account?"
           link="Login"

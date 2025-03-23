@@ -30,11 +30,10 @@ import TutorMeetingPage from "./pages/tutor/MeetingPage/MeetingPage";
 import AdminLayout from "./layouts/AdminLayout/AdminLayout";
 import AdminDashboardPage from "./pages/admin/DashboardPage/DashboardPage";
 import AdminCalendarPage from "./pages/admin/CalendarPage/CalendarPage";
-import StudentManagementPage from "./pages/admin/StudentManagementPage/StudentManagementPage";
-import TutorManagementPage from "./pages/admin/TutorManagementPage/TutorManagementPage";
 import BlogManagementPage from "./pages/admin/BlogManagementPage/BlogManagementPage";
 import DocumentManagementPage from "./pages/admin/DocumentManagementPage/DocumentManagementPage";
 import MeetingManagementPage from "./pages/admin/MeetingManagementPage/MeetingManagementPage";
+import AccountsManagementPage from "./pages/admin/AccountsManagementPage/AccountsManagementPage";
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
@@ -63,10 +62,9 @@ createRoot(document.getElementById("root")).render(
           <Route path="dashboard" element={<AdminDashboardPage />} />
           <Route path="calendar" element={<AdminCalendarPage />} />
           <Route
-            path="student-management"
-            element={<StudentManagementPage />}
+            path="accounts-management"
+            element={<AccountsManagementPage />}
           />
-          <Route path="tutor-management" element={<TutorManagementPage />} />
           <Route path="blog-management" element={<BlogManagementPage />} />
           <Route
             path="document-management"

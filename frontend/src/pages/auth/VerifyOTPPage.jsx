@@ -9,7 +9,7 @@ import AuthButton from "../../components/auth/AuthButton";
 import AssistanceLink from "../../components/auth/AssistanceLink";
 import { useReducer } from "react";
 import { registerVerifyOTP } from "../../../api_service/auth_service";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router";
 function formReducer(state, action) {
   switch (action.type) {
     case "CHANGE_INPUT_VALUE": {
