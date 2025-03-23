@@ -36,12 +36,51 @@ export default function AddUserModal({ isModalOpen, hideModal }) {
         autoComplete="off"
       >
         <Form.Item
-          label="Username"
-          name="username"
+          label="Fist Name"
+          name="firstName"
           rules={[
             {
               required: true,
-              message: "Please input username!",
+              message: "Please input Fist Name!",
+            },
+          ]}
+        >
+          <Input />
+        </Form.Item>
+
+        <Form.Item
+          label="Last Name"
+          name="lastName"
+          rules={[
+            {
+              required: true,
+              message: "Please input Last Name!",
+            },
+          ]}
+        >
+          <Input />
+        </Form.Item>
+
+        <Form.Item
+          label="Email"
+          name="email"
+          rules={[
+            {
+              required: true,
+              message: "Please input Email!",
+            },
+          ]}
+        >
+          <Input />
+        </Form.Item>
+
+        <Form.Item
+          label="Phone"
+          name="phone"
+          rules={[
+            {
+              required: true,
+              message: "Please input Phone!",
             },
           ]}
         >
