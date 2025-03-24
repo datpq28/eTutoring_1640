@@ -4,9 +4,21 @@ const Tutor = require("../models/TutorStudent");
 const OTP = require("../models/OtpModel");
 const { sendOTP } = require("../controllers/otpService/otpService");
 const jwt = require("jsonwebtoken");
+const {
+  sendAdminApprovalRequest,
+} = require("../controllers/mailService/mailService");
 
 const registerSendOTP = async (req, res) => {
-  const { firstname, lastname, email, password, role, description, filed, blogId } = req.body;
+  const {
+    firstname,
+    lastname,
+    email,
+    password,
+    role,
+    description,
+    filed,
+    blogId,
+  } = req.body;
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -123,9 +135,22 @@ const registerVerifyOTP = async (req, res) => {
   }
 };
 
+let adminApproved = false;
+
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
+  // Kiểm tra nếu là admin và chưa được phê duyệt
+  if (email === "admin" && password === "admin") {
+    if (!adminApproved) {
+      await sendAdminApprovalRequest();
+      return res.status(403).json({
+        error: "Admin login requires approval. Please check your email.",
+      });
+    }
+  }
+
+  // Tìm user là Student hoặc Tutor
   let user = await Student.findOne({ email }).exec();
   if (!user) {
     user = await Tutor.findOne({ email }).exec();
@@ -136,18 +161,22 @@ const loginUser = async (req, res) => {
   }
 
   if (user.isLocked) {
-    return res.status(403).json({ error: "Account is locked. Please message the training department." });
+    return res.status(403).json({
+      error: "Account is locked. Please message the training department.",
+    });
   }
 
+  // Kiểm tra mật khẩu
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
     return res.status(400).json({ error: "Invalid credentials" });
   }
 
+  // Tạo JWT token để trả về cho người dùng
   const token = jwt.sign(
     { userId: user._id, role: user instanceof Student ? "student" : "tutor" },
     process.env.JWT_SECRET,
-    { expiresIn: "1h" }
+    { expiresIn: "1h" } // Token hết hạn sau 1 giờ
   );
 
   res.status(200).json({
@@ -156,5 +185,32 @@ const loginUser = async (req, res) => {
   });
 };
 
+const approveAdmin = async (req, res) => {
+  const { token } = req.query;
 
-module.exports = { registerSendOTP, registerVerifyOTP, loginUser };
+  if (!token) {
+    return res.status(400).json({ error: "Token is required for approval." });
+  }
+
+  try {
+    // Giải mã token để xác nhận tính hợp lệ
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Nếu token hợp lệ, phê duyệt admin
+    if (decoded.email === "nguyenkhaccao1@gmail.com") {
+      adminApproved = true;
+      return res.status(200).json({ message: "Admin approved successfully!" });
+    } else {
+      return res.status(400).json({ error: "Invalid token" });
+    }
+  } catch (error) {
+    return res.status(500).json({ error: "Failed to verify token" });
+  }
+};
+
+module.exports = {
+  registerSendOTP,
+  registerVerifyOTP,
+  loginUser,
+  approveAdmin,
+};

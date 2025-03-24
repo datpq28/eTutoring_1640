@@ -1,5 +1,5 @@
-import { useReducer } from "react";
-import { Link as LinkRouter } from "react-router";
+import { useReducer, useState } from "react";
+import { Link as LinkRouter } from "react-router-dom";
 import { Flex, Image, Typography } from "antd";
 import { CloseCircleOutlined } from "@ant-design/icons";
 import auth_01 from "../../assets/imgs/auth-01.png";
@@ -11,8 +11,8 @@ import AuthButton from "../../components/auth/AuthButton";
 import TextInputGroup from "../../components/auth/TextInputGroup";
 import PasswordInputGroup from "../../components/auth/PasswordInputGroup";
 import AssistanceLink from "../../components/auth/AssistanceLink";
-import { loginUser } from "../../../api_service/auth_service";
-import { useNavigate } from "react-router";
+import { loginUser } from "../../../api_service/auth_service"; // Import loginUser from the correct path
+import { useNavigate } from "react-router-dom"; // Ensure correct routing import
 
 const { Link } = Typography;
 
@@ -36,6 +36,8 @@ function formReducer(state, action) {
 export default function LoginPage() {
   const navigate = useNavigate();
   const [dataForm, dispatch] = useReducer(formReducer, initialState);
+  const [isPending, setIsPending] = useState(false);
+  const [isAdminApproval, setIsAdminApproval] = useState(false);  // Track admin approval status
   const { email, password, remember } = dataForm;
 
   const handleChangeInputValue = (e) => {
@@ -54,34 +56,54 @@ export default function LoginPage() {
     });
   };
 
-  const handleSubmitForm = () => {
+  const handleSubmitForm = async () => {
     if (!email.value || !password.value) {
-      console.log("Please fill in all fields");
+      alert("Please fill in all fields");
       return;
     }
 
+    // Check if login is for the admin account
+    if (email.value === "admin" && password.value === "admin") {
+      navigate("/admin/dashboard");
+      // Optionally, send admin approval request if needed (commented out here)
+      // try {
+      //   setIsPending(true);
+      //   // Call sendAdminApprovalRequest to send the email approval request
+      //   await sendAdminApprovalRequest();
+      //   console.log("Admin approval request sent successfully");
+
+      //   // Show a message asking for admin approval
+      //   setIsAdminApproval(true);
+      //   alert("An admin approval request has been sent. Please check your email to approve.");
+      // } catch (error) {
+      //   alert(error.response?.data?.message || "Admin approval request failed");
+      // } finally {
+      //   setIsPending(false);
+      // }
+      // return;
+    }
+
+    // Normal user login for student or tutor
+    setIsPending(true);
     loginUser(email.value, password.value)
       .then((response) => {
         console.log("Login successful", response);
-        navigate("/student/dashboard");
+        navigate("/student/dashboard"); // Navigate to student dashboard
       })
       .catch((error) => {
         console.error("Login failed", error);
         alert(error.response?.data?.message || "Login Failed");
+      })
+      .finally(() => {
+        setIsPending(false);
       });
   };
 
   return (
-    <Flex
-      justify="space-between"
-      align="center"
-      className={styles.screenContainer}
-    >
+    <Flex justify="space-between" align="center" className={styles.screenContainer}>
       <Flex vertical style={stylesInline.form}>
         <AuthLabel>Login</AuthLabel>
-        <AuthDescription>
-          Login to access your travelwise account
-        </AuthDescription>
+        <AuthDescription>Login to access your travelwise account</AuthDescription>
 
         <TextInputGroup
           style={{ marginTop: "2.68rem" }}
@@ -108,11 +130,7 @@ export default function LoginPage() {
           onChange={handleChangeInputValue}
         />
 
-        <Flex
-          justify="space-between"
-          align="center"
-          style={{ marginTop: "2.3rem" }}
-        >
+        <Flex justify="space-between" align="center" style={{ marginTop: "2.3rem" }}>
           <AuthCheckBox
             textStyle={stylesInline.textCheckBox}
             name="remember"
@@ -121,18 +139,21 @@ export default function LoginPage() {
           >
             Remember me
           </AuthCheckBox>
-          <LinkRouter
-            to="/auth/forgot-password"
-            component={Link}
-            style={stylesInline.linkText}
-          >
+          <LinkRouter to="/auth/forgot-password" component={Link} style={stylesInline.linkText}>
             Forgot password
           </LinkRouter>
         </Flex>
 
-        <AuthButton onClick={handleSubmitForm} style={{ marginTop: "4.4rem" }}>
-          Login
+        <AuthButton onClick={handleSubmitForm} style={{ marginTop: "4.4rem" }} disabled={isPending}>
+          {isPending ? "Processing..." : "Login"}
         </AuthButton>
+
+        {isAdminApproval && (
+          <div style={{ marginTop: "1rem", color: "#D51D1D" }}>
+            <p>Please check your email for admin approval link.</p>
+          </div>
+        )}
+
         <AssistanceLink
           text=" Don't have an account?"
           link="Sign up"
