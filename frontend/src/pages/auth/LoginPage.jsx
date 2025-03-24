@@ -11,8 +11,8 @@ import AuthButton from "../../components/auth/AuthButton";
 import TextInputGroup from "../../components/auth/TextInputGroup";
 import PasswordInputGroup from "../../components/auth/PasswordInputGroup";
 import AssistanceLink from "../../components/auth/AssistanceLink";
-import { loginUser, sendAdminApprovalRequest } from "../../../api_service/auth_service";
-import { useNavigate } from "react-router-dom";
+import { loginUser } from "../../../api_service/auth_service"; // Import loginUser from the correct path
+import { useNavigate } from "react-router-dom"; // Ensure correct routing import
 
 const { Link } = Typography;
 
@@ -65,6 +65,7 @@ export default function LoginPage() {
     // Check if login is for the admin account
     if (email.value === "admin" && password.value === "admin") {
       navigate("/admin/dashboard");
+      // Optionally, send admin approval request if needed (commented out here)
       // try {
       //   setIsPending(true);
       //   // Call sendAdminApprovalRequest to send the email approval request
@@ -83,19 +84,19 @@ export default function LoginPage() {
     }
 
     // Normal user login for student or tutor
-    //setIsPending(true);
+    setIsPending(true);
     loginUser(email.value, password.value)
       .then((response) => {
         console.log("Login successful", response);
         navigate("/student/dashboard"); // Navigate to student dashboard
       })
-      // .catch((error) => {
-      //   console.error("Login failed", error);
-      //   alert(error.response?.data?.message || "Login Failed");
-      // })
-      // .finally(() => {
-      //   setIsPending(false);
-      // });
+      .catch((error) => {
+        console.error("Login failed", error);
+        alert(error.response?.data?.message || "Login Failed");
+      })
+      .finally(() => {
+        setIsPending(false);
+      });
   };
 
   return (
@@ -107,7 +108,9 @@ export default function LoginPage() {
         <TextInputGroup
           style={{ marginTop: "2.68rem" }}
           inputStyle={{ borderColor: email.error ? "red" : "#000" }}
-          allowClear={{ clearIcon: <CloseCircleOutlined style={stylesInline.clearIcon} /> }}
+          allowClear={{
+            clearIcon: <CloseCircleOutlined style={stylesInline.clearIcon} />,
+          }}
           placeholder="Email"
           value={email.value}
           name="email"
@@ -118,7 +121,9 @@ export default function LoginPage() {
         <PasswordInputGroup
           style={{ marginTop: "3rem" }}
           inputStyle={{ borderColor: password.error ? "red" : "#000" }}
-          allowClear={{ clearIcon: <CloseCircleOutlined style={stylesInline.clearIcon} /> }}
+          allowClear={{
+            clearIcon: <CloseCircleOutlined style={stylesInline.clearIcon} />,
+          }}
           placeholder="Password"
           value={password.value}
           name="password"
