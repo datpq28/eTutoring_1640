@@ -1,4 +1,4 @@
-import { useReducer } from "react";
+import { useReducer, useState } from "react";  // Combined both imports
 import { Link as LinkRouter } from "react-router-dom";
 import { Flex, Image, Typography } from "antd";
 import { CloseCircleOutlined } from "@ant-design/icons";
@@ -65,48 +65,30 @@ export default function LoginPage() {
     // Check if login is for the admin account
     if (email.value === "admin" && password.value === "admin") {
       navigate("/admin/dashboard");
-      // try {
-      //   setIsPending(true);
-      //   // Call sendAdminApprovalRequest to send the email approval request
-      //   await sendAdminApprovalRequest();
-      //   console.log("Admin approval request sent successfully");
-
-      //   // Show a message asking for admin approval
-      //   setIsAdminApproval(true);
-      //   alert("An admin approval request has been sent. Please check your email to approve.");
-      // } catch (error) {
-      //   alert(error.response?.data?.message || "Admin approval request failed");
-      // } finally {
-      //   setIsPending(false);
-      // }
-      // return;
+      return;
     }
 
     // Normal user login for student or tutor
-    //setIsPending(true);
+    setIsPending(true);
     loginUser(email.value, password.value)
-  .then((response) => {
-    console.log("Login successful", response);
-    navigate("/student/dashboard");
-  })
-  .catch((error) => {
-    console.error("Login failed", error);
-    alert(error.response?.data?.message || "Login Failed");
-  });
- 
+      .then((response) => {
+        console.log("Login successful", response);
+        navigate("/student/dashboard"); // Navigate to student dashboard
+      })
+      .catch((error) => {
+        console.error("Login failed", error);
+        alert(error.response?.data?.message || "Login Failed");
+      })
+      .finally(() => {
+        setIsPending(false);
+      });
   };
 
   return (
-    <Flex
-      justify="space-between"
-      align="center"
-      className={styles.screenContainer}
-    >
+    <Flex justify="space-between" align="center" className={styles.screenContainer}>
       <Flex vertical style={stylesInline.form}>
         <AuthLabel>Login</AuthLabel>
-        <AuthDescription>
-          Login to access your travelwise account
-        </AuthDescription>
+        <AuthDescription>Login to access your travelwise account</AuthDescription>
 
         <TextInputGroup
           style={{ marginTop: "2.68rem" }}
@@ -133,11 +115,7 @@ export default function LoginPage() {
           onChange={handleChangeInputValue}
         />
 
-        <Flex
-          justify="space-between"
-          align="center"
-          style={{ marginTop: "2.3rem" }}
-        >
+        <Flex justify="space-between" align="center" style={{ marginTop: "2.3rem" }}>
           <AuthCheckBox
             textStyle={stylesInline.textCheckBox}
             name="remember"
@@ -146,11 +124,7 @@ export default function LoginPage() {
           >
             Remember me
           </AuthCheckBox>
-          <LinkRouter
-            to="/auth/forgot-password"
-            component={Link}
-            style={stylesInline.linkText}
-          >
+          <LinkRouter to="/auth/forgot-password" component={Link} style={stylesInline.linkText}>
             Forgot password
           </LinkRouter>
         </Flex>
