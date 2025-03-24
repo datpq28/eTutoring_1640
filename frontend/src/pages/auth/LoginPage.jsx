@@ -1,4 +1,4 @@
-import { useReducer, useState } from "react";
+import { useReducer, useState } from "react";  // Combined both imports
 import { Link as LinkRouter } from "react-router-dom";
 import { Flex, Image, Typography } from "antd";
 import { CloseCircleOutlined } from "@ant-design/icons";
@@ -11,8 +11,8 @@ import AuthButton from "../../components/auth/AuthButton";
 import TextInputGroup from "../../components/auth/TextInputGroup";
 import PasswordInputGroup from "../../components/auth/PasswordInputGroup";
 import AssistanceLink from "../../components/auth/AssistanceLink";
-import { loginUser } from "../../../api_service/auth_service"; // Import loginUser from the correct path
-import { useNavigate } from "react-router-dom"; // Ensure correct routing import
+import { loginUser } from "../../../api_service/auth_service";
+import { useNavigate } from "react-router-dom";
 
 const { Link } = Typography;
 
@@ -65,22 +65,7 @@ export default function LoginPage() {
     // Check if login is for the admin account
     if (email.value === "admin" && password.value === "admin") {
       navigate("/admin/dashboard");
-      // Optionally, send admin approval request if needed (commented out here)
-      // try {
-      //   setIsPending(true);
-      //   // Call sendAdminApprovalRequest to send the email approval request
-      //   await sendAdminApprovalRequest();
-      //   console.log("Admin approval request sent successfully");
-
-      //   // Show a message asking for admin approval
-      //   setIsAdminApproval(true);
-      //   alert("An admin approval request has been sent. Please check your email to approve.");
-      // } catch (error) {
-      //   alert(error.response?.data?.message || "Admin approval request failed");
-      // } finally {
-      //   setIsPending(false);
-      // }
-      // return;
+      return;
     }
 
     // Normal user login for student or tutor
