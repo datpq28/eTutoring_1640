@@ -83,19 +83,19 @@ export default function LoginPage() {
     }
 
     // Normal user login for student or tutor
-    setIsPending(true);
+    //setIsPending(true);
     loginUser(email.value, password.value)
       .then((response) => {
         console.log("Login successful", response);
         navigate("/student/dashboard"); // Navigate to student dashboard
       })
-      .catch((error) => {
-        console.error("Login failed", error);
-        alert(error.response?.data?.message || "Login Failed");
-      })
-      .finally(() => {
-        setIsPending(false);
-      });
+      // .catch((error) => {
+      //   console.error("Login failed", error);
+      //   alert(error.response?.data?.message || "Login Failed");
+      // })
+      // .finally(() => {
+      //   setIsPending(false);
+      // });
   };
 
   return (
