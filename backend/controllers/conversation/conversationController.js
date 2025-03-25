@@ -1,8 +1,8 @@
 const Conversation = require("../../models/ConversationModel");
 const Message = require("../../models/MesagesModel");
+
 const createConversation = async (req, res) => {
   const { participants } = req.body;
-
   try {
     let conversation = await Conversation.findOne({
       participants: { $size: participants.length, $all: participants },

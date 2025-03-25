@@ -5,12 +5,6 @@ const { sendMailAssignNewTutor } = require("../mailService/mailService");
 
 const viewListUser = async (req, res) => {
   try {
-    // const { email } = req.body;
-
-    // if (email !== "admin") {
-    //   return res.status(403).json({ error: "Access denied. Admin only." });
-    // }
-
     const students = await Student.find({});
     const tutors = await Tutor.find({});
 
