@@ -34,6 +34,7 @@ const registerSendOTP = async (req, res) => {
       lastname,
       email,
       password: hashedPassword,
+      role,
       description,
       filed,
       blogId,
@@ -86,6 +87,7 @@ const registerSendOTP = async (req, res) => {
       lastname,
       email,
       password: hashedPassword,
+      role,
       description,
       filed,
       blog: blogId,
@@ -172,18 +174,27 @@ const loginUser = async (req, res) => {
     return res.status(400).json({ error: "Invalid credentials" });
   }
 
+  // Xác định vai trò của người dùng
+  const role = user instanceof Student ? "student" : "tutor";
+
   // Tạo JWT token để trả về cho người dùng
   const token = jwt.sign(
-    { userId: user._id, role: user instanceof Student ? "student" : "tutor" },
+    { userId: user._id, role: role },
     process.env.JWT_SECRET,
     { expiresIn: "1h" } // Token hết hạn sau 1 giờ
   );
 
+  // Trả về thông tin cần thiết bao gồm cả userId
   res.status(200).json({
     message: "Login successful",
     token,
+    role,
+    userId: user._id,  // ✅ Thêm userId vào response
   });
 };
+
+module.exports = loginUser;
+
 
 const approveAdmin = async (req, res) => {
   const { token } = req.query;

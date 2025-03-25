@@ -11,7 +11,7 @@ const conversationSchema = new mongoose.Schema({
       participantModel: {
         type: String,
         required: true,
-        enum: ["Tutor", "Student"],
+        enum: ["tutor", "student"],
       },
     },
   ],

@@ -61,19 +61,26 @@ export default function LoginPage() {
       alert("Please fill in all fields");
       return;
     }
-
+  
     // Check if login is for the admin account
     if (email.value === "admin" && password.value === "admin") {
       navigate("/admin/dashboard");
       return;
     }
-
+  
     // Normal user login for student or tutor
     setIsPending(true);
     loginUser(email.value, password.value)
       .then((response) => {
         console.log("Login successful", response);
-        navigate("/student/dashboard"); // Navigate to student dashboard
+        const role = response.role; // Giả sử response trả về có user và role
+        if (role === "student") {
+          navigate("/student/dashboard");
+        } else if (role === "tutor") {
+          navigate("/tutor/dashboard");
+        } else {
+          alert("Unknown role. Please contact support.");
+        }
       })
       .catch((error) => {
         console.error("Login failed", error);
@@ -83,7 +90,7 @@ export default function LoginPage() {
         setIsPending(false);
       });
   };
-
+  
   return (
     <Flex justify="space-between" align="center" className={styles.screenContainer}>
       <Flex vertical style={stylesInline.form}>
