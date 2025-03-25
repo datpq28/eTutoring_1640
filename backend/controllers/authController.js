@@ -34,6 +34,7 @@ const registerSendOTP = async (req, res) => {
       lastname,
       email,
       password: hashedPassword,
+      role,
       description,
       filed,
       blogId,
@@ -86,6 +87,7 @@ const registerSendOTP = async (req, res) => {
       lastname,
       email,
       password: hashedPassword,
+      role,
       description,
       filed,
       blog: blogId,
@@ -178,10 +180,12 @@ const loginUser = async (req, res) => {
     process.env.JWT_SECRET,
     { expiresIn: "1h" } // Token hết hạn sau 1 giờ
   );
+  const role = user instanceof Student ? "student" : "tutor";
 
   res.status(200).json({
     message: "Login successful",
     token,
+    role,
   });
 };
 

@@ -1,11 +1,11 @@
-const Conversation = require('../../models/ConversationModel');
-
+const Conversation = require("../../models/ConversationModel");
+const Message = require("../../models/MesagesModel");
 const createConversation = async (req, res) => {
   const { participants } = req.body;
 
   try {
     let conversation = await Conversation.findOne({
-      participants: { $size: participants.length, $all: participants }
+      participants: { $size: participants.length, $all: participants },
     });
 
     if (!conversation) {
@@ -25,7 +25,9 @@ const getConversations = async (req, res) => {
 
   try {
     const conversations = await Conversation.find({
-      participants: { $elemMatch: { participantId: userId, participantModel: userModel } }
+      participants: {
+        $elemMatch: { participantId: userId, participantModel: userModel },
+      },
     }).sort({ updatedAt: -1 });
 
     res.status(200).json(conversations);
@@ -34,14 +36,24 @@ const getConversations = async (req, res) => {
   }
 };
 
-// Lấy chi tiết một cuộc trò chuyện
 const getConversationById = async (req, res) => {
   const { conversationId } = req.params;
 
   try {
     const conversation = await Conversation.findById(conversationId);
     if (!conversation) return res.status(404).json({ message: 'Conversation not found' });
-    res.status(200).json(conversation);
+
+    const messages = await Message.find({ conversationId }).sort({ createdAt: 1 });
+
+    res.status(200).json({
+      conversationId: conversation._id,
+      participants: conversation.participants,
+      messages: messages.map(message => ({
+        senderId: message.senderId,
+        senderModel: message.senderModel,
+        contents: message.contents
+      }))
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -53,7 +65,7 @@ const deleteConversation = async (req, res) => {
 
   try {
     await Conversation.findByIdAndDelete(conversationId);
-    res.status(200).json({ message: 'Conversation deleted successfully' });
+    res.status(200).json({ message: "Conversation deleted successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -71,7 +83,8 @@ const addParticipantsToGroup = async (req, res) => {
       { new: true }
     );
 
-    if (!conversation) return res.status(404).json({ message: 'Conversation not found' });
+    if (!conversation)
+      return res.status(404).json({ message: "Conversation not found" });
     res.status(200).json(conversation);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -90,7 +103,8 @@ const removeParticipantFromGroup = async (req, res) => {
       { new: true }
     );
 
-    if (!conversation) return res.status(404).json({ message: 'Conversation not found' });
+    if (!conversation)
+      return res.status(404).json({ message: "Conversation not found" });
     res.status(200).json(conversation);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -103,5 +117,5 @@ module.exports = {
   getConversationById,
   deleteConversation,
   addParticipantsToGroup,
-  removeParticipantFromGroup
+  removeParticipantFromGroup,
 };
