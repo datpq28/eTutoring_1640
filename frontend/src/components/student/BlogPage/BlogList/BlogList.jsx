@@ -9,10 +9,10 @@ export default function BlogList() {
   const [isCreating, setIsCreating] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newContent, setNewContent] = useState("");
-  const [tags, setTags] = useState(""); // Tags cách nhau bằng dấu phẩy
+  const [tags, setTags] = useState(""); 
   const [imageUrl, setImageUrl] = useState(""); // URL hình ảnh bài viết
 
-  // Lấy uploaderId và uploaderType từ localStorage
+
   const userId = localStorage.getItem("userId");
   const userRole = (localStorage.getItem("role") || "Student")
 
