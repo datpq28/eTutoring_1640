@@ -2,24 +2,34 @@ import axios from "axios";
 
 const API_URL = "http://localhost:5080";
 
-// Tạo bài blog
 export const createBlog = async (blogData) => {
-  try {
-    const token = localStorage.getItem("token");
-    const response = await axios.post(`${API_URL}/api/blogs`, blogData, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return response.data;
-  } catch (error) {
-    console.error("Error creating blog:", error);
-    throw error;
-  }
-};
+    try {
+      const userId = localStorage.getItem("userId");
+      const role = localStorage.getItem("role");
+  
+      if (!userId || !role) {
+        throw new Error("User information is missing. Please log in again.");
+      }
+  
+      const response = await axios.post(`${API_URL}/api/blog/blogs`, {
+        ...blogData,
+        uploaderId: userId,
+        uploaderType: role, // Lấy role từ localStorage
+      });
+  
+      return response.data;
+    } catch (error) {
+      console.error("Error creating blog:", error);
+      throw error;
+    }
+  };
+  
+  
 
 // Lấy danh sách blog
 export const getBlogs = async () => {
   try {
-    const response = await axios.get(`${API_URL}/api/blogs`);
+    const response = await axios.get(`${API_URL}/api/blog/blogs`);
     return response.data;
   } catch (error) {
     console.error("Error fetching blogs:", error);
@@ -30,7 +40,7 @@ export const getBlogs = async () => {
 // Lấy bài blog theo ID
 export const getBlogById = async (blogId) => {
   try {
-    const response = await axios.get(`${API_URL}/api/blogs/${blogId}`);
+    const response = await axios.get(`${API_URL}/api/blog/blogs/${blogId}`);
     return response.data;
   } catch (error) {
     console.error("Error fetching blog by ID:", error);
@@ -42,7 +52,7 @@ export const getBlogById = async (blogId) => {
 export const editBlog = async (blogId, blogData) => {
   try {
     const token = localStorage.getItem("token");
-    const response = await axios.put(`${API_URL}/api/blogs/${blogId}`, blogData, {
+    const response = await axios.put(`${API_URL}/api/blog/blogs/${blogId}`, blogData, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
@@ -56,7 +66,7 @@ export const editBlog = async (blogId, blogData) => {
 export const likeBlog = async (blogId) => {
   try {
     const token = localStorage.getItem("token");
-    const response = await axios.post(`${API_URL}/api/blogs/${blogId}/like`, {}, {
+    const response = await axios.post(`${API_URL}/api/blog/blogs/${blogId}/like`, {}, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
@@ -70,7 +80,7 @@ export const likeBlog = async (blogId) => {
 export const deleteBlog = async (blogId) => {
   try {
     const token = localStorage.getItem("token");
-    const response = await axios.delete(`${API_URL}/api/blogs/${blogId}`, {
+    const response = await axios.delete(`${API_URL}/api/blog/blogs/${blogId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
