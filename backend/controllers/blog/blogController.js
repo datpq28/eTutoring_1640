@@ -3,44 +3,45 @@ const Tutor = require("../../models/TutorStudent");
 const Student = require("../../models/StudentModel");
 
 const createBlog = async (req, res) => {
-    try {
-      const { title, content, uploaderId, uploaderType, tags, imageUrl } = req.body;
-  
-      if (!["student", "tutor"].includes(uploaderType)) {
-        console.error("Lỗi: Uploader type không hợp lệ:", uploaderType);
-        return res.status(400).json({ error: "Uploader type không hợp lệ" });
-      }
-  
-      const uploaderModel = uploaderType === "Tutor" ? Tutor : Student;
-      const uploader = await uploaderModel.findById(uploaderId);
-      if (!uploader) {
-        console.error("Lỗi: Người đăng không tồn tại với ID:", uploaderId);
-        return res.status(404).json({ error: "Người đăng không tồn tại" });
-      }
-  
-      const newBlog = new Blog({
-        title,
-        content,
-        uploaderId,
-        uploaderType,
-        tags: tags || [],
-        imageUrl: imageUrl || "",
-        likes: 0,
-      });
-  
-      await newBlog.save();
-  
-      uploader.blogIds = uploader.blogIds || [];
-      uploader.blogIds.push(newBlog._id);
-      await uploader.save();
-  
-      console.log("Bài blog đã được tạo:", newBlog);
-      res.status(201).json({ message: "Bài blog đã được tạo", blog: newBlog });
-    } catch (error) {
-      console.error("Lỗi trong quá trình tạo blog:", error);
-      res.status(500).json({ error: error.message });
+  try {
+    const { title, content, uploaderId, uploaderType, tags, imageUrl } =
+      req.body;
+
+    if (!["student", "tutor"].includes(uploaderType)) {
+      console.error("Lỗi: Uploader type không hợp lệ:", uploaderType);
+      return res.status(400).json({ error: "Uploader type không hợp lệ" });
     }
-  };
+
+    const uploaderModel = uploaderType === "Tutor" ? Tutor : Student;
+    const uploader = await uploaderModel.findById(uploaderId);
+    if (!uploader) {
+      console.error("Lỗi: Người đăng không tồn tại với ID:", uploaderId);
+      return res.status(404).json({ error: "Người đăng không tồn tại" });
+    }
+
+    const newBlog = new Blog({
+      title,
+      content,
+      uploaderId,
+      uploaderType,
+      tags: tags || [],
+      imageUrl: imageUrl || "",
+      likes: 0,
+    });
+
+    await newBlog.save();
+
+    uploader.blogIds = uploader.blogIds || [];
+    uploader.blogIds.push(newBlog._id);
+    await uploader.save();
+
+    console.log("Bài blog đã được tạo:", newBlog);
+    res.status(201).json({ message: "Bài blog đã được tạo", blog: newBlog });
+  } catch (error) {
+    console.error("Lỗi trong quá trình tạo blog:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
 
 const getBlogs = async (req, res) => {
   try {
@@ -57,7 +58,10 @@ const getBlogs = async (req, res) => {
 const getBlogById = async (req, res) => {
   try {
     const { blogId } = req.params;
-    const blog = await Blog.findById(blogId).populate("uploaderId", "firstname lastname email");
+    const blog = await Blog.findById(blogId).populate(
+      "uploaderId",
+      "firstname lastname email"
+    );
 
     if (!blog) {
       return res.status(404).json({ error: "Bài blog không tồn tại" });
@@ -105,7 +109,9 @@ const deleteBlog = async (req, res) => {
     }
 
     const uploaderModel = blog.uploaderType === "Tutor" ? Tutor : Student;
-    await uploaderModel.findByIdAndUpdate(blog.uploaderId, { $pull: { blogIds: blogId } });
+    await uploaderModel.findByIdAndUpdate(blog.uploaderId, {
+      $pull: { blogIds: blogId },
+    });
 
     res.status(200).json({ message: "Bài blog đã được xóa" });
   } catch (error) {
@@ -116,7 +122,11 @@ const deleteBlog = async (req, res) => {
 const likeBlog = async (req, res) => {
   try {
     const { blogId } = req.params;
-    const blog = await Blog.findByIdAndUpdate(blogId, { $inc: { likes: 1 } }, { new: true });
+    const blog = await Blog.findByIdAndUpdate(
+      blogId,
+      { $inc: { likes: 1 } },
+      { new: true }
+    );
 
     if (!blog) {
       return res.status(404).json({ error: "Bài blog không tồn tại" });

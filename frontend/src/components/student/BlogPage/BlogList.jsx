@@ -56,6 +56,7 @@ export default function BlogList() {
       setImageUrl("");
       fetchBlogs();
     } catch (error) {
+      console.log(error);
       message.error("Có lỗi xảy ra khi tạo bài viết!");
     }
   };

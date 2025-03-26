@@ -1,68 +1,88 @@
-import { Card, Flex, Input, Select } from "antd";
-const selectSubject = [
+import { DiffOutlined, TeamOutlined, UserOutlined } from "@ant-design/icons";
+import { Button, Card, Flex, Input, Segmented, Select, Space } from "antd";
+import { useState } from "react";
+
+const optionsSearch = [
   {
-    value: "empty",
-    label: "Select Subject",
+    value: "all",
+    label: "All",
   },
   {
-    value: "math",
-    label: "Math",
+    value: "title",
+    label: "Title",
   },
   {
-    value: "literature",
-    label: "Literature",
+    value: "tags",
+    label: "Tags",
   },
 ];
 
-const selectStatus = [
+const userOptions = [
   {
-    value: "empty",
-    label: "Select Status",
+    value: "all_blogs",
+    label: "All Blogs",
+
+    icon: <TeamOutlined />,
   },
   {
-    value: "newest",
-    label: "Newest",
-  },
-  {
-    value: "oldest",
-    label: "Oldest",
+    value: "my_blogs",
+    label: "My Blogs",
+    icon: <UserOutlined />,
   },
 ];
 
-export default function BlogActionBar() {
-  const onSearch = (value, _e, info) => console.log(info?.source, value);
-  const handleChange = (value) => {
-    console.log(`selected ${value}`);
+export default function BlogActionBar({
+  onChangeUserSegmented,
+  onChangeOptionSearch,
+  onChangeSearchValue,
+  onOpenModalActions,
+}) {
+  const [searchValue, setSearchValue] = useState("");
+  const [optionSearch, setOptionSearch] = useState(optionsSearch[0].value);
+  const [userSegmented, setUserSegmented] = useState(userOptions[0].value);
+
+  const handleChangeOptionSearch = (value) => {
+    setOptionSearch(value);
+    onChangeOptionSearch(value);
   };
+
+  const handleChangeUserSegmented = (value) => {
+    setUserSegmented(value);
+    onChangeUserSegmented(value);
+  };
+
+  const handleChangeSearchValue = (e) => {
+    setSearchValue(e.target.value);
+    onChangeSearchValue(e.target.value);
+  };
+  console.log(searchValue);
   return (
     <Card>
       <Flex gap="middle" justify="space-between" wrap>
-        <Input.Search
-          placeholder="Search File"
-          onSearch={onSearch}
-          style={{
-            maxWidth: "60rem",
-          }}
-          enterButton
-        />
-        <Flex gap="middle" wrap>
+        <Space.Compact style={{ width: "50rem" }}>
           <Select
-            defaultValue="empty"
-            style={{
-              width: 200,
-            }}
-            placement="bottomLeft"
-            onChange={handleChange}
-            options={selectSubject}
+            style={{ width: "12rem" }}
+            value={optionSearch}
+            options={optionsSearch}
+            onChange={handleChangeOptionSearch}
           />
-          <Select
-            defaultValue="empty"
-            style={{
-              width: 200,
-            }}
-            placement="bottomLeft"
-            onChange={handleChange}
-            options={selectStatus}
+          <Input
+            placeholder="Search Blog"
+            value={searchValue}
+            onChange={handleChangeSearchValue}
+          />
+        </Space.Compact>
+        <Flex gap="middle" wrap>
+          <Button onClick={() => onOpenModalActions(true)} type="primary">
+            <Space size="small" align="center">
+              <DiffOutlined />
+              Post New Blog
+            </Space>
+          </Button>
+          <Segmented
+            options={userOptions}
+            value={userSegmented}
+            onChange={handleChangeUserSegmented}
           />
         </Flex>
       </Flex>
