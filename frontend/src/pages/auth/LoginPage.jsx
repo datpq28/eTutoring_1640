@@ -62,18 +62,26 @@ export default function LoginPage() {
       return;
     }
   
-    // Check if login is for the admin account
+    // Nếu là admin, chuyển hướng luôn mà không gọi API
     if (email.value === "admin" && password.value === "admin") {
       navigate("/admin/dashboard");
       return;
     }
   
-    // Normal user login for student or tutor
     setIsPending(true);
-    loginUser(email.value, password.value)
-      .then((response) => {
-        console.log("Login successful", response);
-        const role = response.role; // Giả sử response trả về có user và role
+    try {
+      const response = await loginUser(email.value, password.value);
+  
+      console.log("Login successful", response);
+  
+      // ✅ Lưu thông tin user vào localStorage
+      const { token, role, userId } = response;
+  
+      if (token && userId) {
+        localStorage.setItem("user", JSON.stringify({ userId, role }));
+        localStorage.setItem("token", token);
+  
+        // Chuyển hướng theo vai trò của người dùng
         if (role === "student") {
           navigate("/student/dashboard");
         } else if (role === "tutor") {
@@ -81,14 +89,13 @@ export default function LoginPage() {
         } else {
           alert("Unknown role. Please contact support.");
         }
-      })
-      .catch((error) => {
-        console.error("Login failed", error);
-        alert(error.response?.data?.message || "Login Failed");
-      })
-      .finally(() => {
-        setIsPending(false);
-      });
+      }
+    } catch (error) {
+      console.error("Login failed", error);
+      alert(error.response?.data?.message || "Login Failed");
+    } finally {
+      setIsPending(false);
+    }
   };
   
   return (

@@ -27,6 +27,7 @@ export default function TutorLayout() {
     "/tutor/setting": "⚙️ Settings",
     "/tutor/blog": "📁 Blog",
     "/tutor/meeting": "📹 Meeting",
+    "/tutor/room-meeting": "📹 RoomMeeting",
   };
   const userMenu = (
     <Menu

@@ -8,18 +8,18 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-  "start": "cross-env PORT=5173 react-scripts start"
-
+    "start": "cross-env PORT=5173 react-scripts start"
   },
   "dependencies": {
     "@ant-design/icons": "^5.6.1",
     "@tailwindcss/vite": "^4.0.14",
     "antd": "^5.24.4",
     "axios": "^1.8.4",
+    "moment": "^2.30.1",
     "peerjs": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router": "^7.1.5",
+    "react-router": "^7.4.0",
     "react-router-dom": "^7.4.0",
     "recharts": "^2.15.1",
     "simple-peer": "^9.11.1",

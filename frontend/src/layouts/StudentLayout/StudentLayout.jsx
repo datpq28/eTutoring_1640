@@ -28,6 +28,7 @@ export default function StudentLayout() {
     "/student/setting": "⚙️ Settings",
     "/student/blog": "📁 Blog",
     "/student/meeting": "📹 Meeting",
+    "/student/room-meeting": "📹 RoomMeeting",
   };
   const userMenu = (
     <Menu

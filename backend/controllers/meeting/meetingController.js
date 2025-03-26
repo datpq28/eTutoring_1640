@@ -1,24 +1,66 @@
 const Meeting = require("../../models/MeetingModel");
 const Tutor = require("../../models/TutorStudent");
 const Student = require("../../models/StudentModel");
-const MeetingComments = require("../../models/MeetingCommentsModel");
 
-let io;
-const setSocketIo = (socketIoInstance) => {
-  io = socketIoInstance;
+const io = require("../../server"); // Import io từ server.js
+
+const createMeeting = async (req, res) => {
+  try {
+    const { tutorId, name, description, startTime, endTime } = req.body;
+
+    console.log("📌 Nhận request tạo cuộc họp với tutorId:", tutorId);
+
+    // Kiểm tra tutorId có tồn tại không
+    if (!tutorId) {
+      console.log("❌ Lỗi: tutorId không được cung cấp!");
+      return res.status(400).json({ error: "Thiếu tutorId!" });
+    }
+
+    // Kiểm tra tutor có tồn tại trong DB không
+    const tutor = await Tutor.findById(tutorId).populate("students");
+    if (!tutor) {
+      console.log(`❌ Lỗi: Tutor với ID ${tutorId} không tồn tại trong database!`);
+      return res.status(404).json({ error: "Tutor không tồn tại!" });
+    }
+
+    console.log("✅ Tutor tìm thấy:", tutor);
+
+    // Lấy danh sách học sinh của Tutor
+    const studentIds = tutor.students.map((student) => student._id);
+    console.log("📌 Danh sách học sinh thuộc tutor:", studentIds);
+
+    // Tạo cuộc họp
+    const meeting = new Meeting({
+      tutorId,
+      name,
+      description,
+      studentIds,
+      joinedUsers: studentIds,
+      participantType: "Student",
+      startTime,
+      endTime,
+    });
+
+    await meeting.save();
+    console.log("✅ Cuộc họp đã được tạo thành công:", meeting);
+
+    res.status(201).json(meeting);
+  } catch (error) {
+    console.log("❌ Lỗi khi tạo cuộc họp:", error.message);
+    res.status(500).json({ error: error.message });
+  }
 };
+
 
 const getMeetingsByUser = async (req, res) => {
   try {
     const { userId, role } = req.params;
-
     let meetings;
+
     if (role === "tutor") {
-      // Lấy các cuộc họp mà tutor đã tạo
-      meetings = await Meeting.find({ tutorId: userId }).populate("studentIds", "name");
+      meetings = await Meeting.find({ tutorId: userId });
     } else if (role === "student") {
-      // Lấy các cuộc họp mà student có thể tham gia
-      meetings = await Meeting.find({ studentIds: userId }).populate("tutorId", "name");
+      meetings = await Meeting.find({ studentIds: userId });
     } else {
       return res.status(400).json({ error: "Role không hợp lệ" });
     }
@@ -29,137 +71,59 @@ const getMeetingsByUser = async (req, res) => {
   }
 };
 
-const createMeeting = async (req, res) => {
-  try {
-    const { name, type, description, tutorId, studentIds, startTime, endTime, role } = req.body;
-
-    if (role !== "tutor") {
-      return res.status(403).json({ error: "Chỉ giáo viên mới có thể tạo cuộc họp" });
-    }
-
-    const tutor = await Tutor.findById(tutorId);
-    if (!tutor) {
-      return res.status(403).json({ error: "Giáo viên không tồn tại" });
-    }
-
-    if (type === "private" && studentIds.length !== 1) {
-      return res.status(400).json({ error: "Cuộc họp riêng tư chỉ có 1 học sinh" });
-    }
-
-    const meetingLink = `http://localhost:5080/meeting/${tutorId}-${Date.now()}`;
-    const newMeeting = new Meeting({
-      name,
-      type,
-      description,
-      tutorId,
-      studentIds,
-      startTime,
-      endTime,
-      meetingLink,
-      joinedUsers: [],
-    });
-
-    await newMeeting.save();
-    io.emit("meeting-created", newMeeting);
-    res.status(201).json({ message: "Cuộc họp đã được tạo", meeting: newMeeting });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-
-const getCommentsForMeeting = async (req, res) => {
-  try {
-    const { meetingId } = req.params;
-    const comments = await MeetingComments.find({ meetingId }).populate("commenterId", "name");
-    res.json(comments);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
 
 const joinMeeting = async (req, res) => {
   try {
     const { meetingId } = req.params;
-    const { userId, role } = req.body;
-
-    if (role !== "student") {
-      return res.status(403).json({ error: "Chỉ học sinh mới có thể tham gia cuộc họp" });
-    }
-
-    const meeting = await Meeting.findById(meetingId).populate("tutorId studentIds");
-    if (!meeting) {
-      return res.status(404).json({ error: "Cuộc họp không tìm thấy" });
-    }
-
-    if (!meeting.studentIds.includes(userId)) {
-      return res.status(403).json({ error: "Bạn không có quyền tham gia cuộc họp này" });
-    }
-
-    if (!meeting.joinedUsers.includes(userId)) {
-      meeting.joinedUsers.push(userId);
-      await meeting.save();
-      io.emit("user-joined", { meetingId, userId, joinedUsers: meeting.joinedUsers });
-    }
-
-    res.json({ message: "Người dùng đã tham gia cuộc họp.", meeting });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-
-const leaveMeeting = async (req, res) => {
-  try {
-    const { meetingId } = req.params;
     const { userId } = req.body;
-
     const meeting = await Meeting.findById(meetingId);
-    if (!meeting) {
-      return res.status(404).json({ error: "Cuộc họp không tồn tại" });
+
+    if (!meeting || !meeting.studentIds.includes(userId)) {
+      return res.status(403).json({ error: "Không thể tham gia cuộc họp này" });
     }
 
-    meeting.joinedUsers = meeting.joinedUsers.filter((id) => id !== userId);
-    await meeting.save();
-
-    res.json({ message: "User đã rời cuộc họp", joinedUsers: meeting.joinedUsers });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-const addCommentToMeeting = async (req, res) => {
-  try {
-    const { meetingId, userId, userType, content } = req.body;
-
-    const meeting = await Meeting.findById(meetingId);
-    if (!meeting) {
-      return res.status(404).json({ error: "Cuộc họp không tồn tại" });
-    }
-
-    const newComment = new MeetingComments({
-      commenterId: userId,
-      content,
-      meetingId,
-      commenterType: userType,
+    // Gửi thông báo đến tất cả student trong cuộc họp
+    meeting.studentIds.forEach((studentId) => {
+      const studentSocket = onlineUsers[studentId]?.socketId;
+      if (studentSocket) {
+        io.to(studentSocket).emit("user-joined", { meetingId, userId });
+      }
     });
 
-    await newComment.save();
-    io.emit("new-comment", { meetingId, newComment });
+    res.json({ message: "Đã tham gia cuộc họp", meeting });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
-    res.status(201).json({ message: "Bình luận đã được gửi", newComment });
+const getAllMeetings = async (req, res) => {
+  try {
+    const meetings = await Meeting.find().populate("tutorId", "name").populate("studentIds", "name");
+    res.json(meetings);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getStudentsByTutor = async (req, res) => {
+  try {
+    const { tutorId } = req.params;
+    const tutor = await Tutor.findById(tutorId);
+
+    if (!tutor) {
+      return res.status(404).json({ error: "Tutor không tồn tại" });
+    }
+
+    res.json({ studentIds: tutor.studentId || [] });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
 module.exports = {
-  setSocketIo,  // ✅ Thêm socket.io vào exports
   createMeeting,
   getMeetingsByUser,
   joinMeeting,
-  leaveMeeting,
-  getCommentsForMeeting,
-  addCommentToMeeting,
+  getAllMeetings,
+  getStudentsByTutor, 
 };

@@ -1,114 +1,59 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Layout, Button, Input, List } from "antd";
-import Peer from "peerjs";
+import React, { useEffect, useState } from "react";
+import { List, Button, message } from "antd";
 import { io } from "socket.io-client";
+import axios from "axios";
 
-const { Content } = Layout;
 const socket = io("http://localhost:5000");
 
-export default function MeetingPage() {
-  const [roomId, setRoomId] = useState("");
-  const [peers, setPeers] = useState([]);
-  const [peerId, setPeerId] = useState("");
-  const [isRoomCreated, setIsRoomCreated] = useState(false);
-  const peer = useRef(null);
-  const localStream = useRef(null);
-  const localVideoRef = useRef(null);
-  const videoRefs = useRef({});
+export default function MeetingPage({ userId }) {
+  const [meetings, setMeetings] = useState([]);
+  const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
-    socket.on("user-joined", ({ users }) => {
-      setPeers(users);
-      users.forEach((user) => {
-        if (user.peerId !== peerId) {
-          callUser(user.peerId);
-        }
-      });
-    });
-
-    socket.on("user-left", ({ users }) => {
-      setPeers(users);
-    });
-
-    return () => {
-      socket.disconnect();
-      if (peer.current) peer.current.destroy();
+    const fetchMeetings = async () => {
+      try {
+        const { data } = await axios.get(`http://localhost:5000/api/meeting/user/${userId}/student`);
+        setMeetings(data);
+      } catch (error) {
+        console.error("Lỗi khi tải danh sách cuộc họp:", error);
+      }
     };
-  }, [peerId]);
-
-  const createRoom = async () => {
-    if (!roomId) return alert("Nhập ID phòng trước!");
-    setIsRoomCreated(true);
-
-    // Lấy quyền truy cập camera/micro
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      localStream.current = stream;
-
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream;
-      }
-
-      // Khởi tạo PeerJS
-      peer.current = new Peer();
-      peer.current.on("open", (id) => {
-        setPeerId(id);
-        socket.emit("join-room", { roomId, peerId: id });
-
-        peer.current.on("call", (incomingCall) => {
-          incomingCall.answer(stream);
-          incomingCall.on("stream", (remoteStream) => {
-            addVideoStream(remoteStream, incomingCall.peer);
-          });
-        });
-      });
-    } catch (error) {
-      console.error("Lỗi khi truy cập camera/micro:", error);
-      alert("Vui lòng cho phép truy cập camera & micro.");
-    }
-  };
-
-  const callUser = (remotePeerId) => {
-    if (!localStream.current) return;
-    const call = peer.current.call(remotePeerId, localStream.current);
-    call.on("stream", (remoteStream) => {
-      addVideoStream(remoteStream, remotePeerId);
+    fetchMeetings();
+  
+    socket.on("meeting-notification", (notification) => {
+      setNotifications((prev) => [notification.message, ...prev]);
+      message.info(notification.message);
+      setMeetings((prev) => [...prev, { _id: notification.meetingId, name: notification.message }]);
     });
-  };
+  
+    return () => socket.off("meeting-notification");
+  }, [userId]);
 
-  const addVideoStream = (stream, id) => {
-    if (!videoRefs.current[id]) {
-      videoRefs.current[id] = React.createRef();
+  const joinMeeting = async (meetingId) => {
+    try {
+      await axios.post(`http://localhost:5000/api/meeting/join/${meetingId}`, { userId });
+      window.location.href = `/meeting/${meetingId}`;
+    } catch (error) {
+      console.error("Lỗi khi tham gia cuộc họp:", error);
+      message.error("Không thể tham gia cuộc họp.");
     }
-    setTimeout(() => {
-      if (videoRefs.current[id].current) {
-        videoRefs.current[id].current.srcObject = stream;
-      }
-    }, 500);
   };
 
   return (
-    <Content style={{ padding: "2rem" }}>
-      <h2>Tutor Meeting Room</h2>
-      <Input placeholder="Nhập ID phòng" onChange={(e) => setRoomId(e.target.value)} />
-      <Button onClick={createRoom} type="primary" style={{ marginTop: "10px" }} disabled={isRoomCreated}>
-        Tạo Phòng
-      </Button>
-
-      <h3 style={{ marginTop: "20px" }}>Video Call:</h3>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginTop: "10px" }}>
-        <video ref={localVideoRef} autoPlay playsInline muted style={{ width: "45%", border: "1px solid black" }} />
-        {peers.map((user) => (
-          <video key={user.peerId} ref={videoRefs.current[user.peerId]} autoPlay playsInline style={{ width: "45%", border: "1px solid black" }} />
-        ))}
-      </div>
-
-      <h3 style={{ marginTop: "20px" }}>Người tham gia:</h3>
+    <div>
+      <h2>Danh sách cuộc họp</h2>
       <List
         bordered
-        dataSource={peers}
-        renderItem={(user) => <List.Item key={user.peerId}>{user.peerId}</List.Item>}
+        dataSource={meetings}
+        renderItem={(meeting) => (
+          <List.Item>
+            {meeting.name}
+            <Button type="primary" onClick={() => joinMeeting(meeting._id)}>Tham gia</Button>
+          </List.Item>
+        )}
       />
-    </Content>
+      <h3>Thông báo mới:</h3>
+      <List bordered dataSource={notifications} renderItem={(notif) => <List.Item>{notif}</List.Item>} />
+    </div>
   );
 }

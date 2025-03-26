@@ -10,6 +10,12 @@ require("dotenv").config();
 
 const app = express();
 const server = http.createServer(app); // 🔥 Tạo HTTP server
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+  },
+});
 
 app.use(express.json());
 connectDB();
@@ -23,60 +29,34 @@ app.use(
   })
 );
 
-const io = new Server(server, {
-  cors: {
-    origin: "http://localhost:5173",
-    methods: ["GET", "POST", "PUT", "DELETE"],
-  },
-});
-
-io.on("connection", (socket) => {
-  console.log("🟢 Người dùng kết nối:", socket.id);
-
-  socket.on("sendMessage", (message) => {
-    console.log("Message received:", message);
-    io.emit("receiveMessage", message);
-  });
-
-  socket.on("disconnect", () => {
-    console.log("❌ Người dùng đã ngắt kết nối:", socket.id);
-  });
-});
-
-const usersInRoom = {};
-
-io.on("connection", (socket) => {
-  console.log("🟢 Người dùng kết nối:", socket.id);
-
-  socket.on("join-room", ({ roomId, peerId }) => {
-    socket.join(roomId);
-    if (!usersInRoom[roomId]) usersInRoom[roomId] = [];
-    
-    usersInRoom[roomId].push(peerId);
-    io.to(roomId).emit("user-joined", { users: usersInRoom[roomId] });
-  });
-
-  socket.on("leave-room", ({ roomId, peerId }) => {
-    socket.leave(roomId);
-    if (usersInRoom[roomId]) {
-      usersInRoom[roomId] = usersInRoom[roomId].filter((id) => id !== peerId);
-    }
-    
-    io.to(roomId).emit("user-left", { users: usersInRoom[roomId] });
-  });
-
-  socket.on("disconnect", () => {
-    console.log("❌ Người dùng đã ngắt kết nối:", socket.id);
-    for (const roomId in usersInRoom) {
-      usersInRoom[roomId] = usersInRoom[roomId].filter((id) => id !== socket.id);
-      io.to(roomId).emit("user-left", { users: usersInRoom[roomId] });
-    }
-  });
-});
-
 app.use("/api/auth", authRoutes);
 app.use("/api/meeting", meetingRoutes);
 app.use("/api/messages", messageRoutes);
 
-const PORT = process.env.PORT;
+// 🔥 Quản lý kết nối WebSocket
+const onlineUsers = {}; // Lưu danh sách user đang online
+
+io.on("connection", (socket) => {
+
+  // Đăng ký user vào danh sách online
+  socket.on("register", ({ userId, role }) => {
+    onlineUsers[userId] = { socketId: socket.id, role };
+    
+  });
+
+  // Xử lý khi user ngắt kết nối
+  socket.on("disconnect", () => {
+    for (const userId in onlineUsers) {
+      if (onlineUsers[userId].socketId === socket.id) {
+        delete onlineUsers[userId];
+        break;
+      }
+    }
+  });
+});
+
+// Xuất `io` để dùng trong controllers
+module.exports = { app, server, io };
+
+const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

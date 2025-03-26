@@ -4,16 +4,16 @@ const {
   createMeeting,
   getMeetingsByUser,
   joinMeeting,
-  leaveMeeting,
-  getCommentsForMeeting,
-  addCommentToMeeting,
+  getAllMeetings,
+  getStudentsByTutor,
 } = require("../controllers/meeting/meetingController");
 
-router.post("/create", createMeeting); // Chỉ Tutor tạo cuộc họp
-router.get("/user/:userId/:role", getMeetingsByUser); // Lấy danh sách cuộc họp theo role
-router.post("/join/:meetingId", joinMeeting); // Chỉ Student có thể tham gia
-router.post("/leave/:meetingId", leaveMeeting);
-router.get("/comments/:meetingId", getCommentsForMeeting);
-router.post("/comment", addCommentToMeeting);
+router.post("/create", createMeeting); 
+router.get("/user/:userId/:role", getMeetingsByUser);
+router.post("/join/:meetingId", joinMeeting);
+
+router.get("/all", getAllMeetings);
+router.get("/students/:tutorId", getStudentsByTutor);
+
 
 module.exports = router;

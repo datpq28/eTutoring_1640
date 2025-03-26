@@ -35,6 +35,7 @@ import BlogManagementPage from "./pages/admin/BlogManagementPage/BlogManagementP
 import DocumentManagementPage from "./pages/admin/DocumentManagementPage/DocumentManagementPage";
 import MeetingManagementPage from "./pages/admin/MeetingManagementPage/MeetingManagementPage";
 import AccountsManagementPage from "./pages/admin/AccountsManagementPage/AccountsManagementPage";
+import RoomMeetingPage from "./sharedMeeting/roomMeetingPage";
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
@@ -51,6 +52,7 @@ createRoot(document.getElementById("root")).render(
           <Route path="blog" element={<StudentBlogPage />} />
           <Route path="messages" element={<StudentMessagePage />} />
           <Route path="meeting" element={<StudentMeetingPage />} />
+          <Route path="room-meeting" element={<RoomMeetingPage />} />
         </Route>
         <Route path="tutor" element={<TutorLayout />}>
           <Route path="dashboard" element={<TutorDashboardPage />} />
@@ -59,6 +61,7 @@ createRoot(document.getElementById("root")).render(
           <Route path="blog" element={<TutorBlogPage />} />
           <Route path="messages" element={<TutorMessagePage />} />
           <Route path="meeting" element={<TutorMeetingPage />} />
+          <Route path="room-meeting" element={<RoomMeetingPage />} />
         </Route>
         <Route path="admin" element={<AdminLayout />}>
           <Route path="dashboard" element={<AdminDashboardPage />} />
