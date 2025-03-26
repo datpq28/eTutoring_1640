@@ -1,6 +1,5 @@
 import { LeftOutlined, UserOutlined } from "@ant-design/icons";
 import { Avatar, Card, Flex, Layout, Typography } from "antd";
-import ChatBox from "../../../components/student/MessagePage/ChatBox/ChatBox";
 import { useEffect, useState } from "react";
 const { Title } = Typography;
 const { Content } = Layout;
