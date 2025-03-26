@@ -29,7 +29,6 @@ export default function CardBlog({ blog, fetchBlogs }) {
   const [editedTitle, setEditedTitle] = useState(blog.title);
   const [editedContent, setEditedContent] = useState(blog.content);
   const [likes, setLikes] = useState(blog.likes);
-  const [hasLiked, setHasLiked] = useState(false); // Kiểm soát trạng thái like
 
   // Chỉnh sửa bài viết
   const handleEdit = async () => {
@@ -63,22 +62,14 @@ export default function CardBlog({ blog, fetchBlogs }) {
     });
   };
 
-  // Xử lý like/unlike bài viết
+  // Xử lý like bài viết
   const handleLike = async () => {
     try {
-      if (!hasLiked) {
-        await likeBlog(blog._id, { action: "like" });
-        setLikes(likes + 1);
-        setHasLiked(true);
-        message.success("Bạn đã thích bài viết!");
-      } else {
-        await likeBlog(blog._id, { action: "unlike" });
-        setLikes(likes - 1);
-        setHasLiked(false);
-        message.success("Bạn đã bỏ thích bài viết!");
-      }
+      await likeBlog(blog._id);
+      setLikes(likes + 1); // Cập nhật số lượt like ngay lập tức
+      message.success("Bạn đã thích bài viết!");
     } catch (error) {
-      message.error("Có lỗi xảy ra khi thực hiện thao tác!");
+      message.error("Có lỗi xảy ra khi like bài viết!");
     }
   };
 
@@ -110,12 +101,8 @@ export default function CardBlog({ blog, fetchBlogs }) {
           <Text>{new Date(blog.createdAt).toLocaleDateString()}</Text>
         </Space>
         <Space size="small">
-          <Space 
-            size="small" 
-            style={{ cursor: "pointer" }} 
-            onClick={handleLike}
-          >
-            <LikeOutlined style={{ color: hasLiked ? "red" : "gray" }} />
+          <Space size="small" style={{ cursor: "pointer" }} onClick={handleLike}>
+            <LikeOutlined style={{ color: "red" }} />
             <Text>{likes}</Text>
           </Space>
           <Space size="small">
