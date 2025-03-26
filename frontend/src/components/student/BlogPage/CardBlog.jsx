@@ -28,8 +28,8 @@ export default function CardBlog({ blog, fetchBlogs }) {
   const [editedTitle, setEditedTitle] = useState(blog.title);
   const [editedContent, setEditedContent] = useState(blog.content);
   const [likes, setLikes] = useState(blog.likes);
-  const [hasLiked, setHasLiked] = useState(false);
-  const [processing, setIsProcessing] = useState(false);
+  const [hasLiked, setHasLiked] = useState(false); // Kiểm soát trạng thái like
+
   // Chỉnh sửa bài viết
   const handleEdit = async () => {
     try {
@@ -63,7 +63,7 @@ export default function CardBlog({ blog, fetchBlogs }) {
     });
   };
 
-  // Xử lý like/unlike bài viết
+  // Xử lý like bài viết
   const handleLike = async () => {
     if (processing) return;
     setLikes((prevLike) => (hasLiked ? prevLike - 1 : prevLike + 1));
@@ -71,58 +71,20 @@ export default function CardBlog({ blog, fetchBlogs }) {
     setIsProcessing(true);
     try {
       if (!hasLiked) {
-        //Chỗ gọi API
         await likeBlog(blog._id, { action: "like" });
-        message.success(`You liked the ${blog.title}`);
+        setLikes(likes + 1);
+        setHasLiked(true);
+        message.success("Bạn đã thích bài viết!");
       } else {
-        //Chỗ gọi API
         await likeBlog(blog._id, { action: "unlike" });
-        message.success(`You unlike the ${blog.title}`);
+        setLikes(likes - 1);
+        setHasLiked(false);
+        message.success("Bạn đã bỏ thích bài viết!");
       }
     } catch (error) {
-      message.error("Error like!");
-      console.log(error, "In Card Blog");
-    } finally {
-      setIsProcessing(false);
+      message.error("Có lỗi xảy ra khi thực hiện thao tác!");
     }
   };
-  const IconText = ({ icon, text, onClick, toolTipText, color = "8c8c8c" }) => (
-    <Tooltip placement="top" title={toolTipText}>
-      <span
-        onClick={onClick}
-        style={{ cursor: "pointer", userSelect: "none", color: color }}
-      >
-        <Space>
-          {React.createElement(icon)}
-          {text}
-        </Space>
-      </span>
-    </Tooltip>
-  );
-  const listItemAction = [
-    <IconText
-      icon={LikeOutlined}
-      text={likes}
-      key="list-vertical-like-o"
-      onClick={handleLike}
-      toolTipText="Like"
-      color={hasLiked ? "red" : "8c8c8c"}
-    />,
-    <IconText
-      icon={MessageOutlined}
-      text="2"
-      key="list-vertical-message"
-      toolTipText="Comment"
-    />,
-    ...blog.tags.map((item, i) => (
-      <IconText
-        key={`${item}${i}`}
-        icon={TagOutlined}
-        text={item}
-        toolTipText="Tags"
-      />
-    )),
-  ];
 
   return (
     <>
@@ -201,9 +163,9 @@ export default function CardBlog({ blog, fetchBlogs }) {
           <Text>{new Date(blog.createdAt).toLocaleDateString()}</Text>
         </Space>
         <Space size="small">
-          <Space
-            size="small"
-            style={{ cursor: "pointer" }}
+          <Space 
+            size="small" 
+            style={{ cursor: "pointer" }} 
             onClick={handleLike}
           >
             <LikeOutlined style={{ color: hasLiked ? "red" : "gray" }} />
