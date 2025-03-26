@@ -1,11 +1,33 @@
 import {
-  CheckCircleTwoTone, DeleteTwoTone, ImportOutlined, LockTwoTone,
-  TeamOutlined, ToolOutlined, UnlockTwoTone, UserAddOutlined, UserOutlined
+  DeleteTwoTone,
+  ImportOutlined,
+  LockTwoTone,
+  TeamOutlined,
+  ToolOutlined,
+  UnlockTwoTone,
+  UserAddOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
-import { Button, Card, Flex, Input, Layout, Segmented, Space, Table, Tag, Typography, message  } from "antd";
+import {
+  Button,
+  Card,
+  Flex,
+  Input,
+  Layout,
+  Segmented,
+  Space,
+  Table,
+  Tag,
+  Typography,
+  message,
+} from "antd";
 import { useState, useEffect } from "react";
 import AddUserModal from "../../../components/admin/AccountsManagementPage/AddUserModal/AddUserModal";
-import { viewListUser, lockUser, unLockUser } from "../../../../api_service/admin_service";
+import {
+  viewListUser,
+  lockUser,
+  unLockUser,
+} from "../../../../api_service/admin_service";
 
 const { Content } = Layout;
 const { Text } = Typography;
@@ -23,15 +45,15 @@ export default function AccountsManagementPage() {
     const fetchUsers = async () => {
       try {
         const data = await viewListUser();
-        console.log('Data from API:', data);
+        console.log("Data from API:", data);
         const allUsers = [...data.students, ...data.tutors];
-        const mappedUsers = allUsers.map(user => ({
+        const mappedUsers = allUsers.map((user) => ({
           ...user,
           name: `${user.firstname} ${user.lastname}`,
           status: user.isLocked ? "locked" : "active",
           role: user.role === "student" ? "student" : "tutor",
         }));
-        console.log('Mapped Users:', mappedUsers);
+        console.log("Mapped Users:", mappedUsers);
         setUsers(mappedUsers);
       } catch (error) {
         console.error("Failed to fetch users:", error);
@@ -46,7 +68,9 @@ export default function AccountsManagementPage() {
       message.success("User locked successfully");
       setUsers((prevUsers) =>
         prevUsers.map((user) =>
-          user.email === email ? { ...user, isLocked: true, status: "locked" } : user
+          user.email === email
+            ? { ...user, isLocked: true, status: "locked" }
+            : user
         )
       );
     } catch (error) {
@@ -60,7 +84,9 @@ export default function AccountsManagementPage() {
       message.success("User unlocked successfully");
       setUsers((prevUsers) =>
         prevUsers.map((user) =>
-          user.email === email ? { ...user, isLocked: false, status: "active" } : user
+          user.email === email
+            ? { ...user, isLocked: false, status: "active" }
+            : user
         )
       );
     } catch (error) {
@@ -75,7 +101,9 @@ export default function AccountsManagementPage() {
       (segmented === "tutors" && item.role === "tutor") ||
       (segmented === "admin" && item.role === "admin") ||
       (segmented === "requests" && item.status === "pending");
-    const matchesSearch = item.name.toLowerCase().includes(searchValue.toLowerCase());
+    const matchesSearch = item.name
+      .toLowerCase()
+      .includes(searchValue.toLowerCase());
     return matchesSegmented && (searchValue === "" || matchesSearch);
   });
 
@@ -91,44 +119,71 @@ export default function AccountsManagementPage() {
     { title: "Name", dataIndex: "name", key: "name" },
     { title: "Email", dataIndex: "email", key: "email" },
     { title: "Phone", dataIndex: "phone", key: "phone" },
-    { title: "Password", dataIndex: "password", key: "password" },
     {
-      title: "Role", dataIndex: "role", key: "role",
+      title: "Password",
+      dataIndex: "password",
+      key: "password",
+      render: (password) => (
+        <div style={{ wordBreak: "break-word" }}>{password}</div>
+      ),
+    },
+    {
+      title: "Role",
+      dataIndex: "role",
+      key: "role",
       render: (_, { role }) => {
-        const color = role === "admin" ? "volcano" : role === "student" ? "green" : "blue";
+        const color =
+          role === "admin" ? "volcano" : role === "student" ? "green" : "blue";
         return <Tag color={color}>{role.toUpperCase()}</Tag>;
       },
     },
     {
-      title: "Status", dataIndex: "status", key: "status",
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
       render: (_, { status }) => {
-        const color = status === "active" ? "#87d068" : status === "locked" ? "#f50" : "#108ee9";
+        const color =
+          status === "active"
+            ? "#87d068"
+            : status === "locked"
+            ? "#f50"
+            : "#108ee9";
         return <Tag color={color}>{status.toUpperCase()}</Tag>;
       },
     },
     {
-      title: "Actions", key: "actions", align: "right",
+      title: "Actions",
+      key: "actions",
+      align: "right",
       render: (_, record) => {
         const { isLocked } = record;
-        
+
         const unlockButton = (
-          <Button color="lime" variant="filled" onClick={() => handleUnlock(record.email)}>
+          <Button
+            color="lime"
+            variant="filled"
+            onClick={() => handleUnlock(record.email)}
+          >
             <Space size="small">
               <UnlockTwoTone twoToneColor="#52c41a" />
               <Text type="success">Unlock</Text>
             </Space>
           </Button>
         );
-        
+
         const lockButton = (
-          <Button color="gold" variant="filled" onClick={() => handleLock(record.email)}>
+          <Button
+            color="gold"
+            variant="filled"
+            onClick={() => handleLock(record.email)}
+          >
             <Space size="small">
               <LockTwoTone twoToneColor="#faad14" />
               <Text type="warning">Lock</Text>
             </Space>
           </Button>
         );
-        
+
         const deleteButton = (
           <Button color="red" variant="filled">
             <Space size="small">
@@ -137,14 +192,14 @@ export default function AccountsManagementPage() {
             </Space>
           </Button>
         );
-      
+
         return (
           <Flex gap="middle" justify="end">
             {isLocked ? unlockButton : lockButton}
             {deleteButton}
           </Flex>
         );
-      },      
+      },
     },
   ];
 
@@ -153,7 +208,11 @@ export default function AccountsManagementPage() {
       <Flex vertical gap="middle">
         <Card>
           <Flex justify="space-between">
-            <Segmented value={segmented} options={segmentedOptions} onChange={setSegmented} />
+            <Segmented
+              value={segmented}
+              options={segmentedOptions}
+              onChange={setSegmented}
+            />
             <Space size="middle">
               <Input
                 placeholder="Search User"
@@ -168,7 +227,12 @@ export default function AccountsManagementPage() {
           </Flex>
         </Card>
         <Card>
-          <Table columns={columns} dataSource={filteredData} pagination={{ pageSize: 5 }} rowKey="email" />
+          <Table
+            columns={columns}
+            dataSource={filteredData}
+            pagination={{ pageSize: 5 }}
+            rowKey="email"
+          />
         </Card>
       </Flex>
       <AddUserModal isModalOpen={isModalOpen} hideModal={hideModal} />
