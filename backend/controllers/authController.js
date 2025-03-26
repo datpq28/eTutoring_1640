@@ -4,9 +4,21 @@ const Tutor = require("../models/TutorStudent");
 const OTP = require("../models/OtpModel");
 const { sendOTP } = require("../controllers/otpService/otpService");
 const jwt = require("jsonwebtoken");
+const {
+  sendAdminApprovalRequest,
+} = require("../controllers/mailService/mailService");
 
 const registerSendOTP = async (req, res) => {
-  const { email, password, role, description, filed, blogId } = req.body;
+  const {
+    firstname,
+    lastname,
+    email,
+    password,
+    role,
+    description,
+    filed,
+    blogId,
+  } = req.body;
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -18,12 +30,16 @@ const registerSendOTP = async (req, res) => {
     }
 
     const student = new Student({
+      firstname,
+      lastname,
       email,
       password: hashedPassword,
+      role,
       description,
       filed,
       blogId,
       tutorId: tutor._id,
+      isLocked: true,
     });
 
     await student.save();
@@ -67,11 +83,15 @@ const registerSendOTP = async (req, res) => {
       .json({ message: "Student registered successfully, OTP sent to email." });
   } else if (role === "tutor") {
     const tutor = new Tutor({
+      firstname,
+      lastname,
       email,
       password: hashedPassword,
+      role,
       description,
       filed,
       blog: blogId,
+      isLocked: true,
     });
 
     await tutor.save();
@@ -117,9 +137,22 @@ const registerVerifyOTP = async (req, res) => {
   }
 };
 
+let adminApproved = false;
+
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
+  // Kiểm tra nếu là admin và chưa được phê duyệt
+  if (email === "admin" && password === "admin") {
+    if (!adminApproved) {
+      await sendAdminApprovalRequest();
+      return res.status(403).json({
+        error: "Admin login requires approval. Please check your email.",
+      });
+    }
+  }
+
+  // Tìm user là Student hoặc Tutor
   let user = await Student.findOne({ email }).exec();
   if (!user) {
     user = await Tutor.findOne({ email }).exec();
@@ -129,20 +162,66 @@ const loginUser = async (req, res) => {
     return res.status(400).json({ error: "User not found" });
   }
 
+  if (user.isLocked) {
+    return res.status(403).json({
+      error: "Account is locked. Please message the training department.",
+    });
+  }
+
+  // Kiểm tra mật khẩu
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
     return res.status(400).json({ error: "Invalid credentials" });
   }
+
+  // Xác định vai trò của người dùng
+  const role = user instanceof Student ? "student" : "tutor";
+
+  // Tạo JWT token để trả về cho người dùng
   const token = jwt.sign(
-    { userId: user._id, role: user instanceof Student ? "student" : "tutor" },
-    JWT_SECRET,
-    { expiresIn: "1h" }
+    { userId: user._id, role: role },
+    process.env.JWT_SECRET,
+    { expiresIn: "1h" } // Token hết hạn sau 1 giờ
   );
 
+  // Trả về thông tin cần thiết bao gồm cả userId
   res.status(200).json({
     message: "Login successful",
     token,
+    role,
+    userId: user._id,  // ✅ Thêm userId vào response
   });
 };
 
-module.exports = { registerSendOTP, registerVerifyOTP, loginUser };
+module.exports = loginUser;
+
+
+const approveAdmin = async (req, res) => {
+  const { token } = req.query;
+
+  if (!token) {
+    return res.status(400).json({ error: "Token is required for approval." });
+  }
+
+  try {
+    // Giải mã token để xác nhận tính hợp lệ
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Nếu token hợp lệ, phê duyệt admin
+    if (decoded.email === "nguyenkhaccao1@gmail.com") {
+      adminApproved = true;
+      return res.status(200).json({ message: "Admin approved successfully!" });
+    } else {
+      return res.status(400).json({ error: "Invalid token" });
+    }
+  } catch (error) {
+    return res.status(500).json({ error: "Failed to verify token" });
+  }
+};
+
+module.exports = {
+  registerSendOTP,
+  registerVerifyOTP,
+  loginUser,
+  approveAdmin,
+};

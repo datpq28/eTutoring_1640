@@ -8,7 +8,8 @@ import TextInputGroup from "../../components/auth/TextInputGroup";
 import AuthButton from "../../components/auth/AuthButton";
 import AssistanceLink from "../../components/auth/AssistanceLink";
 import { useReducer } from "react";
-
+import { registerVerifyOTP } from "../../../api_service/auth_service";
+import { useLocation, useNavigate } from "react-router";
 function formReducer(state, action) {
   switch (action.type) {
     case "CHANGE_INPUT_VALUE": {
@@ -32,6 +33,9 @@ const initialValue = {
 
 export default function VerifyOTPPage() {
   const [formData, dispatch] = useReducer(formReducer, initialValue);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const email = location.state?.email;
   const { code } = formData;
   function handleChangeInputValue(e) {
     const action = {
@@ -42,7 +46,21 @@ export default function VerifyOTPPage() {
     dispatch(action);
   }
   function handleSubmitForm() {
-    console.log("submite");
+    if (!email) {
+      alert("Email not found, please register again.");
+      navigate("/auth/register");
+      return;
+    }
+
+    registerVerifyOTP(email, code.value)
+      .then((response) => {
+        console.log("Verify OTP successful", response);
+        navigate("/auth/login");
+      })
+      .catch((error) => {
+        console.error("Wrong OTP", error);
+        alert(error.response?.data?.message || "Verify Failed");
+      });
   }
   return (
     <Flex

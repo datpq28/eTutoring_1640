@@ -1,5 +1,5 @@
-import { useReducer } from "react";
-import { Link as LinkRouter } from "react-router";
+import { useReducer, useState } from "react";  // Combined both imports
+import { Link as LinkRouter } from "react-router-dom";
 import { Flex, Image, Typography } from "antd";
 import { CloseCircleOutlined } from "@ant-design/icons";
 import auth_01 from "../../assets/imgs/auth-01.png";
@@ -11,27 +11,10 @@ import AuthButton from "../../components/auth/AuthButton";
 import TextInputGroup from "../../components/auth/TextInputGroup";
 import PasswordInputGroup from "../../components/auth/PasswordInputGroup";
 import AssistanceLink from "../../components/auth/AssistanceLink";
-const { Link } = Typography;
+import { loginUser } from "../../../api_service/auth_service";
+import { useNavigate } from "react-router-dom";
 
-function formReducer(state, action) {
-  switch (action.type) {
-    case "CHANGE_VALUE_INPUT": {
-      return {
-        ...state,
-        [action.field]: { value: action.value, error: "" },
-      };
-    }
-    case "CHECKED": {
-      return {
-        ...state,
-        [action.field]: { checked: action.checked },
-      };
-    }
-    default: {
-      return state;
-    }
-  }
-}
+const { Link } = Typography;
 
 const initialState = {
   email: { value: "", error: "" },
@@ -39,48 +22,84 @@ const initialState = {
   remember: { checked: false },
 };
 
-export default function LoginPage() {
-  const [dataForm, dispatch] = useReducer(formReducer, initialState);
+function formReducer(state, action) {
+  switch (action.type) {
+    case "CHANGE_VALUE_INPUT":
+      return { ...state, [action.field]: { value: action.value, error: "" } };
+    case "CHECKED":
+      return { ...state, [action.field]: { checked: action.checked } };
+    default:
+      return state;
+  }
+}
 
+export default function LoginPage() {
+  const navigate = useNavigate();
+  const [dataForm, dispatch] = useReducer(formReducer, initialState);
+  const [isPending, setIsPending] = useState(false);
+  const [isAdminApproval, setIsAdminApproval] = useState(false);  // Track admin approval status
   const { email, password, remember } = dataForm;
-  // console.log(">>>email : ", email.value);
-  // console.log(">>>password : ", password.value);
-  function handleChangeInputValue(e) {
+
+  const handleChangeInputValue = (e) => {
     dispatch({
       type: "CHANGE_VALUE_INPUT",
       field: e.target.name,
       value: e.target.value,
     });
-  }
-  function handleCheckedValue(e) {
+  };
+
+  const handleCheckedValue = (e) => {
     dispatch({
       type: "CHECKED",
       field: e.target.name,
       checked: e.target.checked,
     });
-  }
-  function handleSubmitForm() {
-    console.log("handle submit form");
-  }
+  };
+
+  const handleSubmitForm = async () => {
+    if (!email.value || !password.value) {
+      alert("Please fill in all fields");
+      return;
+    }
+  
+    // Check if login is for the admin account
+    if (email.value === "admin" && password.value === "admin") {
+      navigate("/admin/dashboard");
+      return;
+    }
+  
+    // Normal user login for student or tutor
+    setIsPending(true);
+    loginUser(email.value, password.value)
+      .then((response) => {
+        console.log("Login successful", response);
+        const role = response.role; // Giả sử response trả về có user và role
+        if (role === "student") {
+          navigate("/student/dashboard");
+        } else if (role === "tutor") {
+          navigate("/tutor/dashboard");
+        } else {
+          alert("Unknown role. Please contact support.");
+        }
+      })
+      .catch((error) => {
+        console.error("Login failed", error);
+        alert(error.response?.data?.message || "Login Failed");
+      })
+      .finally(() => {
+        setIsPending(false);
+      });
+  };
+  
   return (
-    <Flex
-      justify="space-between"
-      align="center"
-      className={styles.screenContainer}
-    >
-      <Flex vertical={true} style={stylesInline.form}>
+    <Flex justify="space-between" align="center" className={styles.screenContainer}>
+      <Flex vertical style={stylesInline.form}>
         <AuthLabel>Login</AuthLabel>
-        <AuthDescription>
-          Login to access your travelwise account
-        </AuthDescription>
+        <AuthDescription>Login to access your travelwise account</AuthDescription>
 
         <TextInputGroup
-          style={{
-            marginTop: "2.68rem",
-          }}
-          inputStyle={{
-            borderColor: email.error ? "red" : "#000",
-          }}
+          style={{ marginTop: "2.68rem" }}
+          inputStyle={{ borderColor: email.error ? "red" : "#000" }}
           allowClear={{
             clearIcon: <CloseCircleOutlined style={stylesInline.clearIcon} />,
           }}
@@ -92,12 +111,8 @@ export default function LoginPage() {
         />
 
         <PasswordInputGroup
-          style={{
-            marginTop: "3rem",
-          }}
-          inputStyle={{
-            borderColor: password.error ? "red" : "#000",
-          }}
+          style={{ marginTop: "3rem" }}
+          inputStyle={{ borderColor: password.error ? "red" : "#000" }}
           allowClear={{
             clearIcon: <CloseCircleOutlined style={stylesInline.clearIcon} />,
           }}
@@ -106,30 +121,31 @@ export default function LoginPage() {
           name="password"
           onChange={handleChangeInputValue}
         />
-        <Flex
-          justify="space-between"
-          align="center"
-          style={{ marginTop: "2.3rem" }}
-        >
+
+        <Flex justify="space-between" align="center" style={{ marginTop: "2.3rem" }}>
           <AuthCheckBox
             textStyle={stylesInline.textCheckBox}
             name="remember"
-            checked={remember.value}
+            checked={remember.checked}
             onChange={handleCheckedValue}
           >
             Remember me
           </AuthCheckBox>
-          <LinkRouter
-            to="/auth/forgot-password"
-            component={Link}
-            style={stylesInline.linkText}
-          >
+          <LinkRouter to="/auth/forgot-password" component={Link} style={stylesInline.linkText}>
             Forgot password
           </LinkRouter>
         </Flex>
-        <AuthButton onClick={handleSubmitForm} style={{ marginTop: "4.4rem" }}>
-          Login
+
+        <AuthButton onClick={handleSubmitForm} style={{ marginTop: "4.4rem" }} disabled={isPending}>
+          {isPending ? "Processing..." : "Login"}
         </AuthButton>
+
+        {isAdminApproval && (
+          <div style={{ marginTop: "1rem", color: "#D51D1D" }}>
+            <p>Please check your email for admin approval link.</p>
+          </div>
+        )}
+
         <AssistanceLink
           text=" Don't have an account?"
           link="Sign up"
@@ -163,5 +179,8 @@ const stylesInline = {
   },
   link: {
     textAlign: "center",
+  },
+  clearIcon: {
+    color: "rgba(0, 0, 0, 0.25)",
   },
 };
