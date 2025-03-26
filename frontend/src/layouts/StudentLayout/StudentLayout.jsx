@@ -27,6 +27,7 @@ export default function StudentLayout() {
     "/student/documents": "📁 Documents",
     "/student/setting": "⚙️ Settings",
     "/student/blog": "📁 Blog",
+    "/student/meeting": "📹 Meeting",
   };
   const userMenu = (
     <Menu

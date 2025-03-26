@@ -1,12 +1,15 @@
 const express = require("express");
-const http = require("http"); // Thêm http để tạo server
+const http = require("http"); // Import module http
 const connectDB = require("./configs/database");
 const authRoutes = require("./api/auth");
+const meetingRoutes = require("./api/meeting");
+const messageRoutes = require("./api/messages");
 
 const { Server } = require("socket.io");
 require("dotenv").config();
 
 const app = express();
+const server = http.createServer(app); // 🔥 Tạo HTTP server
 
 app.use(express.json());
 connectDB();
@@ -28,20 +31,17 @@ const io = new Server(server, {
 });
 
 io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
+  console.log("🟢 Người dùng kết nối:", socket.id);
 
-  // Nhận tin nhắn từ client
   socket.on("sendMessage", (message) => {
     console.log("Message received:", message);
-    io.emit("receiveMessage", message); // Gửi lại tất cả client
+    io.emit("receiveMessage", message);
   });
+
   socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
+    console.log("❌ Người dùng đã ngắt kết nối:", socket.id);
   });
 });
-
-app.use("/api/auth", authRoutes);
-app.use("/api/meeting", meetingRoutes); // ✅ Kiểm tra đường dẫn API
 
 const usersInRoom = {};
 
@@ -74,10 +74,9 @@ io.on("connection", (socket) => {
   });
 });
 
-
+app.use("/api/auth", authRoutes);
 app.use("/api/meeting", meetingRoutes);
 app.use("/api/messages", messageRoutes);
 
 const PORT = process.env.PORT;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
+server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

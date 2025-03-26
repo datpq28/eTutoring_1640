@@ -16,6 +16,7 @@ import StudentCalendarPage from "./pages/student/CalendarPage/CalendarPage";
 import StudentDocumentsPage from "./pages/student/DocumentPage/DocumentsPage";
 import StudentBlogPage from "./pages/student/BlogPage/BlogPage";
 import StudentMessagePage from "./pages/student/MessagePage/MessagePage";
+import StudentMeetingPage from "./pages/student/MeetingPage/MeetingPage";
 
 //Tutor
 import TutorLayout from "./layouts/TutorLayout/TutorLayout";
@@ -49,6 +50,7 @@ createRoot(document.getElementById("root")).render(
           <Route path="documents" element={<StudentDocumentsPage />} />
           <Route path="blog" element={<StudentBlogPage />} />
           <Route path="messages" element={<StudentMessagePage />} />
+          <Route path="meeting" element={<StudentMeetingPage />} />
         </Route>
         <Route path="tutor" element={<TutorLayout />}>
           <Route path="dashboard" element={<TutorDashboardPage />} />

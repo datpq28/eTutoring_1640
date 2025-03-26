@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+  "start": "cross-env PORT=5173 react-scripts start"
+
   },
   "dependencies": {
     "@ant-design/icons": "^5.6.1",

@@ -8,13 +8,38 @@ const setSocketIo = (socketIoInstance) => {
   io = socketIoInstance;
 };
 
+const getMeetingsByUser = async (req, res) => {
+  try {
+    const { userId, role } = req.params;
+
+    let meetings;
+    if (role === "tutor") {
+      // Lấy các cuộc họp mà tutor đã tạo
+      meetings = await Meeting.find({ tutorId: userId }).populate("studentIds", "name");
+    } else if (role === "student") {
+      // Lấy các cuộc họp mà student có thể tham gia
+      meetings = await Meeting.find({ studentIds: userId }).populate("tutorId", "name");
+    } else {
+      return res.status(400).json({ error: "Role không hợp lệ" });
+    }
+
+    res.json(meetings);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 const createMeeting = async (req, res) => {
   try {
-    const { name, type, description, tutorId, studentIds, startTime, endTime } = req.body;
+    const { name, type, description, tutorId, studentIds, startTime, endTime, role } = req.body;
+
+    if (role !== "tutor") {
+      return res.status(403).json({ error: "Chỉ giáo viên mới có thể tạo cuộc họp" });
+    }
 
     const tutor = await Tutor.findById(tutorId);
     if (!tutor) {
-      return res.status(403).json({ error: "Chỉ giáo viên mới có thể tạo cuộc họp" });
+      return res.status(403).json({ error: "Giáo viên không tồn tại" });
     }
 
     if (type === "private" && studentIds.length !== 1) {
@@ -22,7 +47,6 @@ const createMeeting = async (req, res) => {
     }
 
     const meetingLink = `http://localhost:5080/meeting/${tutorId}-${Date.now()}`;
-
     const newMeeting = new Meeting({
       name,
       type,
@@ -43,6 +67,7 @@ const createMeeting = async (req, res) => {
   }
 };
 
+
 const getCommentsForMeeting = async (req, res) => {
   try {
     const { meetingId } = req.params;
@@ -57,11 +82,19 @@ const getCommentsForMeeting = async (req, res) => {
 const joinMeeting = async (req, res) => {
   try {
     const { meetingId } = req.params;
-    const { userId } = req.body;
+    const { userId, role } = req.body;
+
+    if (role !== "student") {
+      return res.status(403).json({ error: "Chỉ học sinh mới có thể tham gia cuộc họp" });
+    }
 
     const meeting = await Meeting.findById(meetingId).populate("tutorId studentIds");
     if (!meeting) {
       return res.status(404).json({ error: "Cuộc họp không tìm thấy" });
+    }
+
+    if (!meeting.studentIds.includes(userId)) {
+      return res.status(403).json({ error: "Bạn không có quyền tham gia cuộc họp này" });
     }
 
     if (!meeting.joinedUsers.includes(userId)) {
@@ -70,15 +103,12 @@ const joinMeeting = async (req, res) => {
       io.emit("user-joined", { meetingId, userId, joinedUsers: meeting.joinedUsers });
     }
 
-    res.json({
-      message: "Người dùng đã tham gia cuộc họp.",
-      meeting,
-      joinedUsers: meeting.joinedUsers,
-    });
+    res.json({ message: "Người dùng đã tham gia cuộc họp.", meeting });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 const leaveMeeting = async (req, res) => {
   try {
@@ -125,10 +155,11 @@ const addCommentToMeeting = async (req, res) => {
 };
 
 module.exports = {
-  setSocketIo,
+  setSocketIo,  // ✅ Thêm socket.io vào exports
   createMeeting,
+  getMeetingsByUser,
   joinMeeting,
   leaveMeeting,
-  addCommentToMeeting,
   getCommentsForMeeting,
+  addCommentToMeeting,
 };

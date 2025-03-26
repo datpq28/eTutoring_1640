@@ -1,5 +1,5 @@
 import { useReducer, useState } from "react";  // Combined both imports
-import { Link as LinkRouter } from "react-router-dom";
+import { Link as LinkRouter } from "react-router";
 import { Flex, Image, Typography } from "antd";
 import { CloseCircleOutlined } from "@ant-design/icons";
 import auth_01 from "../../assets/imgs/auth-01.png";
@@ -12,7 +12,7 @@ import TextInputGroup from "../../components/auth/TextInputGroup";
 import PasswordInputGroup from "../../components/auth/PasswordInputGroup";
 import AssistanceLink from "../../components/auth/AssistanceLink";
 import { loginUser } from "../../../api_service/auth_service";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 
 const { Link } = Typography;
 

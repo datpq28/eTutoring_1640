@@ -5,15 +5,15 @@ const {
   getMeetingsByUser,
   joinMeeting,
   leaveMeeting,
-  getCommentsForMeeting, // ✅ Kiểm tra lại import
+  getCommentsForMeeting,
   addCommentToMeeting,
 } = require("../controllers/meeting/meetingController");
 
-router.post("/create", createMeeting);
-router.get("/user/:userId/:role", getMeetingsByUser);
-router.post("/join/:meetingId", joinMeeting);
+router.post("/create", createMeeting); // Chỉ Tutor tạo cuộc họp
+router.get("/user/:userId/:role", getMeetingsByUser); // Lấy danh sách cuộc họp theo role
+router.post("/join/:meetingId", joinMeeting); // Chỉ Student có thể tham gia
 router.post("/leave/:meetingId", leaveMeeting);
-router.get("/comments/:meetingId", getCommentsForMeeting); // ✅ Đảm bảo route này hoạt động đúng
+router.get("/comments/:meetingId", getCommentsForMeeting);
 router.post("/comment", addCommentToMeeting);
 
 module.exports = router;
