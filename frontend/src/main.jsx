@@ -10,30 +10,30 @@ import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import SetNewPasswordPage from "./pages/auth/SetNewPasswordPage";
 
 //Student
-import StudentLayout from "./layouts/StudentLayout/StudentLayout";
-import StudentDashboardPage from "./pages/student/DashboardPage/DashboardPage";
-import StudentCalendarPage from "./pages/student/CalendarPage/CalendarPage";
-import StudentDocumentsPage from "./pages/student/DocumentPage/DocumentsPage";
-import StudentBlogPage from "./pages/student/BlogPage/BlogPage";
-import StudentMessagePage from "./pages/student/MessagePage/MessagePage";
+import StudentLayout from "./layouts/StudentLayout.jsx";
+import StudentDashboardPage from "./pages/student/DashboardPage.jsx";
+import StudentCalendarPage from "./pages/student/CalendarPage.jsx";
+import StudentDocumentsPage from "./pages/student/DocumentsPage.jsx";
+import StudentBlogPage from "./pages/student/BlogPage.jsx";
+import StudentMessagePage from "./pages/student/MessagePage.jsx";
 
 //Tutor
-import TutorLayout from "./layouts/TutorLayout/TutorLayout";
-import TutorDashboardPage from "./pages/tutor/DashboardPage/DashboardPage";
-import TutorCalendarPage from "./pages/tutor/CalendarPage/CalendarPage";
-import TutorDocumentsPage from "./pages/tutor/DocumentPage/DocumentsPage";
-import TutorBlogPage from "./pages/tutor/BlogPage/BlogPage";
-import TutorMessagePage from "./pages/tutor/MessagePage/MessagePage";
-import TutorMeetingPage from "./pages/tutor/MeetingPage/MeetingPage";
+import TutorLayout from "./layouts/TutorLayout.jsx";
+import TutorDashboardPage from "./pages/tutor/DashboardPage.jsx";
+import TutorCalendarPage from "./pages/tutor/CalendarPage.jsx";
+import TutorDocumentsPage from "./pages/tutor/DocumentsPage.jsx";
+import TutorBlogPage from "./pages/tutor/BlogPage.jsx";
+import TutorMessagePage from "./pages/tutor/MessagePage.jsx";
+import TutorMeetingPage from "./pages/tutor/MeetingPage.jsx";
 
 //Admin
-import AdminLayout from "./layouts/AdminLayout/AdminLayout";
-import AdminDashboardPage from "./pages/admin/DashboardPage/DashboardPage";
-import AdminCalendarPage from "./pages/admin/CalendarPage/CalendarPage";
-import BlogManagementPage from "./pages/admin/BlogManagementPage/BlogManagementPage";
-import DocumentManagementPage from "./pages/admin/DocumentManagementPage/DocumentManagementPage";
-import MeetingManagementPage from "./pages/admin/MeetingManagementPage/MeetingManagementPage";
-import AccountsManagementPage from "./pages/admin/AccountsManagementPage/AccountsManagementPage";
+import AdminLayout from "./layouts/AdminLayout.jsx";
+import AdminDashboardPage from "./pages/admin/DashboardPage.jsx";
+import AdminCalendarPage from "./pages/admin/CalendarPage.jsx";
+import BlogManagementPage from "./pages/admin/BlogManagementPage.jsx";
+import DocumentManagementPage from "./pages/admin/DocumentManagementPage.jsx";
+import MeetingManagementPage from "./pages/admin/MeetingManagementPage.jsx";
+import AccountsManagementPage from "./pages/admin/AccountsManagementPage.jsx";
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
