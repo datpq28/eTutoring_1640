@@ -50,17 +50,10 @@ export default function BlogList() {
       const newBlog = await createBlog({
         title: newTitle,
         content: newContent,
-<<<<<<< HEAD:frontend/src/components/student/BlogPage/BlogList/BlogList.jsx
-        uploaderId: userId,
-        uploaderType: userRole,
-        tags: tags ? tags.split(",").map(tag => tag.trim()) : [],
-        imageUrl
-=======
         uploaderId: userId, // Lấy từ localStorage
         uploaderType: userRole, // Lấy từ localStorage
         tags: tags ? tags.split(",").map((tag) => tag.trim()) : [],
         imageUrl,
->>>>>>> main:frontend/src/components/student/BlogPage/BlogList.jsx
       });
   
       if (newBlog) {
