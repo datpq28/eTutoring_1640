@@ -9,24 +9,32 @@ export default function BlogList() {
   const [isCreating, setIsCreating] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newContent, setNewContent] = useState("");
-  const [tags, setTags] = useState(""); // Tags cách nhau bằng dấu phẩy
+  const [tags, setTags] = useState(""); 
   const [imageUrl, setImageUrl] = useState(""); // URL hình ảnh bài viết
-  console.log(blogs);
-  // Lấy uploaderId và uploaderType từ localStorage
+
   const userId = localStorage.getItem("userId");
-  const userRole = localStorage.getItem("role") || "Student";
+  const userRole = (localStorage.getItem("role") || "Student")
+
 
   const fetchBlogs = async () => {
     setLoading(true);
     try {
       const data = await getBlogs();
-      setBlogs(data);
+      console.log("Dữ liệu từ API:", data);
+      if (Array.isArray(data)) {
+        setBlogs(data);
+      } else {
+        message.error("Dữ liệu trả về không hợp lệ!");
+      }
     } catch (error) {
-      message.error("Lỗi khi tải danh sách blog");
+      console.error("Lỗi khi tải danh sách blog:", error);
+      message.error(`Lỗi khi tải danh sách blog: ${error.message}`);
     } finally {
       setLoading(false);
     }
   };
+  
+  
 
   useEffect(() => {
     fetchBlogs();
@@ -37,28 +45,40 @@ export default function BlogList() {
       message.warning("Vui lòng nhập đầy đủ tiêu đề và nội dung!");
       return;
     }
-
+  
     try {
-      await createBlog({
+      const newBlog = await createBlog({
         title: newTitle,
         content: newContent,
+<<<<<<< HEAD:frontend/src/components/student/BlogPage/BlogList/BlogList.jsx
+        uploaderId: userId,
+        uploaderType: userRole,
+        tags: tags ? tags.split(",").map(tag => tag.trim()) : [],
+        imageUrl
+=======
         uploaderId: userId, // Lấy từ localStorage
         uploaderType: userRole, // Lấy từ localStorage
         tags: tags ? tags.split(",").map((tag) => tag.trim()) : [],
         imageUrl,
+>>>>>>> main:frontend/src/components/student/BlogPage/BlogList.jsx
       });
-
-      message.success("Tạo bài viết thành công!");
-      setIsCreating(false);
-      setNewTitle("");
-      setNewContent("");
-      setTags("");
-      setImageUrl("");
-      fetchBlogs();
+  
+      if (newBlog) {
+        message.success("Tạo bài viết thành công!");
+        setNewTitle("");
+        setNewContent("");
+        setTags("");
+        setImageUrl("");
+        setIsCreating(false);
+  
+        // Đợi API hoàn tất rồi tải lại danh sách
+        setTimeout(fetchBlogs, 500);
+      }
     } catch (error) {
       message.error("Có lỗi xảy ra khi tạo bài viết!");
     }
   };
+  
 
   return (
     <Card>

@@ -4,43 +4,48 @@ const Student = require("../../models/StudentModel");
 
 const createBlog = async (req, res) => {
     try {
-      const { title, content, uploaderId, uploaderType, tags, imageUrl } = req.body;
-  
-      if (!["student", "tutor"].includes(uploaderType)) {
-        console.error("Lỗi: Uploader type không hợp lệ:", uploaderType);
-        return res.status(400).json({ error: "Uploader type không hợp lệ" });
-      }
-  
-      const uploaderModel = uploaderType === "Tutor" ? Tutor : Student;
-      const uploader = await uploaderModel.findById(uploaderId);
-      if (!uploader) {
-        console.error("Lỗi: Người đăng không tồn tại với ID:", uploaderId);
-        return res.status(404).json({ error: "Người đăng không tồn tại" });
-      }
-  
-      const newBlog = new Blog({
-        title,
-        content,
-        uploaderId,
-        uploaderType,
-        tags: tags || [],
-        imageUrl: imageUrl || "",
-        likes: 0,
-      });
-  
-      await newBlog.save();
-  
-      uploader.blogIds = uploader.blogIds || [];
-      uploader.blogIds.push(newBlog._id);
-      await uploader.save();
-  
-      console.log("Bài blog đã được tạo:", newBlog);
-      res.status(201).json({ message: "Bài blog đã được tạo", blog: newBlog });
+        const { title, content, uploaderId, uploaderType, tags, imageUrl } = req.body;
+        
+        const formattedUploaderType =
+            uploaderType.charAt(0).toUpperCase() + uploaderType.slice(1).toLowerCase();
+
+        if (!["Student", "Tutor"].includes(formattedUploaderType)) {
+            console.error("Lỗi: Uploader type không hợp lệ:", formattedUploaderType);
+            return res.status(400).json({ error: "Uploader type không hợp lệ" });
+        }
+
+        const uploaderModel = formattedUploaderType === "Tutor" ? Tutor : Student;
+        const uploader = await uploaderModel.findById(uploaderId);
+        if (!uploader) {
+            console.error("Lỗi: Người đăng không tồn tại với ID:", uploaderId);
+            return res.status(404).json({ error: "Người đăng không tồn tại" });
+        }
+
+        const newBlog = new Blog({
+            title,
+            content,
+            uploaderId,
+            uploaderType: formattedUploaderType, // Lưu đúng định dạng enum
+            tags: tags || [],
+            imageUrl: imageUrl || "",
+            likes: 0,
+        });
+
+        await newBlog.save();
+
+        uploader.blogIds = uploader.blogIds || [];
+        uploader.blogIds.push(newBlog._id);
+        await uploader.save();
+
+        console.log("Bài blog đã được tạo:", newBlog);
+        res.status(201).json({ message: "Bài blog đã được tạo", blog: newBlog });
     } catch (error) {
-      console.error("Lỗi trong quá trình tạo blog:", error);
-      res.status(500).json({ error: error.message });
+        console.error("Lỗi trong quá trình tạo blog:", error);
+        res.status(500).json({ error: error.message });
     }
-  };
+};
+
+
 
 const getBlogs = async (req, res) => {
   try {
