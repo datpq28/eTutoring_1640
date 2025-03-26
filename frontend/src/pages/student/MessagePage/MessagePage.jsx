@@ -16,7 +16,6 @@ import {
   Modal,
   List,
 } from "antd";
-import ChatBox from "../../../components/student/MessagePage/ChatBox/ChatBox";
 import { useEffect, useState, useRef } from "react";
 import {
   getConversations,
