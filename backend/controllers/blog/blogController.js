@@ -5,8 +5,7 @@ const Student = require("../../models/StudentModel");
 const createBlog = async (req, res) => {
     try {
         const { title, content, uploaderId, uploaderType, tags, imageUrl } = req.body;
-
-        // Chuyển uploaderType về đúng định dạng trong DB (viết hoa chữ cái đầu)
+        
         const formattedUploaderType =
             uploaderType.charAt(0).toUpperCase() + uploaderType.slice(1).toLowerCase();
 
