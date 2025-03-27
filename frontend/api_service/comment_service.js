@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5080";
+const API_URL = "http://localhost:5090";
 
 // Tạo bình luận mới
 export const createComment = async (blogId, commentData) => {
