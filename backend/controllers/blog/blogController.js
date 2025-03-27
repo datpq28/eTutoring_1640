@@ -121,18 +121,6 @@ const deleteBlog = async (req, res) => {
 const likeBlog = async (req, res) => {
   try {
     const { blogId } = req.params;
-    const blog = await Blog.findByIdAndUpdate(
-      blogId,
-      { $inc: { likes: 1 } },
-      { new: true }
-    );
-
-    const blog = await Blog.findById(blogId);
-    if (!blog) {
-      console.error("Blog not found:", blogId);
-      return res.status(404).json({ error: "Bài blog không tồn tại" });
-    }
-
         if (blog.likedBy.includes(userId)) {
             console.warn("User already liked this blog:", { blogId, userId });
             return res.status(400).json({ error: "Bạn đã thích bài blog này rồi" });
