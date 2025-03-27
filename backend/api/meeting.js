@@ -4,7 +4,7 @@ const {
   createMeeting,
   getMeetingsByUser,
   joinMeeting,
-  getAllMeetings,
+  // getAllMeetings,
   getStudentsByTutor,
 } = require("../controllers/meeting/meetingController");
 
@@ -12,7 +12,10 @@ router.post("/create", createMeeting);
 router.get("/user/:userId/:role", getMeetingsByUser);
 router.post("/join/:meetingId", joinMeeting);
 
+
 router.get("/all", getAllMeetings);
-router.post("/students/:tutorId", getStudentsByTutor);
+=======
+// router.get("/all", getAllMeetings);
+router.get("/students/:tutorId", getStudentsByTutor);
 
 module.exports = router;
