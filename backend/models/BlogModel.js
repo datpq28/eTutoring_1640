@@ -9,6 +9,7 @@ const blogSchema = new mongoose.Schema({
   likes: { type: Number, default: 0 }, // Số lượt thích
   imageUrl: { type: String, default: "" }, // Ảnh bài viết
   commentIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
+  likedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   createdAt: { type: Date, default: Date.now }
 });
 

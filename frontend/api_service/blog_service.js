@@ -62,19 +62,46 @@ export const editBlog = async (blogId, blogData) => {
   }
 };
 
-// Thích bài blog
 export const likeBlog = async (blogId) => {
   try {
-    const token = localStorage.getItem("token");
-    const response = await axios.post(`${API_URL}/api/blog/blogs/${blogId}/like`, {}, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return response.data;
+      const userId = localStorage.getItem("userId");
+      const token = localStorage.getItem("token");
+
+      if (!userId || !token) throw new Error("Người dùng chưa đăng nhập!");
+
+      const response = await axios.post(
+          `${API_URL}/api/blog/blogs/${blogId}/like`,
+          { userId }, 
+          { headers: { Authorization: `Bearer ${token}` } }
+      );
+      return response.data;
   } catch (error) {
-    console.error("Error liking blog:", error);
-    throw error;
+      console.error("Error liking blog:", error.response?.data || error.message);
+      throw error;
   }
 };
+
+export const unlikeBlog = async (blogId) => {
+  try {
+      const userId = localStorage.getItem("userId"); // ✅ Lấy userId từ localStorage
+      const token = localStorage.getItem("token");
+
+      if (!userId || !token) throw new Error("Người dùng chưa đăng nhập!");
+
+      const response = await axios.post(
+          `${API_URL}/api/blog/blogs/${blogId}/unlike`,
+          { userId }, 
+          { headers: { Authorization: `Bearer ${token}` } }
+      );
+      return response.data;
+  } catch (error) {
+      console.error("Error unliking blog:", error.response?.data || error.message);
+      throw error;
+  }
+};
+
+
+  
 
 // Xóa bài blog
 export const deleteBlog = async (blogId) => {
