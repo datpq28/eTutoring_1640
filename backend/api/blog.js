@@ -5,7 +5,8 @@ const {
     getBlogs, 
     getBlogById, 
     deleteBlog, 
-    likeBlog, 
+    likeBlog,
+    unlikeBlog, 
     editBlog } = require('../controllers/blog/blogController');
 
 // Tạo bài blog
@@ -22,6 +23,8 @@ router.put('/blogs/:blogId', editBlog);
 
 // Thích bài blog
 router.post('/blogs/:blogId/like', likeBlog);
+
+router.post('/blogs/:blogId/unlike', unlikeBlog);
 
 // Xóa bài blog
 router.delete('/blogs/:blogId', deleteBlog);
