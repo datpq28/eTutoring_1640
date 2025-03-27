@@ -1,24 +1,18 @@
 const express = require("express");
-
-// Import controller functions
+const router = express.Router();
 const {
   createMeeting,
   getMeetingsByUser,
   joinMeeting,
-  getCommentsForMeeting,
-  addCommentToMeeting,
+  // getAllMeetings,
+  getStudentsByTutor,
 } = require("../controllers/meeting/meetingController");
 
-const router = express.Router();
-
-router.post("/createMeeting", createMeeting);
-
+router.post("/create", createMeeting);
 router.get("/user/:userId/:role", getMeetingsByUser);
-
 router.post("/join/:meetingId", joinMeeting);
 
-router.get("/comments/:meetingId", getCommentsForMeeting);
-
-router.post("/comment", addCommentToMeeting);
+// router.get("/all", getAllMeetings);
+router.get("/students/:tutorId", getStudentsByTutor);
 
 module.exports = router;

@@ -1,11 +1,11 @@
 import axios from "axios";
 import io from "socket.io-client";
 
-const socket = io("http://localhost:5080", {
+const socket = io("http://localhost:5090", {
   transports: ["websocket"], // Đảm bảo sử dụng websocket
 });
 
-const API_URL = "http://localhost:5080";
+const API_URL = "http://localhost:5090";
 
 // Hàm lấy một đoạn chat theo ID
 export const getConversationById = async (conversationId) => {
