@@ -12,9 +12,6 @@ router.post("/create", createMeeting);
 router.get("/user/:userId/:role", getMeetingsByUser);
 router.post("/join/:meetingId", joinMeeting);
 
-
-router.get("/all", getAllMeetings);
-=======
 // router.get("/all", getAllMeetings);
 router.get("/students/:tutorId", getStudentsByTutor);
 
