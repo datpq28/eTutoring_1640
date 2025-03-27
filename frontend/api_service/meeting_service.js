@@ -8,6 +8,7 @@ const API_URL = "http://localhost:5080/api";
 export const fetchMeetings = async () => {
   try {
     const { data } = await axios.get(`${API_URL}/meeting/all`);
+    console.log("API Response:", data);
     return data.meetings;
   } catch (error) {
     console.error("Lỗi khi lấy danh sách cuộc họp:", error);
@@ -21,7 +22,7 @@ export const fetchMeetings = async () => {
  */
 export const fetchStudentsOfTutor = async (tutorId) => {
   try {
-    const { data } = await axios.get(`${API_URL}/tutor/${tutorId}`);
+    const { data } = await axios.get(`${API_URL}/meeting/students/${tutorId}`);
     return data.studentId || [];
   } catch (error) {
     console.error("Lỗi khi lấy danh sách học sinh của tutor:", error);

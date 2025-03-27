@@ -6,51 +6,40 @@ const io = require("../../server"); // Import io từ server.js
 
 const createMeeting = async (req, res) => {
   try {
-    const { tutorId, name, description, startTime, endTime } = req.body;
+    const { name, type, description, tutorId, studentIds, startTime, endTime } =
+      req.body;
 
-    console.log("📌 Nhận request tạo cuộc họp với tutorId:", tutorId);
-
-    // Kiểm tra tutorId có tồn tại không
-    if (!tutorId) {
-      console.log("❌ Lỗi: tutorId không được cung cấp!");
-      return res.status(400).json({ error: "Thiếu tutorId!" });
-    }
-
-    // Kiểm tra tutor có tồn tại trong DB không
-    const tutor = await Tutor.findById(tutorId).populate("students");
+    const tutor = await Tutor.findById(tutorId);
     if (!tutor) {
-      console.log(`❌ Lỗi: Tutor với ID ${tutorId} không tồn tại trong database!`);
-      return res.status(404).json({ error: "Tutor không tồn tại!" });
+      return res
+        .status(403)
+        .json({ error: "Chỉ giáo viên mới có thể tạo cuộc họp" });
     }
 
-    console.log("✅ Tutor tìm thấy:", tutor);
+    if (type === "private" && studentIds.length !== 1) {
+      return res
+        .status(400)
+        .json({ error: "Cuộc họp riêng tư chỉ có 1 học sinh" });
+    }
 
-    // Lấy danh sách học sinh của Tutor
-    const studentIds = tutor.students.map((student) => student._id);
-    console.log("📌 Danh sách học sinh thuộc tutor:", studentIds);
 
-    // Tạo cuộc họp
-    const meeting = new Meeting({
-      tutorId,
+    const newMeeting = new Meeting({
       name,
+      type,
       description,
+      tutorId,
       studentIds,
-      joinedUsers: studentIds,
-      participantType: "Student",
       startTime,
       endTime,
+      joinedUsers: [],
     });
 
-    await meeting.save();
-    console.log("✅ Cuộc họp đã được tạo thành công:", meeting);
-
-    res.status(201).json(meeting);
+    await newMeeting.save();
+    res.status(201).json({ message: "Cuộc họp đã được tạo", meeting: newMeeting });
   } catch (error) {
-    console.log("❌ Lỗi khi tạo cuộc họp:", error.message);
     res.status(500).json({ error: error.message });
   }
 };
-
 
 const getMeetingsByUser = async (req, res) => {
   try {

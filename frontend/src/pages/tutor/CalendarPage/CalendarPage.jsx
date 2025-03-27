@@ -1,29 +1,29 @@
 import { useEffect, useState } from "react";
-import { Card, Layout, Calendar, Modal, Input, Select, Button, message, Badge } from "antd";
-import moment from "moment/moment";
-import { fetchMeetings, fetchStudentsOfTutor, createMeeting } from "../../../../api_service/meeting_service"; // Import API
+import { Card, Layout, Calendar, Modal, Input, Select, Button, message, Badge, TimePicker } from "antd";
+import moment from "moment";
+import { fetchMeetings, fetchStudentsOfTutor, createMeeting } from "../../../../api_service/meeting_service";
 
 const { Content } = Layout;
 const { Option } = Select;
 
 export default function CalendarPage() {
-  const [user, setUser] = useState(null); // Lưu thông tin người dùng
+  const [user, setUser] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [meetings, setMeetings] = useState([]);
+  const [studentIds, setStudentIds] = useState([]);
   const [meetingInfo, setMeetingInfo] = useState({
     name: "",
     description: "",
     type: "group",
+    startTime: null,
+    endTime: null,
   });
 
   useEffect(() => {
-    // Lấy thông tin người dùng từ localStorage
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser);
-      console.log("User info:", parsedUser);
-      // Kiểm tra nếu là Tutor thì lưu user vào state
       if (parsedUser.role === "tutor") {
         setUser(parsedUser);
       } else {
@@ -34,11 +34,11 @@ export default function CalendarPage() {
     }
   }, []);
 
-  // Fetch danh sách cuộc họp
   useEffect(() => {
     const loadMeetings = async () => {
       try {
         const data = await fetchMeetings();
+        console.log("Meetings", data);
         setMeetings(data);
       } catch (error) {
         message.error("Không thể lấy danh sách cuộc họp!");
@@ -47,40 +47,50 @@ export default function CalendarPage() {
     loadMeetings();
   }, []);
 
-  // Khi tutor click vào ngày, mở popup tạo cuộc họp
-  const handleDateClick = (date) => {
-    if (user?.role === "tutor") {
-      setSelectedDate(date.format("YYYY-MM-DD"));
-      setIsModalVisible(true);
-    } else {
+  // Khi tutor click vào ngày, mở modal và đặt ngày được chọn
+  const handleDateClick = async (date) => {
+    if (user?.role !== "tutor") {
       message.warning("Bạn không có quyền tạo cuộc họp!");
+      return;
+    }
+
+    setSelectedDate(date.format("YYYY-MM-DD"));
+    setIsModalVisible(true);
+
+    try {
+      const students = await fetchStudentsOfTutor(user.userId);
+      setStudentIds(students);
+      console.log("Students", students);
+    } catch (error) {
+      message.error("Không thể lấy danh sách học sinh!");
     }
   };
 
-  // Tạo cuộc họp mới
+  // Xử lý tạo cuộc họp
   const handleCreateMeeting = async () => {
     try {
-      if (!user || !user.userId) {
-        message.error("Không tìm thấy thông tin Tutor!");
+      if (!meetingInfo.startTime || !meetingInfo.endTime) {
+        message.error("Vui lòng chọn giờ bắt đầu và kết thúc!");
         return;
       }
 
-      const studentIds = await fetchStudentsOfTutor(user.id);
+      const startTime = moment(`${selectedDate} ${meetingInfo.startTime}`).toISOString();
+      const endTime = moment(`${selectedDate} ${meetingInfo.endTime}`).toISOString();
 
       const meetingData = {
-        tutorId: user.id,
+        tutorId: user.userId,
         name: meetingInfo.name,
         description: meetingInfo.description,
         type: meetingInfo.type,
-        startTime: selectedDate,
-        joinedUsers: studentIds,
+        startTime,
+        endTime,
+        studentIds,
       };
 
       await createMeeting(meetingData);
       message.success("Cuộc họp đã được tạo!");
       setIsModalVisible(false);
 
-      // Cập nhật danh sách cuộc họp
       const updatedMeetings = await fetchMeetings();
       setMeetings(updatedMeetings);
     } catch (error) {
@@ -89,32 +99,40 @@ export default function CalendarPage() {
   };
 
   // Hiển thị cuộc họp trên lịch
-  const dateCellRender = (value) => {
-    if (!Array.isArray(meetings)) return null; // Kiểm tra xem meetings có phải là mảng không
+  const cellRender = (current) => {
+    if (!meetings || !Array.isArray(meetings)) return null;
   
-    const dateString = value.format("YYYY-MM-DD");
-    const dailyMeetings = meetings.filter((meeting) =>
-      moment(meeting.startTime).format("YYYY-MM-DD") === dateString
-    );
+    const dateString = current.format("YYYY-MM-DD");
+  
+    const dailyMeetings = meetings.filter((meeting) => {
+      const meetingDate = moment(meeting.startTime).format("YYYY-MM-DD");
+      return meetingDate === dateString;
+    });
+  
+    if (dailyMeetings.length === 0) return null;
   
     return (
-      <ul style={{ padding: 0 }}>
+      <ul style={{ padding: 0, listStyle: "none" }}>
         {dailyMeetings.map((meeting) => (
-          <li key={meeting._id} style={{ listStyle: "none" }}>
-            <Badge status="success" text={meeting.name} />
+          <li key={meeting._id}>
+            <Badge
+              status="success"
+              text={`${meeting.name} (${moment(meeting.startTime).format("HH:mm")})`}
+            />
           </li>
         ))}
       </ul>
     );
   };
+  
 
   return (
     <Content style={{ padding: "2rem" }}>
       <Card>
-        <Calendar onSelect={handleDateClick} dateCellRender={dateCellRender} />
+        <Calendar onSelect={handleDateClick} cellRender={cellRender} />
       </Card>
 
-      {/* Popup tạo cuộc họp */}
+      {/* Modal tạo cuộc họp */}
       <Modal
         title="Tạo Cuộc Họp"
         open={isModalVisible}
@@ -143,11 +161,27 @@ export default function CalendarPage() {
         <Select
           value={meetingInfo.type}
           onChange={(value) => setMeetingInfo({ ...meetingInfo, type: value })}
-          style={{ width: "100%" }}
+          style={{ width: "100%", marginBottom: 10 }}
         >
           <Option value="group">Nhóm</Option>
           <Option value="private">Riêng tư</Option>
         </Select>
+
+        {/* Chọn giờ bắt đầu và kết thúc */}
+        <TimePicker
+          use12Hours
+          format="h:mm A"
+          placeholder="Chọn giờ bắt đầu"
+          onChange={(time, timeString) => setMeetingInfo({ ...meetingInfo, startTime: timeString })}
+          style={{ width: "100%", marginBottom: 10 }}
+        />
+        <TimePicker
+          use12Hours
+          format="h:mm A"
+          placeholder="Chọn giờ kết thúc"
+          onChange={(time, timeString) => setMeetingInfo({ ...meetingInfo, endTime: timeString })}
+          style={{ width: "100%" }}
+        />
       </Modal>
     </Content>
   );
