@@ -119,28 +119,34 @@ const deleteBlog = async (req, res) => {
 };
 
 const likeBlog = async (req, res) => {
-        const blog = await Blog.findById(blogId);
-        if (!blog) {
-            console.error("Blog not found:", blogId);
-            return res.status(404).json({ error: "Bài blog không tồn tại" });
-        }
+  try {
+      const { blogId } = req.params;
+      const { userId } = req.body;
 
-        if (blog.likedBy.includes(userId)) {
-            console.warn("User already liked this blog:", { blogId, userId });
-            return res.status(400).json({ error: "Bạn đã thích bài blog này rồi" });
-        }
+      console.log("Like request received:", { blogId, userId });
 
-        blog.likes += 1;
-        blog.likedBy.push(userId);
-        await blog.save();
+      const blog = await Blog.findById(blogId);
+      if (!blog) {
+          console.error("Blog not found:", blogId);
+          return res.status(404).json({ error: "Bài blog không tồn tại" });
+      }
 
-        console.log("Blog liked successfully:", { blogId, likes: blog.likes });
+      if (blog.likedBy.includes(userId)) {
+          console.warn("User already liked this blog:", { blogId, userId });
+          return res.status(400).json({ error: "Bạn đã thích bài blog này rồi" });
+      }
 
-        res.status(200).json({ message: "Đã thích bài blog", blog });
-    } catch (error) {
-        console.error("Error in likeBlog:", error);
-        res.status(500).json({ error: error.message });
-    }
+      blog.likes += 1;
+      blog.likedBy.push(userId);
+      await blog.save();
+
+      console.log("Blog liked successfully:", { blogId, likes: blog.likes });
+
+      res.status(200).json({ message: "Đã thích bài blog", blog });
+  } catch (error) {
+      console.error("Error in likeBlog:", error);
+      res.status(500).json({ error: error.message });
+  }
 };
 
 const unlikeBlog = async (req, res) => {
