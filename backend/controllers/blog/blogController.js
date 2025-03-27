@@ -119,12 +119,6 @@ const deleteBlog = async (req, res) => {
 };
 
 const likeBlog = async (req, res) => {
-    try {
-        const { blogId } = req.params;
-        const { userId } = req.body;
-
-        console.log("Like request received:", { blogId, userId });
-
         const blog = await Blog.findById(blogId);
         if (!blog) {
             console.error("Blog not found:", blogId);
