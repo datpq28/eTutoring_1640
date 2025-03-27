@@ -8,11 +8,11 @@ const {
   getStudentsByTutor,
 } = require("../controllers/meeting/meetingController");
 
-router.post("/create", createMeeting); 
+router.post("/create", createMeeting);
 router.get("/user/:userId/:role", getMeetingsByUser);
 router.post("/join/:meetingId", joinMeeting);
 
 router.get("/all", getAllMeetings);
-router.get("/students/:tutorId", getStudentsByTutor);
+router.post("/students/:tutorId", getStudentsByTutor);
 
 module.exports = router;
