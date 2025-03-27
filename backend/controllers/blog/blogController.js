@@ -126,12 +126,6 @@ const deleteBlog = async (req, res) => {
 const likeBlog = async (req, res) => {
   try {
     const { blogId } = req.params;
-    const blog = await Blog.findByIdAndUpdate(
-      blogId,
-      { $inc: { likes: 1 } },
-      { new: true }
-    );
-
     const blog = await Blog.findById(blogId);
     if (!blog) {
       console.error("Blog not found:", blogId);
