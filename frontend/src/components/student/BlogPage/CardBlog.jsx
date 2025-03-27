@@ -19,11 +19,12 @@ import {
   Button
 } from "antd";
 
-import { editBlog, deleteBlog, likeBlog } from "../../../../api_service/blog_service.js";
+import { editBlog, deleteBlog, likeBlog, unlikeBlog } from "../../../../api_service/blog_service.js";
 
 const { Text } = Typography;
 
 export default function CardBlog({ blog, fetchBlogs }) {
+  const userId = localStorage.getItem("userId");
   const [open, setOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(blog.title);
@@ -62,16 +63,21 @@ export default function CardBlog({ blog, fetchBlogs }) {
     });
   };
 
-  // Xử lý like bài viết
   const handleLike = async () => {
     try {
-      await likeBlog(blog._id);
-      setLikes(likes + 1); // Cập nhật số lượt like ngay lập tức
-      message.success("Bạn đã thích bài viết!");
+        if (blog.likedBy.includes(userId)) {
+            await unlikeBlog(blog._id);
+            message.success("Bạn đã bỏ thích bài viết!");
+        } else {
+            await likeBlog(blog._id);
+            message.success("Bạn đã thích bài viết!");
+        }
+        fetchBlogs(); // Reload danh sách blog sau khi like/unlike
     } catch (error) {
-      message.error("Có lỗi xảy ra khi like bài viết!");
+        message.error("Có lỗi xảy ra khi cập nhật lượt thích!");
     }
   };
+  
 
   return (
     <Card 
@@ -101,10 +107,11 @@ export default function CardBlog({ blog, fetchBlogs }) {
           <Text>{new Date(blog.createdAt).toLocaleDateString()}</Text>
         </Space>
         <Space size="small">
-          <Space size="small" style={{ cursor: "pointer" }} onClick={handleLike}>
-            <LikeOutlined style={{ color: "red" }} />
-            <Text>{likes}</Text>
-          </Space>
+        <Space size="small" style={{ cursor: "pointer" }} onClick={handleLike}>
+    <LikeOutlined style={{ color: blog.likedBy.includes(userId) ? "blue" : "gray" }} />
+    <Text>{likes}</Text>
+</Space>
+
           <Space size="small">
             <CommentOutlined />
             <Text>{blog.commentIds.length}</Text>
