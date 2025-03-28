@@ -56,7 +56,7 @@ createRoot(document.getElementById("root")).render(
           <Route path="documents" element={<TutorDocumentsPage />} />
           <Route path="blog" element={<TutorBlogPage />} />
           <Route path="messages" element={<TutorMessagePage />} />
-          <Route path="meeting" element={<TutorMeetingPage />} />
+          <Route path="meeting/:meetingId" element={<TutorMeetingPage />} />
         </Route>
         <Route path="admin" element={<AdminLayout />}>
           <Route path="dashboard" element={<AdminDashboardPage />} />

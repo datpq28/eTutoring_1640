@@ -33,18 +33,30 @@ const io = new Server(server, {
   },
 });
 
+const meetings = {}; // Lưu danh sách người tham gia mỗi cuộc họp
+
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  // Nhận tin nhắn từ client
-  socket.on("sendMessage", (message) => {
-    console.log("Message received:", message);
-    io.emit("receiveMessage", message); // Gửi lại tất cả client
+  socket.on("join_meeting", ({ meetingId, peerId }) => {
+    socket.join(meetingId);
+    socket.to(meetingId).emit("user_connected", { peerId });
   });
+
+  socket.on("start_call", ({ meetingId }) => {
+    console.log("Start Call Triggered for Meeting:", meetingId); // ✅ Debug
+    io.emit("meeting_started", { meetingId }); // Gửi sự kiện đến tất cả student
+  });
+
+  socket.on("leave_meeting", (meetingId) => {
+    socket.leave(meetingId);
+  });
+
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id);
   });
 });
+
 
 app.use("/api/auth", authRoutes);
 app.use("/api/meeting", meetingRoutes);

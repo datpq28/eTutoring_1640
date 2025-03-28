@@ -30,3 +30,25 @@ export const unLockUser = async (email) => {
     throw error;
   }
 };
+
+// 🆕 Lấy danh sách các cuộc họp đang chờ duyệt
+export const fetchAllMeetings = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/api/auth/meetings/all`);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách cuộc họp chờ duyệt:", error);
+    throw error;
+  }
+};
+
+// 🆕 Cập nhật trạng thái cuộc họp (duyệt hoặc từ chối)
+export const updateMeetingStatus = async (meetingId, status) => {
+  try {
+    const response = await axios.put(`${API_URL}/api/auth/meetings/${meetingId}/status`, { status }); // ⚠️ Kiểm tra đường dẫn
+    return response.data;
+  } catch (error) {
+    console.error(`Lỗi khi cập nhật trạng thái cuộc họp ${status}:`, error.response?.data || error.message);
+    throw error;
+  }
+};
