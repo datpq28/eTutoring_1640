@@ -16,9 +16,24 @@ export default function BlogPage() {
   const [searchValue, setSearchValue] = useState("");
   const [optionSearch, setOptionSearch] = useState("all");
   const [userSegmented, setUserSegmented] = useState("all_blogs");
-
+  useEffect(() => {
+    fetchBlogs();
+  }, []);
+  const fetchBlogs = async () => {
+    setIsLoading(true);
+    try {
+      const data = await getBlogs();
+      setBlogs(data);
+    } catch (error) {
+      message.error("Error loading Blogs");
+      console.log(error, "In BlogPage");
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const handleOkForm = () => {
     setIsModalBlogActionsVisible(false);
+    fetchBlogs();
   };
 
   const handleCancelForm = () => {
@@ -58,28 +73,16 @@ export default function BlogPage() {
     return matchesSearch && matchesUser;
   });
 
-  const fetchBlogs = async () => {
-    setIsLoading(true);
-    try {
-      const data = await getBlogs();
-      setBlogs(data);
-    } catch (error) {
-      message.error("Error loading Blogs");
-      console.log(error, "In BlogPage");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  useEffect(() => {
-    fetchBlogs();
-  }, []);
   return (
     <>
-      <ModalBlogActions
-        isModalOpen={isModalBlogActionsVisible}
-        onOK={handleOkForm}
-        onCancel={handleCancelForm}
-      />
+      {isModalBlogActionsVisible && (
+        <ModalBlogActions
+          isModalOpen={isModalBlogActionsVisible}
+          onOK={handleOkForm}
+          onCancel={handleCancelForm}
+          blogProp={null}
+        />
+      )}
       <Content style={stylesInline.content}>
         <Flex vertical gap="middle">
           <BlogActionBar
