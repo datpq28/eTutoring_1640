@@ -10,4 +10,9 @@ const convertSizeToBytes = (size) => {
   return 0;
 };
 
-export { convertSizeToBytes };
+const truncateText = (text, maxLength) => {
+  if (text.length <= maxLength) return text;
+  return text.slice(0, maxLength) + "...";
+};
+
+export { convertSizeToBytes, truncateText };

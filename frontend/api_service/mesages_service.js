@@ -122,3 +122,29 @@ export const createConversations = async (participants) => {
     throw error;
   }
 };
+
+// Hàm xóa thành viên khỏi cuộc trò chuyện
+export const removeConversations = async (
+  conversationId,
+  participantId,
+  participantModel
+) => {
+  try {
+    const response = await axios.delete(
+      `${API_URL}/api/messages/conversations/${conversationId}/participants`,
+      {
+        data: { participantId, participantModel }, // Gửi dữ liệu bằng "data" khi dùng DELETE
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+
+    console.log("Participant removed successfully:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error removing participant:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};

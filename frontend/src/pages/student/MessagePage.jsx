@@ -1,125 +1,109 @@
-import {
-  LeftOutlined,
-  UserOutlined,
-  PlusOutlined,
-  SendOutlined,
-} from "@ant-design/icons";
-import {
-  Avatar,
-  Card,
-  Flex,
-  Layout,
-  Typography,
-  Input,
-  FloatButton,
-  Button,
-  Modal,
-  List,
-} from "antd";
-import { useEffect, useState, useRef } from "react";
+import { Flex, Layout } from "antd";
+import { useEffect, useState, useCallback } from "react";
 import {
   getConversations,
   getConversationById,
   getAllUser,
-  createConversations,
   sendMessage,
 } from "../../../api_service/mesages_service.js";
 import dayjs from "dayjs";
 import io from "socket.io-client";
+import UserList from "../../components/message/UserList.jsx";
+import { formatTime } from "../../utils/Date.js";
+import { truncateText } from "../../utils/Common.js";
+import ModalCreateConversation from "../../components/message/ModalCreateConversation.jsx";
+import ChatBox from "../../components/message/ChatBox.jsx";
 
-const { Title } = Typography;
 const { Content } = Layout;
-const { Search, TextArea } = Input;
-
+const userId = localStorage.getItem("userId");
+const senderModel = localStorage.getItem("role");
 export default function MessagePage() {
-  const [cardWidth, setCardWidth] = useState("50rem");
-  const [searchTerm, setSearchTerm] = useState("");
   const [conversations, setConversations] = useState([]);
-  const [selectedConversation, setSelectedConversation] = useState(null);
+  const [currentConversationId, setCurrentConversationId] = useState(null);
+  const [otherParticipantId, setOtherParticipantId] = useState(null);
   const [messages, setMessages] = useState([]); // Lưu tin nhắn
-  const [newMessage, setNewMessage] = useState(""); // Tin nhắn mới
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [allUsers, setAllUsers] = useState([]);
   const [isAddConversationModalOpen, setIsAddConversationModalOpen] =
     useState(false); // Modal thêm cuộc trò chuyện
-  const [selectedUser, setSelectedUser] = useState(null); // State cho user được chọn
-  const [data, setData] = useState(null);
-  const [currentConversationId, setCurrentConversationId] = useState(null);
-  const [socket, setSocket] = useState(null); // Socket state
   const [sendingMessage, setSendingMessage] = useState(false);
-  const messagesContainerRef = useRef(null); // Tham chiếu đến container tin nhắn
-
-  useEffect(() => {
-    const fetchConversations = async () => {
-      const userId = localStorage.getItem("userId");
-      const userModel = localStorage.getItem("role");
-      if (userId && userModel) {
-        try {
-          const data = await getConversations(userId, userModel);
-          if (Array.isArray(data) && data.length > 0) {
-            const updatedConversations = await Promise.all(
-              data.map(async (conversation) => {
-                const convoData = await getConversationById(conversation._id);
-                const lastMessage =
-                  convoData.messages.length > 0
-                    ? convoData.messages[
-                        convoData.messages.length - 1
-                      ].contents.pop().content
-                    : "No messages yet";
-
-                const updatedParticipants = await Promise.all(
-                  conversation.participants.map(async (participant) => {
-                    const userDetails = await getUserDetails(
-                      participant.participantId
-                    );
-                    return {
-                      ...participant,
-                      fullName: `${userDetails.firstname} ${userDetails.lastname}`,
-                    };
-                  })
+  const [isLoading, setIsLoading] = useState(false);
+  console.log("conversations", conversations);
+  const fetchConversations = useCallback(async () => {
+    setIsLoading(true);
+    const userId = localStorage.getItem("userId");
+    const userModel = localStorage.getItem("role");
+    if (userId && userModel) {
+      try {
+        const data = await getConversations(userId, userModel);
+        if (Array.isArray(data) && data.length > 0) {
+          const updatedConversations = await Promise.all(
+            data.map(async (conversation) => {
+              const convertData = await getConversationById(conversation._id);
+              let lastMessage = "";
+              if (convertData.messages.length > 0) {
+                const formattedMessages = convertData.messages.flatMap((msg) =>
+                  msg.contents.map((content) => ({
+                    senderId: msg.senderId,
+                    content: content.content,
+                    timestamp: content.timestamp,
+                  }))
+                );
+                const messagesSorted = formattedMessages.sort(
+                  (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
                 );
 
-                return {
-                  ...conversation,
-                  lastMessage,
-                  participants: updatedParticipants,
-                };
-              })
-            );
-            setConversations(updatedConversations);
-            handleSelectConversation(updatedConversations[0]._id);
-          } else {
-            console.error("Invalid data format:", data);
-          }
-        } catch (error) {
-          console.error("Error fetching conversations:", error);
+                const messageByUser = messagesSorted.pop();
+
+                lastMessage = `${
+                  messageByUser.senderId === userId ? "You: " : " "
+                }${truncateText(messageByUser.content, 20)} • ${formatTime(
+                  messageByUser.timestamp
+                )}`;
+              } else {
+                lastMessage = "Not messages yet";
+              }
+              const updatedParticipants = await Promise.all(
+                conversation.participants.map(async (participant) => {
+                  const userDetails = await getUserDetails(
+                    participant.participantId
+                  );
+                  return {
+                    ...participant,
+                    fullName: `${userDetails.firstname} ${userDetails.lastname}`,
+                  };
+                })
+              );
+
+              return {
+                ...conversation,
+                lastMessage,
+                participants: updatedParticipants,
+              };
+            })
+          );
+          setConversations(updatedConversations);
+        } else {
+          console.warn("không phải lỗi mà chỉ là thông báo mảng rỗng", data);
         }
-      } else {
-        console.warn("No userId or userModel found in localStorage");
+      } catch (error) {
+        console.error("Error fetching conversations:", error);
+      } finally {
+        setIsLoading(false);
       }
-    };
-    fetchConversations();
+    } else {
+      console.warn("No userId or userModel found in localStorage");
+    }
   }, []);
 
-  const filteredData = conversations
-    .filter((item) =>
-      item.participants.some(
-        (participant) =>
-          participant.participantId !== localStorage.getItem("userId")
-      )
-    )
-    .filter((item) => {
-      return item.participants.some((participant) =>
-        participant.fullName.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    });
+  console.log("conversation", conversations);
+  // useEffect gọi hàm fetchConversations
+  useEffect(() => {
+    fetchConversations();
+  }, [fetchConversations]);
 
   useEffect(() => {
-    const socketIo = io("http://localhost:5080");
-    setSocket(socketIo);
-
+    const socketIo = io("http://localhost:5090");
     socketIo.on("receiveMessage", (message) => {
-      if (selectedConversation === message.conversationId && !sendingMessage) {
+      if (currentConversationId === message.conversationId && !sendingMessage) {
         setMessages((prevMessages) => {
           // Check if the message already exists in the list
           if (
@@ -141,27 +125,14 @@ export default function MessagePage() {
     return () => {
       socketIo.disconnect();
     };
-  }, [selectedConversation, sendingMessage]);
+  }, [currentConversationId, sendingMessage]);
 
-  const fetchData = async () => {
-    try {
-      const result = await getAllUser();
-      if (
-        result &&
-        typeof result === "object" &&
-        "students" in result &&
-        Array.isArray(result.students) &&
-        "tutors" in result &&
-        Array.isArray(result.tutors)
-      ) {
-        setData(result);
-      } else {
-        console.error("Invalid data structure received from API:", result);
-      }
-    } catch (error) {
-      console.error("Error fetching users:", error);
-    }
-  };
+  const conversationsByUser = conversations.filter((item) =>
+    item.participants.some(
+      (participant) =>
+        participant.participantId !== localStorage.getItem("userId")
+    )
+  );
 
   const getUserDetails = async (participantId) => {
     try {
@@ -177,7 +148,6 @@ export default function MessagePage() {
   };
 
   const handleSelectConversation = async (conversationId) => {
-    setSelectedConversation(conversationId);
     setCurrentConversationId(conversationId);
     try {
       const data = await getConversationById(conversationId);
@@ -185,10 +155,16 @@ export default function MessagePage() {
         msg.contents.map((content) => ({
           senderId: msg.senderId,
           content: content.content,
-          timestamp: dayjs(content.timestamp).format("DD/MM/YYYY HH:mm"),
+          timestamp: content.timestamp,
         }))
       );
-
+      const otherParticipant = data.participants.find(
+        (participant) => participant.participantId !== userId
+      );
+      const otherParticipantId = otherParticipant
+        ? otherParticipant.participantId
+        : null;
+      setOtherParticipantId(otherParticipantId); // tìm id người còn lại
       // Sắp xếp tin nhắn theo thời gian (cũ đến mới)
       setMessages(
         formattedMessages.sort(
@@ -199,11 +175,8 @@ export default function MessagePage() {
       console.error("Error loading conversation messages:", error);
     }
   };
-  const handleSendMessage = async () => {
+  const handleSendMessage = async (newMessage) => {
     if (newMessage.trim() === "") return;
-
-    const userId = localStorage.getItem("userId");
-    const senderModel = localStorage.getItem("role");
 
     const newMsg = {
       conversationId: currentConversationId,
@@ -227,7 +200,6 @@ export default function MessagePage() {
         );
         return updatedMessages;
       });
-      setNewMessage(""); // Clear input
     } catch (error) {
       console.error("Failed to send message:", error);
     } finally {
@@ -235,108 +207,34 @@ export default function MessagePage() {
     }
   };
 
-  const handleOpenUserModal = async () => {
-    await fetchData();
+  const handleOpenUserModal = () => {
     setIsAddConversationModalOpen(true);
   };
 
-  const handleCreateConversation = async (
-    selectedUserId,
-    selectedUserModel
-  ) => {
-    try {
-      const userId = localStorage.getItem("userId");
-      const userModel = localStorage.getItem("role");
-
-      const participants = [
-        { participantId: userId, participantModel: userModel },
-        { participantId: selectedUserId, participantModel: selectedUserModel },
-      ];
-
-      await createConversations(participants);
-      setIsAddConversationModalOpen(false);
-    } catch (error) {
-      console.error("Error creating conversation:", error);
-    }
+  const handleCloseUserModal = () => {
+    setIsAddConversationModalOpen(false);
   };
-
-  const userId = localStorage.getItem("userId");
-
-  // Scroll to bottom when messages change
-  useEffect(() => {
-    if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop =
-        messagesContainerRef.current.scrollHeight;
-    }
-  }, [messages]);
 
   return (
     <Content style={stylesInline.content}>
       <Flex gap="middle">
         {/* Danh sách cuộc trò chuyện */}
-        <Card style={{ width: cardWidth, transition: "width 0.3s ease" }}>
-          <Search
-            placeholder="Search..."
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ marginBottom: "1rem" }}
-          />
-          <div
-            style={{
-              height: "calc(100vh - 20rem)",
-              overflowY: "auto",
-              scrollbarWidth: "none",
-            }}
-          >
-            <Flex gap="small" vertical>
-              {filteredData.map((item, index) => {
-                const otherParticipant = item.participants.find(
-                  (participant) => participant.participantId !== userId
-                );
-                const lastMessage = item.lastMessage || "No messages yet";
-                return (
-                  <Card
-                    key={item._id || index}
-                    style={{
-                      cursor: "pointer",
-                      border: "none",
-                      marginLeft: "0.5rem",
-                      marginRight: "0.5rem",
-                    }}
-                    size="small"
-                    hoverable
-                    onClick={() => handleSelectConversation(item._id)}
-                  >
-                    <Card.Meta
-                      avatar={
-                        <Avatar
-                          src={`https://api.dicebear.com/7.x/miniavs/svg?seed=${otherParticipant.participantId}`}
-                        />
-                      }
-                      title={<a href="#">{otherParticipant.fullName}</a>}
-                      description={lastMessage}
-                    />
-                  </Card>
-                );
-              })}
-            </Flex>
-          </div>
-          {/* Nút mở modal để chọn người trò chuyện */}
-          <FloatButton
-            icon={<PlusOutlined />}
-            type="primary"
-            style={{ position: "absolute", right: 24, bottom: 24 }}
-            onClick={handleOpenUserModal}
-          />
-        </Card>
 
+        <UserList
+          conversationsByUser={conversationsByUser}
+          onSelectConversation={handleSelectConversation}
+          onOpenUserModal={handleOpenUserModal}
+          isLoading={isLoading}
+          fetchConversations={fetchConversations}
+        />
         {/* Khung chat */}
-        <Card style={{ flex: 1 }} title={<TitleMessage />}>
+        {/* <Card style={{ flex: 1 }} title={<TitleMessage />}>
           <div
             style={{ height: "65vh", overflowY: "auto", padding: "1rem" }}
             ref={messagesContainerRef}
           >
             {messages.length === 0 ? (
-              <p>No messages yet</p>
+              <Empty description="Not messages yet" />
             ) : (
               messages.map((msg, index) => (
                 <Flex
@@ -367,14 +265,13 @@ export default function MessagePage() {
                     </Typography.Text>
                   </Card>
                   {msg.senderId === userId && (
-                    <Avatar style={{ marginLeft: "0.5rem" }}>U</Avatar>
+                    <Avatar style={{ marginLeft: "0.5rem" }}>Y</Avatar>
                   )}
                 </Flex>
               ))
             )}
           </div>
 
-          {/* Ô nhập tin nhắn và nút gửi */}
           <Flex gap="small" align="center" style={{ marginTop: "1rem" }}>
             <TextArea
               value={newMessage}
@@ -394,64 +291,22 @@ export default function MessagePage() {
               onClick={handleSendMessage}
             />
           </Flex>
-        </Card>
+        </Card> */}
+        <ChatBox
+          messages={messages}
+          onSendMessage={handleSendMessage}
+          otherParticipantId={otherParticipantId}
+        />
       </Flex>
 
       {/* Modal chọn user */}
-      <Modal
-        title="Select User to Start Conversation"
-        visible={isAddConversationModalOpen}
-        onCancel={() => setIsAddConversationModalOpen(false)}
-        onOk={handleCreateConversation}
-      >
-        {data ? (
-          <>
-            <Title level={5}>Students</Title>
-            <List
-              dataSource={data.students}
-              renderItem={(student) => (
-                <List.Item
-                  onClick={() =>
-                    handleCreateConversation(student._id, "student")
-                  }
-                >
-                  <Avatar
-                    src={`https://api.dicebear.com/7.x/miniavs/svg?seed=${student._id}`}
-                    style={{ marginRight: "10px" }}
-                  />
-                  {`${student.firstname} ${student.lastname}`}
-                </List.Item>
-              )}
-            />
-            <List
-              dataSource={data.tutors}
-              renderItem={(tutor) => (
-                <List.Item
-                  onClick={() => handleCreateConversation(tutor._id, "tutor")}
-                >
-                  <Avatar
-                    src={`https://api.dicebear.com/7.x/miniavs/svg?seed=${tutor._id}`}
-                    style={{ marginRight: "10px" }}
-                  />
-                  {`${tutor.firstname} ${tutor.lastname}`}
-                </List.Item>
-              )}
-            />
-          </>
-        ) : (
-          <p>Loading users...</p>
-        )}
-      </Modal>
+      <ModalCreateConversation
+        isOpen={isAddConversationModalOpen}
+        onCancel={handleCloseUserModal}
+        conversationsByUser={conversationsByUser}
+        fetchConversations={fetchConversations}
+      />
     </Content>
-  );
-}
-
-function TitleMessage() {
-  return (
-    <Flex gap="small" align="center">
-      <Avatar size="default" icon={<UserOutlined />} />
-      <Title level={5}>Chat</Title>
-    </Flex>
   );
 }
 
