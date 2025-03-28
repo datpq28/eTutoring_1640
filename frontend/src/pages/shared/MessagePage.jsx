@@ -26,7 +26,6 @@ export default function MessagePage() {
     useState(false); // Modal thêm cuộc trò chuyện
   const [sendingMessage, setSendingMessage] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  console.log("conversations", conversations);
   const fetchConversations = useCallback(async () => {
     setIsLoading(true);
     const userId = localStorage.getItem("userId");
@@ -94,14 +93,16 @@ export default function MessagePage() {
     }
   }, []);
 
-  console.log("conversation", conversations);
   // useEffect gọi hàm fetchConversations
   useEffect(() => {
     fetchConversations();
   }, [fetchConversations]);
 
   useEffect(() => {
-    const socketIo = io("http://localhost:5090");
+    const socketIo = io("http://localhost:5090", {
+      transports: ["websocket", "polling"],
+      withCredentials: true,
+    });
     socketIo.on("receiveMessage", (message) => {
       if (currentConversationId === message.conversationId && !sendingMessage) {
         setMessages((prevMessages) => {
@@ -227,71 +228,6 @@ export default function MessagePage() {
           isLoading={isLoading}
           fetchConversations={fetchConversations}
         />
-        {/* Khung chat */}
-        {/* <Card style={{ flex: 1 }} title={<TitleMessage />}>
-          <div
-            style={{ height: "65vh", overflowY: "auto", padding: "1rem" }}
-            ref={messagesContainerRef}
-          >
-            {messages.length === 0 ? (
-              <Empty description="Not messages yet" />
-            ) : (
-              messages.map((msg, index) => (
-                <Flex
-                  key={index}
-                  align="center"
-                  justify={msg.senderId === userId ? "end" : "start"} // Thay đổi vị trí căn của người gửi và người nhận
-                  style={{ marginTop: "1.6rem" }}
-                >
-                  {msg.senderId !== userId && (
-                    <Avatar style={{ marginRight: "0.5rem" }}>
-                      {msg.senderId.charAt(0).toUpperCase()}
-                    </Avatar>
-                  )}
-
-                  <Card
-                    size="small"
-                    style={{
-                      background: msg.senderId === userId ? "#4096ff" : "#fff",
-                      color: msg.senderId === userId ? "#fff" : "#000",
-                    }}
-                  >
-                    <Typography.Text
-                      style={{
-                        color: msg.senderId === userId ? "white" : "black",
-                      }}
-                    >
-                      {msg.content}
-                    </Typography.Text>
-                  </Card>
-                  {msg.senderId === userId && (
-                    <Avatar style={{ marginLeft: "0.5rem" }}>Y</Avatar>
-                  )}
-                </Flex>
-              ))
-            )}
-          </div>
-
-          <Flex gap="small" align="center" style={{ marginTop: "1rem" }}>
-            <TextArea
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSendMessage();
-                }
-              }}
-              placeholder="Type a message..."
-              autoSize={{ minRows: 1, maxRows: 4 }}
-            />
-            <Button
-              type="primary"
-              icon={<SendOutlined />}
-              onClick={handleSendMessage}
-            />
-          </Flex>
-        </Card> */}
         <ChatBox
           messages={messages}
           onSendMessage={handleSendMessage}

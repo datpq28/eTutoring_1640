@@ -30,13 +30,14 @@ const io = new Server(server, {
   cors: {
     origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true, // Hỗ trợ gửi cookie
   },
 });
 
 const meetings = {}; // Lưu danh sách người tham gia mỗi cuộc họp
 
 io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
+  console.log("User connected:>>>>>>>>>>>>", socket.id);
 
   socket.on("join_meeting", ({ meetingId, peerId }) => {
     socket.join(meetingId);
@@ -52,11 +53,16 @@ io.on("connection", (socket) => {
     socket.leave(meetingId);
   });
 
+  // Nhận tin nhắn từ client
+  socket.on("sendMessage", (message) => {
+    console.log("Message received:", message);
+    io.emit("receiveMessage", message); // Gửi lại tất cả client
+  });
+
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id);
   });
 });
-
 
 app.use("/api/auth", authRoutes);
 app.use("/api/meeting", meetingRoutes);

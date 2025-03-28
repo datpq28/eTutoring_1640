@@ -32,7 +32,6 @@ export default function ChatBox({
     };
     getOtherParticipant();
   }, [otherParticipantId]);
-  console.log("otherParticipant>>>>>>>>>>>>>>>>>>", otherParticipant);
   const handleSendMessage = async (newMessage) => {
     await onSendMessage(newMessage);
     setNewMessage("");

@@ -53,7 +53,6 @@ export default function UserList({
       participant.fullName.toLowerCase().includes(searchValue.toLowerCase())
     );
   });
-  //   console.log("conversationsByUser", conversationsByUser);
 
   const handleSelectUser = async (id, index) => {
     onSelectConversation(id);
@@ -72,10 +71,10 @@ export default function UserList({
     e.stopPropagation();
   };
 
-  const showDeleteConfirm = (conversationsIdByUser, otherParticipant) => {
+  const showDeleteConfirm = (conversationsIdByUser, participant) => {
     //Xóa người còn lại trong cuộc trò chuyện, không phải mình
-    const otherParticipantId = otherParticipant.participantId;
-    const otherParticipantModel = otherParticipant.participantModel;
+    const participantId = participant.participantId;
+    const participantModel = participant.participantModel;
     Modal.confirm({
       title: "Are you sure delete this conversation?",
       icon: <ExclamationCircleFilled />,
@@ -85,8 +84,8 @@ export default function UserList({
       async onOk() {
         await removeConversations(
           conversationsIdByUser,
-          otherParticipantId,
-          otherParticipantModel
+          participantId,
+          participantModel
         );
         await fetchConversations();
         notification.success({
@@ -118,6 +117,9 @@ export default function UserList({
               const otherParticipant = item.participants.find(
                 (participant) => participant.participantId !== userId
               );
+              const user = item.participants.find(
+                (participant) => participant.participantId === userId
+              );
               const lastMessage = item.lastMessage || "No messages yet";
               const conversationsIdByUser = item._id;
               return (
@@ -146,10 +148,7 @@ export default function UserList({
                             color="default"
                             variant="text"
                             onClick={() =>
-                              showDeleteConfirm(
-                                conversationsIdByUser,
-                                otherParticipant
-                              )
+                              showDeleteConfirm(conversationsIdByUser, user)
                             }
                           >
                             <Space align="center" size="small">
