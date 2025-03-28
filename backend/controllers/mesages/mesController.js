@@ -14,7 +14,7 @@ const sendMessage = async (req, res) => {
       },
       { new: true, upsert: true } // Tạo mới nếu không tìm thấy
     );
-
+    console.log(senderId);
     res.status(201).json(message);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -39,11 +39,9 @@ const updateMessage = async (req, res) => {
     );
 
     if (!message) {
-      return res
-        .status(404)
-        .json({
-          message: "Tin nhắn không tồn tại hoặc bạn không có quyền sửa.",
-        });
+      return res.status(404).json({
+        message: "Tin nhắn không tồn tại hoặc bạn không có quyền sửa.",
+      });
     }
 
     res.status(200).json(message);
@@ -68,11 +66,9 @@ const deleteMessage = async (req, res) => {
     );
 
     if (!message) {
-      return res
-        .status(404)
-        .json({
-          message: "Tin nhắn không tồn tại hoặc bạn không có quyền xóa.",
-        });
+      return res.status(404).json({
+        message: "Tin nhắn không tồn tại hoặc bạn không có quyền xóa.",
+      });
     }
 
     res
