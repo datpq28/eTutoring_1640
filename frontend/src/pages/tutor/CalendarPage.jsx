@@ -1,390 +1,206 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Layout,
   Calendar,
   Badge,
   Card,
   Button,
-  Select,
-  Space,
-  Typography,
   Modal,
-  List,
-  Tag,
+  Input,
+  Select,
+  DatePicker,
+  TimePicker,
   notification,
-  Drawer,
-  Empty,
+  List,
 } from "antd";
-
 import dayjs from "dayjs";
-import {
-  BellOutlined,
-  ClockCircleOutlined,
-  DeleteOutlined,
-  CheckOutlined,
-} from "@ant-design/icons";
+import { fetchStudentsByTutor, createMeeting, fetchMeetingsByTutor } from "../../../api_service/meeting_service";
+import { io } from "socket.io-client";
+const socket = io("http://localhost:5090");
+
+import { useNavigate } from "react-router-dom"; 
+
 const { Content } = Layout;
 const { Option } = Select;
 
-// Task data by date
-const taskData = {
-  "2025-03-26": [
-    {
-      type: "success",
-      content: "Meeting with team.",
-      time: "10:00 AM",
-      description: "Weekly team sync to discuss project progress",
-      priority: "high",
-    },
-    {
-      type: "warning",
-      content: "Project deadline.",
-      time: "5:00 PM",
-      description: "Final submission for the Q1 project",
-      priority: "urgent",
-    },
-  ],
-  "2024-03-15": [
-    {
-      type: "error",
-      content: "Submit report.",
-      time: "2:00 PM",
-      description: "Submit quarterly performance report",
-      priority: "medium",
-    },
-    {
-      type: "success",
-      content: "Client call.",
-      time: "3:30 PM",
-      description: "Review project requirements with the client",
-      priority: "high",
-    },
-  ],
-};
-
-// Sample notifications data
-const initialNotifications = [
-  {
-    id: 1,
-    title: "Upcoming Meeting",
-    description: "Team meeting in 30 minutes",
-    time: "10 minutes ago",
-    read: false,
-    type: "info",
-  },
-  {
-    id: 2,
-    title: "Task Due Soon",
-    description: "Project presentation due in 2 hours",
-    time: "1 hour ago",
-    read: false,
-    type: "warning",
-  },
-  {
-    id: 3,
-    title: "New Comment",
-    description: "John commented on your task",
-    time: "2 hours ago",
-    read: true,
-    type: "success",
-  },
-];
-
-const getListData = (value) => {
-  const dateKey = value.format("YYYY-MM-DD");
-  return taskData[dateKey] || [];
-};
-
-const getMonthData = (value) => {
-  if (value.month() === 8) {
-    return 1394;
-  }
-};
-
-const getPriorityColor = (priority) => {
-  const colors = {
-    low: "blue",
-    medium: "orange",
-    high: "red",
-    urgent: "purple",
-  };
-  return colors[priority] || "default";
-};
-
 export default function CalendarPage() {
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [selectedTasks, setSelectedTasks] = useState([]);
-  const [notifications, setNotifications] = useState(initialNotifications);
-  const [isNotificationDrawerOpen, setIsNotificationDrawerOpen] =
-    useState(false);
+  const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
+  const [isMeetingListVisible, setIsMeetingListVisible] = useState(false);
+  const [students, setStudents] = useState([]);
+  const [selectedStudents, setSelectedStudents] = useState([]);
+  const [meetingName, setMeetingName] = useState("");
+  const [meetingType, setMeetingType] = useState("group");
+  const [meetingDescription, setMeetingDescription] = useState("");
+  const [dayOfWeek, setDayOfWeek] = useState(null);
+  const [startTime, setStartTime] = useState(null);
+  const [endTime, setEndTime] = useState(null);
+  const [role, setRole] = useState(null);
+  const [tutorId, setTutorId] = useState(null);
+  const [meetings, setMeetings] = useState([]);
+  const [selectedDateMeetings, setSelectedDateMeetings] = useState([]); // Danh sách cuộc họp cho pop-up
+  const navigate = useNavigate();
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  useEffect(() => {
+    const storedRole = localStorage.getItem("role");
+    const storedTutorId = localStorage.getItem("userId");
 
-  const onPanelChange = (value, mode) => {
-    console.log(value.format("YYYY-MM-DD"), mode);
+    if (storedRole === "tutor" && storedTutorId) {
+      setRole("tutor");
+      setTutorId(storedTutorId);
+      loadStudents(storedTutorId);
+      loadMeetings(storedTutorId);
+    }
+  }, []);
+
+  const loadStudents = async (tutorId) => {
+    const data = await fetchStudentsByTutor(tutorId);
+    setStudents(data);
   };
 
-  const handleDateSelect = (value) => {
-    const date = value.format("YYYY-MM-DD");
-    const tasks = getListData(value);
-    setSelectedDate(date);
-    setSelectedTasks(tasks);
-    setIsModalVisible(true);
+  const loadMeetings = async (tutorId) => {
+    const data = await fetchMeetingsByTutor(tutorId);
+    setMeetings(data.filter((meeting) => meeting.status === "approved")); // Chỉ hiển thị cuộc họp đã duyệt
   };
 
-  const handleNotificationClick = () => {
-    setIsNotificationDrawerOpen(true);
+  const handleCreateMeeting = async () => {
+    if (!meetingName || !dayOfWeek || !startTime || !endTime || selectedStudents.length === 0) {
+      notification.error({ message: "Vui lòng nhập đầy đủ thông tin" });
+      return;
+    }
+  
+    const startDateTime = dayOfWeek.hour(startTime.hour()).minute(startTime.minute());
+    const endDateTime = dayOfWeek.hour(endTime.hour()).minute(endTime.minute());
+  
+    const newMeeting = {
+      name: meetingName,
+      type: meetingType,
+      description: meetingDescription,
+      tutorId: tutorId,
+      studentIds: selectedStudents,
+      startTime: startDateTime.toISOString(),
+      endTime: endDateTime.toISOString(),
+      dayOfWeek: dayOfWeek.format("YYYY-MM-DD"),
+      status: "pending", // Luôn đặt trạng thái pending
+    };
+  
+    const result = await createMeeting(newMeeting);
+    if (result.error) {
+      notification.error({ message: result.error });
+    } else {
+      notification.success({ message: "Cuộc họp đang chờ duyệt" });
+      setIsCreateModalVisible(false);
+    }
   };
-
-  const markAsRead = (notificationId) => {
-    setNotifications(
-      notifications.map((notification) =>
-        notification.id === notificationId
-          ? { ...notification, read: true }
-          : notification
-      )
-    );
-    notification.success({
-      message: "Notification marked as read",
-      duration: 2,
-    });
-  };
-
-  const deleteNotification = (notificationId) => {
-    setNotifications(
-      notifications.filter((notification) => notification.id !== notificationId)
-    );
-    notification.success({
-      message: "Notification deleted",
-      duration: 2,
-    });
-  };
-
-  const monthCellRender = (value) => {
-    const num = getMonthData(value);
-    return num ? (
-      <div className="notes-month">
-        <section>{num}</section>
-        <span>Backlog number</span>
-      </div>
-    ) : null;
+  
+  // Xử lý khi tutor nhấn "Start Meeting"
+  const handleStartMeeting = (meeting) => {
+    if (!meeting || !meeting._id) {
+      console.error("Meeting ID is undefined!", meeting);
+      return;
+    }
+  
+    console.log("Starting Meeting:", meeting._id); // Debug để kiểm tra ID nhận được
+    socket.emit("start_call", { meetingId: meeting._id, tutorId: meeting.tutorId });
+    navigate(`/tutor/meeting/${meeting._id}`);
   };
 
   const dateCellRender = (value) => {
-    const listData = getListData(value);
+    const formattedDate = value.format("YYYY-MM-DD");
+    const meetingsOnThisDay = meetings.filter(
+      (meeting) => dayjs(meeting.startTime).format("YYYY-MM-DD") === formattedDate
+    );
+
     return (
-      <ul className="events" style={{ listStyle: "none", padding: 0 }}>
-        {listData.map((item) => (
-          <li key={item.content}>
-            <Badge status={item.type} text={item.content} />
+      <ul
+        style={{ listStyle: "none", padding: 0, cursor: meetingsOnThisDay.length > 0 ? "pointer" : "default" }}
+        onClick={() => {
+          if (meetingsOnThisDay.length > 0) {
+            setSelectedDateMeetings(meetingsOnThisDay);
+            setIsMeetingListVisible(true);
+          }
+        }}
+      >
+        {meetingsOnThisDay.map((meeting) => (
+          <li key={meeting._id}>
+            <Badge
+              status="processing"
+              text={`${meeting.name} (${dayjs(meeting.startTime).format("HH:mm")} - ${dayjs(meeting.endTime).format("HH:mm")})`}
+            />
           </li>
         ))}
       </ul>
     );
   };
 
-  const cellRender = (current, info) => {
-    if (info.type === "date") return dateCellRender(current);
-    if (info.type === "month") return monthCellRender(current);
-    return info.originNode;
-  };
-
   return (
-    <Content style={stylesInline.content}>
+    <Content style={{ padding: "2rem" }}>
       <Card>
-        <Calendar
-          onPanelChange={onPanelChange}
-          cellRender={cellRender}
-          onSelect={handleDateSelect}
-          headerRender={({ value, onChange }) => (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "flex-end",
-              }}
-            >
-              <Button
-                type="primary"
-                style={{ marginRight: "1rem" }}
-                onClick={handleNotificationClick}
-                icon={<BellOutlined />}
-              >
-                <Space size="small" align="center">
-                  <Typography.Text style={{ color: "white" }}>
-                    Notifications
-                    {unreadCount > 0 && (
-                      <Badge
-                        count={unreadCount}
-                        style={{
-                          marginLeft: "8px",
-                          backgroundColor: "#ff4d4f",
-                        }}
-                      />
-                    )}
-                  </Typography.Text>
-                </Space>
-              </Button>
-
-              <Select
-                value={value.year()}
-                style={{ width: 100 }}
-                onChange={(newYear) => {
-                  const now = value.clone().year(newYear);
-                  onChange(now);
-                }}
-              >
-                {Array.from({ length: 10 }, (_, i) => (
-                  <Option key={i} value={dayjs().year() - 5 + i}>
-                    {dayjs().year() - 5 + i}
-                  </Option>
-                ))}
-              </Select>
-
-              <Select
-                value={value.month()}
-                style={{ width: 120, marginLeft: "1rem" }}
-                onChange={(newMonth) => {
-                  const now = value.clone().month(newMonth);
-                  onChange(now);
-                }}
-              >
-                {Array.from({ length: 12 }, (_, i) => (
-                  <Option key={i} value={i}>
-                    {dayjs().month(i).format("MMMM")}
-                  </Option>
-                ))}
-              </Select>
-            </div>
-          )}
-        />
+        {role === "tutor" && (
+          <Button
+            type="primary"
+            onClick={() => setIsCreateModalVisible(true)}
+            style={{ marginBottom: "1rem" }}
+          >
+            Tạo Cuộc Họp
+          </Button>
+        )}
+        <Calendar dateCellRender={dateCellRender} />
       </Card>
 
+      {/* Modal danh sách cuộc họp trong ngày */}
       <Modal
-        title={`Tasks for ${selectedDate}`}
-        open={isModalVisible}
-        onCancel={() => setIsModalVisible(false)}
-        footer={[
-          <Button key="close" onClick={() => setIsModalVisible(false)}>
-            Close
-          </Button>,
-        ]}
-        width={600}
+        title={"Danh sách cuộc họp"}
+        open={isMeetingListVisible}
+        onCancel={() => setIsMeetingListVisible(false)}
+        footer={null}
       >
         <List
-          itemLayout="horizontal"
-          dataSource={selectedTasks}
-          renderItem={(item) => (
-            <List.Item
-              extra={
-                <Tag color={getPriorityColor(item.priority)}>
-                  {item.priority.toUpperCase()}
-                </Tag>
-              }
-            >
-              <List.Item.Meta
-                avatar={<Badge status={item.type} />}
-                title={item.content}
-                description={
-                  <Space direction="vertical">
-                    <Space>
-                      <ClockCircleOutlined />
-                      {item.time}
-                    </Space>
-                    <div>{item.description}</div>
-                  </Space>
-                }
-              />
+          itemLayout="vertical"
+          dataSource={selectedDateMeetings}
+          renderItem={(meeting) => (
+            <List.Item key={meeting._id}>
+              <h3>{meeting.name}</h3>
+              <p><strong>Loại:</strong> {meeting.type === "group" ? "Nhóm" : "Riêng tư"}</p>
+              <p><strong>Thời gian:</strong> {dayjs(meeting.startTime).format("HH:mm")} - {dayjs(meeting.endTime).format("HH:mm")}</p>
+              <p><strong>Mô tả:</strong> {meeting.description || "Không có mô tả"}</p>
+              <p>
+                <strong>Học sinh tham gia:</strong>{" "}
+                {meeting.studentIds.map((student) => `${student.firstname} ${student.lastname}`).join(", ")}
+              </p>
+
+              {/* Chỉ tutor chủ cuộc họp mới có thể bắt đầu */}
+              {role === "tutor" && (
+                <Button type="primary" onClick={() => handleStartMeeting(meeting)}>
+                  Start Meeting
+                </Button>
+              )}
             </List.Item>
           )}
-          locale={{ emptyText: "No tasks for this date" }}
         />
       </Modal>
 
-      <Drawer
-        title={
-          <Space>
-            <BellOutlined />
-            <span>Notifications</span>
-            {unreadCount > 0 && (
-              <Badge
-                count={unreadCount}
-                style={{ backgroundColor: "#ff4d4f" }}
-              />
-            )}
-          </Space>
-        }
-        placement="right"
-        onClose={() => setIsNotificationDrawerOpen(false)}
-        open={isNotificationDrawerOpen}
-        width={400}
+      {/* Modal tạo cuộc họp */}
+      <Modal
+        title="Tạo Cuộc Họp Mới"
+        open={isCreateModalVisible}
+        onCancel={() => setIsCreateModalVisible(false)}
+        onOk={handleCreateMeeting}
       >
-        {notifications.length > 0 ? (
-          <List
-            itemLayout="horizontal"
-            dataSource={notifications}
-            renderItem={(item, index) => (
-              <List.Item
-                actions={[
-                  !item.read && (
-                    <Button
-                      type="text"
-                      icon={<CheckOutlined />}
-                      onClick={() => markAsRead(item.id)}
-                      title="Mark as read"
-                    />
-                  ),
-                  <Button
-                    key={index}
-                    type="text"
-                    danger
-                    icon={<DeleteOutlined />}
-                    onClick={() => deleteNotification(item.id)}
-                    title="Delete notification"
-                  />,
-                ]}
-                style={{
-                  backgroundColor: item.read
-                    ? "transparent"
-                    : "rgba(24, 144, 255, 0.1)",
-                  padding: "12px",
-                  borderRadius: "8px",
-                  marginBottom: "8px",
-                }}
-              >
-                <List.Item.Meta
-                  title={
-                    <Space>
-                      <Badge status={item.type} />
-                      <span>{item.title}</span>
-                    </Space>
-                  }
-                  description={
-                    <Space direction="vertical" style={{ width: "100%" }}>
-                      <div>{item.description}</div>
-                      <div style={{ color: "#8c8c8c", fontSize: "12px" }}>
-                        {item.time}
-                      </div>
-                    </Space>
-                  }
-                />
-              </List.Item>
-            )}
-          />
-        ) : (
-          <Empty
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description="No notifications"
-          />
-        )}
-      </Drawer>
+        <Input placeholder="Tên cuộc họp" value={meetingName} onChange={(e) => setMeetingName(e.target.value)} />
+        <DatePicker onChange={(date) => setDayOfWeek(dayjs(date))} format="YYYY-MM-DD" style={{ width: "100%" }} />
+        <TimePicker onChange={setStartTime} format="HH:mm" style={{ width: "100%" }} placeholder="Bắt đầu" />
+        <TimePicker onChange={setEndTime} format="HH:mm" style={{ width: "100%" }} placeholder="Kết thúc" />
+        <Select value={meetingType} onChange={setMeetingType} style={{ width: "100%" }}>
+          <Option value="group">Nhóm</Option>
+          <Option value="private">Riêng tư</Option>
+        </Select>
+        <Input.TextArea placeholder="Mô tả" value={meetingDescription} onChange={(e) => setMeetingDescription(e.target.value)} />
+        <Select mode="multiple" placeholder="Chọn học sinh" value={selectedStudents} onChange={setSelectedStudents} style={{ width: "100%" }}>
+          {students.map((student) => (
+            <Option key={student.id} value={student.id}>{student.name}</Option>
+          ))}
+        </Select>
+      </Modal>
     </Content>
   );
 }
-
-const stylesInline = {
-  content: {
-    padding: "2rem",
-  },
-};
