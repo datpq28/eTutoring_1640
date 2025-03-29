@@ -8,6 +8,7 @@ import RegisterPage from "./pages/auth/RegisterPage";
 import VerifyOTPPage from "./pages/auth/VerifyOTPPage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import SetNewPasswordPage from "./pages/auth/SetNewPasswordPage";
+import VerifyOTPPasswordPage from "./pages/auth/VerifyOTPForgotPassword.jsx"
 
 //Student
 import StudentLayout from "./layouts/StudentLayout.jsx";
@@ -43,6 +44,7 @@ createRoot(document.getElementById("root")).render(
         <Route path="auth/verify-otp" element={<VerifyOTPPage />} />
         <Route path="auth/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="auth/set-new-password" element={<SetNewPasswordPage />} />
+        <Route path="auth/verify-otp-forgot" element={<VerifyOTPPasswordPage />} />
         <Route path="student" element={<StudentLayout />}>
           <Route path="dashboard" element={<StudentDashboardPage />} />
           <Route path="calendar" element={<StudentCalendarPage />} />

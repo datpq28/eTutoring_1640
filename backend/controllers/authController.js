@@ -225,7 +225,9 @@ const approveAdmin = async (req, res) => {
 const forgotPasswordSendOTP = async (req, res) => {
   try {
     const { email } = req.body;
-    let user = await Student.findOne({ email }).exec() || await Tutor.findOne({ email }).exec();
+    let user =
+      (await Student.findOne({ email }).exec()) ||
+      (await Tutor.findOne({ email }).exec());
     if (!user) return res.status(400).json({ error: "User not found" });
     await OtpPassword.deleteMany({ email });
     await sendOTPPass(email);
@@ -235,24 +237,61 @@ const forgotPasswordSendOTP = async (req, res) => {
   }
 };
 
-const resetPassword = async (req, res) => {
+const verifyOtp = async (req, res) => {
   try {
-    const { email, otp, newPassword } = req.body;
+    const { email, otp } = req.body;
     const otpRecord = await OtpPassword.findOne({ email }).exec();
-    if (!otpRecord || otpRecord.used || otpRecord.otp !== otp || new Date() > otpRecord.expiry) {
+
+    if (
+      !otpRecord ||
+      otpRecord.used ||
+      otpRecord.otp !== otp ||
+      new Date() > otpRecord.expiry
+    ) {
       return res.status(400).json({ error: "Invalid or expired OTP" });
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    let user = await Student.findOneAndUpdate({ email }, { password: hashedPassword }) || 
-               await Tutor.findOneAndUpdate({ email }, { password: hashedPassword });
-    if (!user) return res.status(400).json({ error: "User not found" });
-
     otpRecord.used = true;
     await otpRecord.save();
-    res.status(200).json({ message: "Password reset successfully" });
+
+    res.status(200).json({ message: "OTP verified successfully" });
   } catch (error) {
-    res.status(500).json({ error: "Password reset failed" });
+    res.status(500).json({ error: "OTP verification failed" });
+  }
+};
+
+const updatePassword = async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+
+    // Find the OTP record by email
+    const otpRecord = await OtpPassword.findOne({ email }).exec();
+
+    // Check if the OTP record exists, is used, and is valid (not expired)
+    if (!otpRecord || !otpRecord.used || new Date() > otpRecord.expiry) {
+      return res.status(400).json({ error: "OTP not verified or expired" });
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update the password for the user (Student or Tutor)
+    let user =
+      (await Student.findOneAndUpdate(
+        { email },
+        { password: hashedPassword }
+      )) ||
+      (await Tutor.findOneAndUpdate({ email }, { password: hashedPassword }));
+
+    if (!user) {
+      return res.status(400).json({ error: "User not found" });
+    }
+
+    // Return success response
+    res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Password update error:", error);
+    res.status(500).json({ error: "Password update failed" });
   }
 };
 
@@ -262,5 +301,6 @@ module.exports = {
   loginUser,
   approveAdmin,
   forgotPasswordSendOTP,
-  resetPassword,
+  verifyOtp,
+  updatePassword,
 };

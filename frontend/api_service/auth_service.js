@@ -106,3 +106,45 @@ export const sendAdminApprovalRequest = async () => {
     throw error;
   }
 };
+
+export const forgotPasswordSendOTP = async (email) => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/api/auth/forgotPasswordSendOTP`,
+      {
+        email,
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error:", error);
+    throw error;
+  }
+};
+
+export const verifyOtpForgot = async (email, otp) => {
+  try {
+    console.log("Verifying OTP with data:", { email, otp });
+    const response = await axios.post(`${API_URL}/api/auth/verifyOtp`, {
+      email,
+      otp,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error verifying OTP:", error);
+    throw error;
+  }
+};
+
+export const updatePassword = async (email, newPassword) => {
+  try {
+    const response = await axios.post(`${API_URL}/api/auth/updatePassword`, {
+      email,
+      newPassword,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error updating password:", error);
+    throw error;
+  }
+};
