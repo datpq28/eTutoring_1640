@@ -8,11 +8,11 @@ import {
 } from "../../../api_service/mesages_service.js";
 import dayjs from "dayjs";
 import io from "socket.io-client";
-import UserList from "../../components/message/UserList.jsx";
+import UserList from "../../components/MessagePage/UserList.jsx";
 import { formatTime } from "../../utils/Date.js";
 import { truncateText } from "../../utils/Common.js";
-import ModalCreateConversation from "../../components/message/ModalCreateConversation.jsx";
-import ChatBox from "../../components/message/ChatBox.jsx";
+import ModalCreateConversation from "../../components/MessagePage/ModalCreateConversation.jsx";
+import ChatBox from "../../components/MessagePage/ChatBox.jsx";
 
 const { Content } = Layout;
 const userId = localStorage.getItem("userId");

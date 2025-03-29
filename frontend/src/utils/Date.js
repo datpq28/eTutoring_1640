@@ -34,9 +34,14 @@ const formatTime = (input) => {
     return `${weeks} week${weeks > 1 ? "s" : ""} before`;
   }
 
-  // Nếu là tháng trước -> Hiện số tháng (ví dụ: 1 month before)
-  const months = now.diff(date, "month");
-  return `${months} month${months > 1 ? "s" : ""} before`;
+  // Nếu là trong 3 tháng -> Hiện số tháng (ví dụ: 1 month before)
+  if (date.isSameOrAfter(now.subtract(3, "month"), "day")) {
+    const months = now.diff(date, "month");
+    return `${months} month${months > 1 ? "s" : ""} before`;
+  }
+
+  // Nếu lâu hơn 3 tháng -> Hiện ngày tháng năm (ví dụ: 12/03/2022)
+  return date.format("DD/MM/YYYY");
 };
 
 export { formatCustomDate, formatTime };

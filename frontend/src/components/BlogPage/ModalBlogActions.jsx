@@ -1,6 +1,6 @@
 import { CloseOutlined, DiffOutlined } from "@ant-design/icons";
 import { Button, Form, Input, Modal, Space, notification } from "antd";
-import { createBlog, editBlog } from "../../../../api_service/blog_service";
+import { createBlog, editBlog } from "../../../api_service/blog_service.js";
 const userId = localStorage.getItem("userId");
 const userRole = localStorage.getItem("role") || "Student";
 export default function ModalBlogActions({
