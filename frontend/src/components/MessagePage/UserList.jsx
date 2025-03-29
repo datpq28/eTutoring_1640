@@ -72,7 +72,7 @@ export default function UserList({
   };
 
   const showDeleteConfirm = (conversationsIdByUser, participant) => {
-    //Xóa người còn lại trong cuộc trò chuyện, không phải mình
+    //Xóa người còn lại trong cuộc trò chuyện là mình
     const participantId = participant.participantId;
     const participantModel = participant.participantModel;
     Modal.confirm({

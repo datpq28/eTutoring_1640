@@ -15,7 +15,7 @@ import StudentLayout from "./layouts/StudentLayout.jsx";
 import StudentDashboardPage from "./pages/student/DashboardPage.jsx";
 import StudentCalendarPage from "./pages/student/CalendarPage.jsx";
 import StudentDocumentsPage from "./pages/student/DocumentsPage.jsx";
-import StudentBlogPage from "./pages/student/BlogPage.jsx";
+import StudentBlogPage from "./pages/shared/BlogPage.jsx";
 import StudentMessagePage from "./pages/shared/MessagePage.jsx";
 
 //Tutor
@@ -23,7 +23,7 @@ import TutorLayout from "./layouts/TutorLayout.jsx";
 import TutorDashboardPage from "./pages/tutor/DashboardPage.jsx";
 import TutorCalendarPage from "./pages/tutor/CalendarPage.jsx";
 import TutorDocumentsPage from "./pages/tutor/DocumentsPage.jsx";
-import TutorBlogPage from "./pages/tutor/BlogPage.jsx";
+import TutorBlogPage from "./pages/shared/BlogPage.jsx";
 import TutorMessagePage from "./pages/shared/MessagePage.jsx";
 import TutorMeetingPage from "./pages/tutor/MeetingPage.jsx";
 

@@ -1,5 +1,14 @@
 import { SendOutlined, UserOutlined } from "@ant-design/icons";
-import { Avatar, Button, Card, Empty, Flex, Input, Typography } from "antd";
+import {
+  Avatar,
+  Button,
+  Card,
+  Empty,
+  Flex,
+  Form,
+  Input,
+  Typography,
+} from "antd";
 import { useEffect, useRef, useState } from "react";
 import { getAllUser } from "../../../api_service/mesages_service";
 const userId = localStorage.getItem("userId");
@@ -12,6 +21,7 @@ export default function ChatBox({
   const messagesContainerRef = useRef(null); // Tham chiếu đến container tin nhắn
   const [newMessage, setNewMessage] = useState("");
   const [otherParticipant, setOtherParticipant] = useState(null);
+  const [form] = Form.useForm();
   useEffect(() => {
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTop =
@@ -32,9 +42,18 @@ export default function ChatBox({
     };
     getOtherParticipant();
   }, [otherParticipantId]);
-  const handleSendMessage = async (newMessage) => {
+
+  const onFinish = async () => {
     await onSendMessage(newMessage);
     setNewMessage("");
+  };
+
+  // Xử lý sự kiện khi nhấn Enter
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault(); // Ngăn xuống dòng
+      form.submit(); // Gửi form
+    }
   };
 
   return (
@@ -97,25 +116,18 @@ export default function ChatBox({
       </div>
 
       {/* Ô nhập tin nhắn và nút gửi */}
-      <Flex gap="small" align="center" style={{ marginTop: "1rem" }}>
-        <Input.TextArea
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              handleSendMessage(newMessage);
-            }
-          }}
-          placeholder="Type a message..."
-          autoSize={{ minRows: 1, maxRows: 4 }}
-        />
-        <Button
-          type="primary"
-          icon={<SendOutlined />}
-          onClick={() => handleSendMessage(newMessage)}
-        />
-      </Flex>
+      <Form form={form} onFinish={onFinish}>
+        <Flex gap="small" align="center" style={{ marginTop: "1rem" }}>
+          <Input.TextArea
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            onKeyDown={handleKeyPress}
+            placeholder="Type a message..."
+            autoSize={{ minRows: 1, maxRows: 4 }}
+          />
+          <Button type="primary" icon={<SendOutlined />} />
+        </Flex>
+      </Form>
     </Card>
   );
 }

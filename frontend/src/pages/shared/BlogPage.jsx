@@ -1,11 +1,11 @@
 import { Card, Flex, Layout, List, message } from "antd";
-import BlogActionBar from "../../components/student/BlogPage/BlogActionBar.jsx";
+import BlogActionBar from "../../components/BlogPage/BlogActionBar.jsx";
 import { getBlogs } from "../../../api_service/blog_service.js";
 import { useEffect, useState } from "react";
 import LoadingSection from "../../components/common/LoadingSection.jsx";
 import EmptySection from "../../components/common/EmptySection.jsx";
-import CardBlog from "../../components/student/BlogPage/CardBlog.jsx";
-import ModalBlogActions from "../../components/student/BlogPage/ModalBlogActions.jsx";
+import CardBlog from "../../components/BlogPage/CardBlog.jsx";
+import ModalBlogActions from "../../components/BlogPage/ModalBlogActions.jsx";
 const userId = localStorage.getItem("userId");
 const { Content } = Layout;
 export default function BlogPage() {
