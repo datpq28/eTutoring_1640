@@ -1,104 +1,78 @@
+import { useEffect, useState } from "react";
 import { Button, Card, Space, Table } from "antd";
-import { convertSizeToBytes } from "../../../utils/Common.js";
 import { DownloadOutlined, ExpandOutlined } from "@ant-design/icons";
-const columns = [
-  {
-    title: "#",
-    key: "index",
-    render: (_, __, index) => index + 1, // Hiển thị số thứ tự bắt đầu từ 1
-  },
-  {
-    title: "Name",
-    dataIndex: "name",
-    key: "name",
-  },
-  {
-    title: "Tutor",
-    dataIndex: "tutor",
-    key: "tutor",
-  },
-  {
-    title: "Subject",
-    dataIndex: "subject",
-    key: "subject",
-  },
-  {
-    title: "Type File",
-    dataIndex: "typeFile",
-    key: "typeFile",
-  },
-  {
-    title: "Upload date",
-    dataIndex: "uploadDate",
-    key: "uploadDate",
-    sorter: (a, b) => {
-      // Chuyển đổi chuỗi ngày thành Date để so sánh
-      return (
-        new Date(a.uploadDate.split("/").reverse().join("-")) -
-        new Date(b.uploadDate.split("/").reverse().join("-"))
-      );
-    },
-  },
-  {
-    title: "Sizes",
-    key: "sizes",
-    dataIndex: "sizes",
-    sorter: (a, b) => convertSizeToBytes(a.sizes) - convertSizeToBytes(b.sizes),
-  },
-  {
-    title: "Action",
-    key: "action",
-    render: () => (
-      <Space size="middle">
-        <Button color="default" variant="filled">
-          <Space size="small" align="center">
-            <ExpandOutlined />
-            Xem trước
-          </Space>
-        </Button>
-        <Button type="primary">
-          <Space size="small" align="center">
-            <DownloadOutlined />
-            Tải về
-          </Space>
-        </Button>
-      </Space>
-    ),
-  },
-];
-const data = [
-  {
-    key: "1",
-    name: "Bài tập Toán cao cấp.pdf",
-    subject: "Math",
-    typeFile: "docx",
-    tutor: "Thoa",
-    uploadDate: "18/03/2025",
-    sizes: "1.2MB",
-  },
-  {
-    key: "2",
-    name: "Bài tập Toán cao cấp.pdf",
-    subject: "Math",
-    typeFile: "pdf",
-    tutor: "Thoa",
-    uploadDate: "19/03/2025",
-    sizes: "1.2MB",
-  },
-  {
-    key: "3",
-    name: "Bài tập Toán cao cấp.pdf",
-    subject: "Math",
-    typeFile: "csv",
-    tutor: "Thoa",
-    uploadDate: "21/03/2025",
-    sizes: "1.2MB",
-  },
-];
+import { getDocuments } from "../../../../api_service/document_service.js";
+import { convertSizeToBytes } from "../../../utils/Common.js";
+
 export default function DocumentList() {
+  const [documents, setDocuments] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
+
+  const fetchDocuments = async () => {
+    setLoading(true);
+    try {
+      const data = await getDocuments();
+      setDocuments(data);
+    } catch (error) {
+      console.error("Error fetching documents:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const columns = [
+    { title: "#", key: "index", render: (_, __, index) => index + 1 },
+    { title: "Title", dataIndex: "title", key: "title" },
+    {
+      title: "Tutor",
+      dataIndex: ["uploadedBy", "firstname"],
+      key: "tutor",
+      render: (_, record) => `${record.uploadedBy.firstname} ${record.uploadedBy.lastname}`,
+    },
+    { title: "Subject", dataIndex: "subject", key: "subject" },
+    { title: "Type File", dataIndex: "typeFile", key: "typeFile" },
+    {
+      title: "Upload Date",
+      dataIndex: "createdAt",
+      key: "uploadDate",
+      sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+      render: (date) => new Date(date).toLocaleDateString("vi-VN"),
+    },
+    {
+      title: "Size",
+      dataIndex: "sizeFile",
+      key: "sizeFile",
+      sorter: (a, b) => convertSizeToBytes(a.sizeFile) - convertSizeToBytes(b.sizeFile),
+    },
+    {
+      title: "Action",
+      key: "action",
+      render: (_, record) => (
+        <Space size="middle">
+          <Button>
+            <Space size="small" align="center">
+              <ExpandOutlined />
+              Xem trước
+            </Space>
+          </Button>
+          <Button type="primary" href={record.fileUrl} download>
+            <Space size="small" align="center">
+              <DownloadOutlined />
+              Tải về
+            </Space>
+          </Button>
+        </Space>
+      ),
+    },
+  ];
+
   return (
-    <Card title="Document List">
-      <Table dataSource={data} columns={columns} />
+    <Card title="Danh sách tài liệu">
+      <Table dataSource={documents} columns={columns} rowKey="_id" loading={loading} />
     </Card>
   );
 }
