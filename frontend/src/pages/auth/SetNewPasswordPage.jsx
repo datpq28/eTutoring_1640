@@ -1,4 +1,4 @@
-import { Flex, Image } from "antd";
+import { Flex, Image, message  } from "antd";
 import auth_03 from "../../assets/imgs/auth-03.png";
 import AuthLabel from "../../components/auth/AuthLabel";
 import AuthDescription from "../../components/auth/AuthDescription";
@@ -6,8 +6,10 @@ import PasswordInputGroup from "../../components/auth/PasswordInputGroup";
 import AuthButton from "../../components/auth/AuthButton";
 import styles from "../../assets/css/SetNewPasswordPage.module.css";
 import AuthBackButton from "../../components/auth/AuthBackButton";
-import { useReducer } from "react";
+import { useReducer, useState } from "react";
 
+import {updatePassword} from "../../../api_service/auth_service";
+import { useNavigate } from "react-router";
 function formReducer(state, action) {
   switch (action.type) {
     case "CHANGE_INPUT_VALUE": {
@@ -35,8 +37,12 @@ const initialValue = {
 
 export default function SetNewPasswordPage() {
   const [dataForm, dispatch] = useReducer(formReducer, initialValue);
-
+  const email = localStorage.getItem("forgotPasswordEmail");
+  const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { password, ["re-password"]: rePassword } = dataForm;
+
+
   console.log("password>>> ", password);
   console.log("re-password: ", rePassword);
 
@@ -50,8 +56,40 @@ export default function SetNewPasswordPage() {
   }
 
   function handleSubmitForm() {
-    console.log("submit form");
+  if (isSubmitting) return;
+
+  if (!email) {
+    message.error("Email is missing. Please try again.");
+    return;
   }
+
+  if (!password.value || !rePassword.value) {
+    message.error("Please fill in both password fields.");
+    return;
+  }
+
+  if (password.value !== rePassword.value) {
+    message.error("Passwords do not match.");
+    return;
+  }
+
+  setIsSubmitting(true);
+  updatePassword(email, password.value)
+    .then(() => {
+      message.success("Password updated successfully!");
+      localStorage.removeItem("forgotPasswordEmail");
+      setTimeout(() => {
+        navigate("/auth/login");
+      }, 1500);
+    })
+    .catch(() => {
+      message.error("Failed to update password. Try again.");
+    })
+    .finally(() => {
+      setIsSubmitting(false);
+    });
+}
+
 
   return (
     <Flex

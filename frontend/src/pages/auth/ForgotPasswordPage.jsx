@@ -7,6 +7,9 @@ import AuthDescription from "../../components/auth/AuthDescription";
 import TextInputGroup from "../../components/auth/TextInputGroup";
 import AuthButton from "../../components/auth/AuthButton";
 import { useReducer } from "react";
+import {forgotPasswordSendOTP} from "../../../api_service/auth_service";
+import { useNavigate } from "react-router";
+
 
 function formReducer(state, action) {
   switch (action.type) {
@@ -32,6 +35,7 @@ const initialValue = {
 export default function ForgotPasswordPage() {
   const [formData, dispatch] = useReducer(formReducer, initialValue);
   const { email } = formData;
+  const navigate = useNavigate();
 
   function handleChangeInputValue(e) {
     const action = {
@@ -42,7 +46,25 @@ export default function ForgotPasswordPage() {
     dispatch(action);
   }
   function handleSubmitForm() {
-    console.log("handle");
+
+    if (!email.value) {
+      alert("Please enter a valid email address.");
+      return;
+    }
+
+    localStorage.setItem("forgotPasswordEmail", email.value);
+
+    forgotPasswordSendOTP(email.value)
+      .then((response) => {
+        console.log("OTP sent for forgot password:", response);
+        navigate("/auth/verify-otp-forgot");
+      })
+      .catch((error) => {
+
+        console.error("Error sending OTP:", error);
+        const errorMessage = error.response?.data?.message || "Something went wrong. Please try again later.";
+        alert(errorMessage); 
+      });
   }
   return (
     <Flex
