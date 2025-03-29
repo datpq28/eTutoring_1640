@@ -7,6 +7,8 @@ import {
   MessageOutlined,
   SendOutlined,
   TagOutlined,
+  EditOutlined,
+  DeleteOutlined,
 } from "@ant-design/icons";
 import {
   Avatar,
@@ -22,6 +24,7 @@ import {
   Input,
   Button,
   Popover,
+  Typography,
 } from "antd";
 
 import {
@@ -29,6 +32,12 @@ import {
   likeBlog,
   unlikeBlog,
 } from "../../../../api_service/blog_service.js";
+import {
+  createComment,
+  getComments,
+  editComment,
+  deleteComment,
+} from "../../../../api_service/comment_service.js";
 import { formatCustomDate } from "../../../utils/Date.js";
 import dayjs from "dayjs";
 import ModalBlogActions from "./ModalBlogActions.jsx";
@@ -43,12 +52,37 @@ export default function CardBlog({ blog, fetchBlogs }) {
   const [processing, setIsProcessing] = useState(false);
   const [isModalCommentVisible, setIsModalCommentVisible] = useState(false);
   const [isModalEditBlogVisible, setIsModalEditBlogVisible] = useState(false);
+  const [comments, setComments] = useState([]);
+  const [commentContent, setCommentContent] = useState("");
+  const [editingComment, setEditingComment] = useState(null);
+  const [form] = Form.useForm();
+  const { TextArea } = Input;
+  
   console.log(blog);
+  
   useEffect(() => {
     if (blog.likedBy.some((item) => item === userId)) {
       setHasLiked(true);
     }
   }, [blog]);
+
+  // Fetch comments when comment modal is opened
+  useEffect(() => {
+    if (isModalCommentVisible) {
+      fetchComments();
+    }
+  }, [isModalCommentVisible]);
+
+  // Fetch comments function
+  const fetchComments = async () => {
+    try {
+      const commentsData = await getComments(blog._id);
+      setComments(commentsData);
+    } catch (error) {
+      message.error("Failed to load comments");
+      console.error("Error fetching comments:", error);
+    }
+  };
 
   const handleOpenModalEditBlog = () => {
     setIsModalEditBlogVisible(true);
@@ -78,7 +112,7 @@ export default function CardBlog({ blog, fetchBlogs }) {
       onOk: async () => {
         try {
           await deleteBlog(blog._id);
-          message.success(`Deleted ${blog.title} successfully `);
+          message.success(`Deleted ${blog.title} successfully`);
           fetchBlogs(); // Reload danh sách blog
         } catch (error) {
           message.error("Có lỗi xảy ra khi xóa bài viết!");
@@ -111,6 +145,69 @@ export default function CardBlog({ blog, fetchBlogs }) {
       setIsProcessing(false);
     }
   };
+
+  // Handle comment submission
+const handleSubmitComment = async () => {
+  if (!commentContent.trim()) return;
+  
+  try {
+      if (editingComment) {
+          // Edit existing comment
+          await editComment(editingComment._id, commentContent);
+          message.success("Comment updated successfully");
+          setEditingComment(null);
+      } else {
+          // Create new comment
+          // Make sure you're passing the content correctly:
+          await createComment(blog._id, { content: commentContent });
+          message.success("Comment added successfully");
+      }
+      
+      // Reset form and refetch comments
+      setCommentContent("");
+      form.resetFields();
+      fetchComments();
+  } catch (error) {
+      message.error("Failed to submit comment");
+      console.error("Error submitting comment:", error);
+  }
+};
+
+  // Handle edit comment
+  const handleEditComment = (comment) => {
+    setEditingComment(comment);
+    setCommentContent(comment.content);
+    form.setFieldsValue({ comment: comment.content });
+  };
+
+  // Handle delete comment
+  const handleDeleteComment = async (commentId) => {
+    Modal.confirm({
+      title: "Are you sure you want to delete this comment?",
+      icon: <ExclamationCircleFilled />,
+      okText: "Yes",
+      okType: "danger",
+      cancelText: "No",
+      onOk: async () => {
+        try {
+          await deleteComment(commentId);
+          message.success("Comment deleted successfully");
+          fetchComments();
+        } catch (error) {
+          message.error("Failed to delete comment");
+          console.error("Error deleting comment:", error);
+        }
+      },
+    });
+  };
+  
+  // Cancel editing
+  const handleCancelEdit = () => {
+    setEditingComment(null);
+    setCommentContent("");
+    form.resetFields();
+  };
+
   const IconText = ({ icon, text, onClick, toolTipText, color = "8c8c8c" }) => (
     <Tooltip placement="top" title={toolTipText}>
       <span
@@ -124,6 +221,7 @@ export default function CardBlog({ blog, fetchBlogs }) {
       </span>
     </Tooltip>
   );
+  
   const listItemAction = [
     <IconText
       icon={LikeOutlined}
@@ -149,21 +247,6 @@ export default function CardBlog({ blog, fetchBlogs }) {
         toolTipText="Tags"
       />
     )),
-  ];
-
-  const commentsList = [
-    {
-      title: "Ant Design Title 1",
-    },
-    {
-      title: "Ant Design Title 2",
-    },
-    {
-      title: "Ant Design Title 3",
-    },
-    {
-      title: "Ant Design Title 4",
-    },
   ];
 
   return (
@@ -243,28 +326,74 @@ export default function CardBlog({ blog, fetchBlogs }) {
             <div style={{ height: "30rem", overflowY: "auto" }}>
               <List
                 itemLayout="horizontal"
-                dataSource={commentsList}
-                renderItem={(item, index) => (
-                  <List.Item>
+                dataSource={comments}
+                locale={{ emptyText: "No comments yet. Be the first to comment!" }}
+                renderItem={(item) => (
+                  <List.Item
+                    actions={
+                      item.userId === userId
+                        ? [
+                            <Button 
+                              type="text" 
+                              icon={<EditOutlined />} 
+                              onClick={() => handleEditComment(item)}
+                            />,
+                            <Button 
+                              type="text" 
+                              danger 
+                              icon={<DeleteOutlined />} 
+                              onClick={() => handleDeleteComment(item._id)}
+                            />
+                          ]
+                        : []
+                    }
+                  >
                     <List.Item.Meta
                       avatar={
                         <Avatar
-                          src={`https://api.dicebear.com/7.x/miniavs/svg?seed=${index}`}
+                          src={`https://api.dicebear.com/7.x/miniavs/svg?seed=${item._id}`}
                         />
                       }
-                      title={item.title}
-                      description="Ant Design, a design language for background applications, is refined by Ant UED Team"
+                      title={
+                        <Space>
+                          <Typography.Text strong>
+                            {item.authorName || "Anonymous"}
+                          </Typography.Text>
+                          <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
+                            {formatCustomDate(item.createdAt)}
+                          </Typography.Text>
+                        </Space>
+                      }
+                      description={item.content}
                     />
                   </List.Item>
                 )}
               />
             </div>
-            <Form>
+            <Form form={form} onFinish={handleSubmitComment}>
               <Flex gap="small" align="center">
-                <Input.TextArea rows={1} placeholder="Comment" />
-                <Button type="primary">
-                  <SendOutlined />
-                </Button>
+                <Form.Item 
+                  name="comment" 
+                  style={{ margin: 0, flex: 1 }}
+                  rules={[{ required: true, message: 'Please input your comment!' }]}
+                >
+                  <TextArea 
+                    rows={1} 
+                    placeholder="Write a comment..." 
+                    value={commentContent}
+                    onChange={(e) => setCommentContent(e.target.value)}
+                  />
+                </Form.Item>
+                <Space>
+                  {editingComment && (
+                    <Button onClick={handleCancelEdit}>
+                      Cancel
+                    </Button>
+                  )}
+                  <Button type="primary" htmlType="submit">
+                    <SendOutlined />
+                  </Button>
+                </Space>
               </Flex>
             </Form>
           </Flex>
