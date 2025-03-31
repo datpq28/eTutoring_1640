@@ -6,18 +6,16 @@ import { useParams } from "react-router-dom";
 
 const { Content } = Layout;
 
-export default function MeetingPage() {
+export default function MeetingPageShared() {
   const { meetingId } = useParams();
   const [peerId, setPeerId] = useState("");
   const [peers, setPeers] = useState({});
-
-  const [messages, setMessages] = useState([]); // ✅ State để lưu tin nhắn
+  const [messages, setMessages] = useState([]);
   const [messageInput, setMessageInput] = useState("");
 
   const peer = useRef(null);
   const socket = useRef(io("http://localhost:5090"));
   const userStream = useRef(null);
-  const videoRefs = useRef({});
 
   useEffect(() => {
     if (!meetingId) return;
@@ -32,7 +30,6 @@ export default function MeetingPage() {
     navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
       userStream.current = stream;
 
-      // Thêm video của chính mình vào danh sách
       setPeers((prev) => ({
         ...prev,
         [peer.current.id]: { stream },
@@ -41,7 +38,6 @@ export default function MeetingPage() {
 
     socket.current.on("user_connected", ({ peerId }) => {
       console.log(`🔗 User connected: ${peerId}`);
-
       setPeers((prev) => ({
         ...prev,
         [peerId]: { stream: null },
@@ -60,14 +56,16 @@ export default function MeetingPage() {
         }));
       });
     });
-    
+
     socket.current.on("receive_message", ({ sender, text }) => {
+      console.log(`📩 Received message from ${sender}: ${text}`); // ✅ Debug
       setMessages((prev) => [...prev, { sender, text }]);
     });
 
     return () => {
       peer.current.destroy();
       socket.current.disconnect();
+      socket.current.off("receive_message");
     };
   }, [meetingId]);
 
@@ -90,20 +88,17 @@ export default function MeetingPage() {
     });
   };
 
-
   const sendMessage = () => {
-    if (messageInput.trim() === "") return;
+    if (messageInput.trim() === "") return; 
     const messageData = { sender: peerId, text: messageInput };
   
-    // Gửi tin nhắn lên server
+    console.log("📤 Sending message:", messageData); // ✅ Debug
+  
     socket.current.emit("send_message", { meetingId, ...messageData });
   
-    // Hiển thị tin nhắn ngay lập tức (không cần đợi phản hồi từ server)
-    setMessages((prev) => [...prev, messageData]);
+    // Không thêm tin nhắn ngay tại đây nữa, chờ server phản hồi để đồng bộ
     setMessageInput("");
   };
-  
-
 
   return (
     <Content style={{ padding: "2rem" }}>
@@ -128,7 +123,7 @@ export default function MeetingPage() {
       </div>
 
       {/* Chat Box */}
-      <div style={{ flex: 1, border: "1px solid #ddd", padding: "10px", borderRadius: "5px" }}>
+      <div style={{ flex: 1, border: "1px solid #ddd", padding: "10px", borderRadius: "5px", marginTop: "20px" }}>
         <h3>Chat</h3>
         <List
           size="small"

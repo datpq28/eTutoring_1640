@@ -17,6 +17,7 @@ import StudentCalendarPage from "./pages/student/CalendarPage.jsx";
 import StudentDocumentsPage from "./pages/student/DocumentsPage.jsx";
 import StudentBlogPage from "./pages/shared/BlogPage.jsx";
 import StudentMessagePage from "./pages/shared/MessagePage.jsx";
+import StudentMeetingPageShared from "./pages/shared/MeetingPageShared.jsx";
 
 //Tutor
 import TutorLayout from "./layouts/TutorLayout.jsx";
@@ -26,6 +27,8 @@ import TutorDocumentsPage from "./pages/tutor/DocumentsPage.jsx";
 import TutorBlogPage from "./pages/shared/BlogPage.jsx";
 import TutorMessagePage from "./pages/shared/MessagePage.jsx";
 import TutorMeetingPage from "./pages/tutor/MeetingPage.jsx";
+
+import TutorMeetingPageShared from "./pages/shared/MeetingPageShared.jsx";
 
 //Admin
 import AdminLayout from "./layouts/AdminLayout.jsx";
@@ -51,6 +54,7 @@ createRoot(document.getElementById("root")).render(
           <Route path="documents" element={<StudentDocumentsPage />} />
           <Route path="blog" element={<StudentBlogPage />} />
           <Route path="messages" element={<StudentMessagePage />} />
+          <Route path="meeting/:meetingId" element={<StudentMeetingPageShared />} />
         </Route>
         <Route path="tutor" element={<TutorLayout />}>
           <Route path="dashboard" element={<TutorDashboardPage />} />
@@ -58,7 +62,8 @@ createRoot(document.getElementById("root")).render(
           <Route path="documents" element={<TutorDocumentsPage />} />
           <Route path="blog" element={<TutorBlogPage />} />
           <Route path="messages" element={<TutorMessagePage />} />
-          <Route path="meeting/:meetingId" element={<TutorMeetingPage />} />
+          <Route path="meeting/:meetingId" element={<TutorMeetingPageShared />} />
+          {/* <Route path="meeting/:meetingId" element={<TutorMeetingPage />} /> */}
         </Route>
         <Route path="admin" element={<AdminLayout />}>
           <Route path="dashboard" element={<AdminDashboardPage />} />

@@ -41,7 +41,7 @@ export default function CalendarPage() {
 
   // Khi student ấn "Join Call"
   const handleJoinMeeting = (meetingId) => {
-    navigate(`/tutor/meeting/${meetingId}`);
+    navigate(`/student/meeting/${meetingId}`);
   };
 
   // Render danh sách cuộc họp trên từng ngày của Calendar
