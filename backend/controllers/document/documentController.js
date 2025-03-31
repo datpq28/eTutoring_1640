@@ -5,39 +5,6 @@ const upload = require("../../middleware/upload");
 const path = require("path"); // Import path
 const fs = require("fs"); // Import fs để xử lý xóa file cũ
 
-// // Tạo tài liệu
-// const createDocument = async (req, res) => {
-//     try {
-//         const { title, description, subject, fileUrl, typeFile, sizeFile, uploadedBy } = req.body;
-    
-//         if (!title || !subject || !fileUrl || !uploadedBy) {
-//             return res.status(400).json({ error: "Thiếu thông tin bắt buộc" });
-//         }
-    
-//         const tutor = await Tutor.findById(uploadedBy);
-//         if (!tutor) {
-//             return res.status(404).json({ error: "Tutor không tồn tại" });
-//         }
-    
-//         const newDocument = new Document({
-//             title,
-//             description,
-//             subject,
-//             fileUrl,
-//             typeFile,
-//             sizeFile,
-//             uploadedBy,
-//         });
-    
-//         await newDocument.save();
-    
-//         res.status(201).json({ message: "Tài liệu đã được tạo", document: newDocument });
-//     } catch (error) {
-//         console.error("Lỗi khi tạo tài liệu:", error);
-//         res.status(500).json({ error: error?.message || "Lỗi máy chủ nội bộ" });
-//     }
-    
-// };
 
 
 const createDocument = async (req, res) => {

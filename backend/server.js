@@ -7,6 +7,7 @@ const messageRoutes = require("./api/messages");
 const blogRoutes = require("./api/blog");
 const commentRoutes = require("./api/comment");
 const documentRoutes = require("./api/document");
+const commentDocumentRoutes = require("./api/commentdocument");
 
 const { Server } = require("socket.io");
 require("dotenv").config();
@@ -85,6 +86,7 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/blog", blogRoutes);
 app.use("/api/comment", commentRoutes);
 app.use("/api/document", documentRoutes);
+app.use("/api/commentdocument", commentDocumentRoutes);
 
 const PORT = process.env.PORT;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
