@@ -60,6 +60,15 @@ io.on("connection", (socket) => {
     io.emit("receiveMessage", message); // Gửi lại tất cả client
   });
 
+  //meessege meeting
+  socket.on("send_message", ({ meetingId, sender, text }) => {
+    console.log(`📨 Message received in ${meetingId} from ${sender}: ${text}`); // ✅ Debug
+  
+    io.to(meetingId).emit("receive_message", { sender, text });
+  
+    console.log(`📤 Server sent message to meeting ${meetingId}`); // ✅ Debug
+  });
+
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id);
   });
