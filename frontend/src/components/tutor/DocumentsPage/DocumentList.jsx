@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { Button, Card, Space, Table, Modal, Form, Input, message } from "antd";
-import { DownloadOutlined, PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import { Button, Card, Space, Table, Modal, Form, Input, message, Upload } from "antd";
+import { DownloadOutlined, PlusOutlined, EditOutlined, DeleteOutlined, UploadOutlined } from "@ant-design/icons";
 import { getDocuments, createDocument, editDocument, deleteDocument } from "../../../../api_service/document_service.js";
-import { convertSizeToBytes } from "../../../utils/Common.js";
 
 export default function DocumentList() {
   const [documents, setDocuments] = useState([]);
@@ -10,6 +9,7 @@ export default function DocumentList() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDocument, setEditingDocument] = useState(null);
   const [form] = Form.useForm();
+  const [file, setFile] = useState(null);
 
   useEffect(() => {
     fetchDocuments();
@@ -49,18 +49,6 @@ export default function DocumentList() {
     }
   };
 
-  const confirmAddOrEdit = (values) => {
-    Modal.confirm({
-      title: editingDocument ? "Xác nhận chỉnh sửa" : "Xác nhận thêm mới",
-      content: editingDocument
-        ? "Bạn có chắc chắn muốn chỉnh sửa tài liệu này không?"
-        : "Bạn có chắc chắn muốn thêm tài liệu này không?",
-      okText: "Lưu",
-      cancelText: "Hủy",
-      onOk: () => handleAddOrEdit(values),
-    });
-  };
-
   const handleAddOrEdit = async (values) => {
     try {
       const userId = localStorage.getItem("userId");
@@ -69,18 +57,26 @@ export default function DocumentList() {
         return;
       }
 
-      const documentData = { ...values, uploadedBy: userId };
+      const formData = new FormData();
+      formData.append("title", values.title);
+      formData.append("description", values.description);
+      formData.append("subject", values.subject);
+      formData.append("uploadedBy", userId);
+      if (file) {
+        formData.append("file", file);
+      }
 
       if (editingDocument) {
-        await editDocument(editingDocument._id, documentData);
+        await editDocument(editingDocument._id, formData);
         message.success("Tài liệu đã được cập nhật");
       } else {
-        await createDocument(documentData);
+        await createDocument(formData);
         message.success("Tài liệu đã được tạo thành công");
       }
 
       setIsModalOpen(false);
       form.resetFields();
+      setFile(null);
       fetchDocuments();
     } catch (error) {
       console.error("Error saving document:", error);
@@ -93,19 +89,12 @@ export default function DocumentList() {
     { title: "Title", dataIndex: "title", key: "title" },
     { title: "Description", dataIndex: "description", key: "description" },
     { title: "Subject", dataIndex: "subject", key: "subject" },
-    { title: "Type File", dataIndex: "typeFile", key: "typeFile" },
     {
       title: "Upload Date",
       dataIndex: "createdAt",
       key: "uploadDate",
       sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
       render: (date) => new Date(date).toLocaleDateString("vi-VN"),
-    },
-    {
-      title: "Size",
-      dataIndex: "sizeFile",
-      key: "sizeFile",
-      sorter: (a, b) => convertSizeToBytes(a.sizeFile) - convertSizeToBytes(b.sizeFile),
     },
     {
       title: "Action",
@@ -156,24 +145,21 @@ export default function DocumentList() {
         onCancel={() => setIsModalOpen(false)}
         onOk={() => form.submit()}
       >
-        <Form form={form} layout="vertical" onFinish={confirmAddOrEdit}>
-          <Form.Item name="title" label="Tiêu đề" rules={[{ required: true, message: "Vui lòng nhập tiêu đề" }]}>
+        <Form form={form} layout="vertical" onFinish={handleAddOrEdit}>
+          <Form.Item name="title" label="Tiêu đề" rules={[{ required: true, message: "Vui lòng nhập tiêu đề" }]}> 
             <Input />
           </Form.Item>
-          <Form.Item name="description" label="Mô tả">
+          <Form.Item name="description" label="Mô tả"> 
             <Input.TextArea />
           </Form.Item>
-          <Form.Item name="subject" label="Môn học" rules={[{ required: true, message: "Vui lòng nhập môn học" }]}>
+          <Form.Item name="subject" label="Môn học" rules={[{ required: true, message: "Vui lòng nhập môn học" }]}> 
             <Input />
           </Form.Item>
-          <Form.Item name="typeFile" label="Loại tệp" rules={[{ required: true, message: "Vui lòng nhập loại tệp" }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="sizeFile" label="Kích thước tệp" rules={[{ required: true, message: "Vui lòng nhập kích thước tệp" }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="fileUrl" label="URL tệp" rules={[{ required: true, message: "Vui lòng nhập URL tệp" }]}>
-            <Input />
+          <Form.Item label="Chọn file">
+            <Upload beforeUpload={(file) => { setFile(file); return false; }}>
+              <Button icon={<UploadOutlined />}>Chọn file</Button>
+            </Upload>
+            {file && <p>File đã chọn: {file.name}</p>}
           </Form.Item>
         </Form>
       </Modal>

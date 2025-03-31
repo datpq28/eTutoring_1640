@@ -14,6 +14,8 @@ require("dotenv").config();
 const app = express();
 const server = http.createServer(app); // Tạo server HTTP
 
+
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 connectDB();
@@ -73,6 +75,9 @@ io.on("connection", (socket) => {
     console.log("User disconnected:", socket.id);
   });
 });
+
+// Phục vụ file tĩnh trong thư mục uploads
+app.use("/uploads", express.static("uploads"));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/meeting", meetingRoutes);
