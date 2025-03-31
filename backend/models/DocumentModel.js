@@ -8,8 +8,8 @@ const documentSchema = new mongoose.Schema({
   typeFile: { type: String, required: true }, // Loại file (PDF, DOCX, PPTX, v.v.)
   sizeFile: { type: Number, required: true }, // Kích thước file (bytes)
   uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Tutor", required: true }, // Người tải lên (Tutor)
+  comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "CommentDocument" }], // Danh sách bình luận
   createdAt: { type: Date, default: Date.now }, // Ngày tải lên
-  comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }] // Danh sách bình luận
 });
 
 const Document = mongoose.model("Document", documentSchema);
