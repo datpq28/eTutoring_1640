@@ -20,6 +20,7 @@ import {
   Tag,
   Typography,
   message,
+  Modal 
 } from "antd";
 import { useState, useEffect } from "react";
 import AddUserModal from "../../components/admin/AccountsManagementPage/AddUserModal.jsx";
@@ -27,6 +28,7 @@ import {
   viewListUser,
   lockUser,
   unLockUser,
+  deleteUser
 } from "../../../api_service/admin_service.js";
 
 const { Content } = Layout;
@@ -92,6 +94,25 @@ export default function AccountsManagementPage() {
     } catch (error) {
       message.error("Failed to unlock user");
     }
+  };
+
+  const handleDeleteUser = (email) => {
+    Modal.confirm({
+      title: "Are you sure?",
+      content: "Do you really want to delete this user? This action cannot be undone.",
+      okText: "Yes, delete",
+      cancelText: "Cancel",
+      okType: "danger",
+      onOk: async () => {
+        try {
+          await deleteUser(email);
+          message.success("User deleted successfully");
+          setUsers((prevUsers) => prevUsers.filter((user) => user.email !== email));
+        } catch (error) {
+          message.error("Failed to delete user");
+        }
+      },
+    });
   };
 
   const filteredData = users.filter((item) => {
@@ -185,7 +206,7 @@ export default function AccountsManagementPage() {
         );
 
         const deleteButton = (
-          <Button color="red" variant="filled">
+          <Button color="red" variant="filled" onClick={() => handleDeleteUser(record.email)}>
             <Space size="small">
               <DeleteTwoTone twoToneColor="#ff4d4f" />
               <Text type="danger">Delete</Text>

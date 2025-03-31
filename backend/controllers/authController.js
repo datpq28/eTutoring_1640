@@ -47,6 +47,9 @@ const registerSendOTP = async (req, res) => {
     });
 
     await student.save();
+    await Student.findByIdAndUpdate(student._id, { role });
+
+    console.log("Student saved with role:", role);
 
     tutor.studentId.push(student._id);
     await tutor.save();
@@ -145,59 +148,113 @@ let adminApproved = false;
 
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
+  const deviceId = req.headers["user-agent"]; // Lấy thông tin thiết bị từ request
 
-  // Kiểm tra nếu là admin và chưa được phê duyệt
-  if (email === "admin" && password === "admin") {
-    if (!adminApproved) {
-      await sendAdminApprovalRequest();
-      return res.status(403).json({
-        error: "Admin login requires approval. Please check your email.",
-      });
-    }
-  }
-
-  // Tìm user là Student hoặc Tutor
-  let user = await Student.findOne({ email }).exec();
-  if (!user) {
-    user = await Tutor.findOne({ email }).exec();
-  }
+  let user = await Student.findOne({ email }).exec() || await Tutor.findOne({ email }).exec();
 
   if (!user) {
     return res.status(400).json({ error: "User not found" });
   }
 
   if (user.isLocked) {
-    return res.status(403).json({
-      error: "Account is locked. Please message the training department.",
-    });
+    return res.status(403).json({ error: "Account is locked. Please contact support." });
   }
 
-  // Kiểm tra mật khẩu
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
     return res.status(400).json({ error: "Invalid credentials" });
   }
 
-  // Xác định vai trò của người dùng
   const role = user instanceof Student ? "student" : "tutor";
 
-  // Tạo JWT token để trả về cho người dùng
-  const token = jwt.sign(
-    { userId: user._id, role: role },
-    process.env.JWT_SECRET,
-    { expiresIn: "1h" } // Token hết hạn sau 1 giờ
-  );
+  // ✅ Kiểm tra nếu user đã đăng nhập trên thiết bị khác
+  if (user.tokens.some(t => t.deviceId !== deviceId)) {
+    user.tokens = user.tokens.filter(t => t.deviceId === deviceId); // Giữ lại token của thiết bị hiện tại
+  }
 
-  // Trả về thông tin cần thiết bao gồm cả userId
+  // ✅ Tạo token mới
+  const token = jwt.sign({ userId: user._id, role: role }, process.env.JWT_SECRET, { expiresIn: "1h" });
+
+  // ✅ Lưu token mới vào database với thông tin thiết bị
+  user.tokens.push({ token, deviceId });
+  await user.save();
+
   res.status(200).json({
     message: "Login successful",
     token,
     role,
-    userId: user._id, // ✅ Thêm userId vào response
+    userId: user._id,
   });
 };
 
-module.exports = loginUser;
+
+const logoutUser = async (req, res) => {
+  try {
+    const token = req.header("Authorization")?.replace("Bearer ", "");
+    if (!token) {
+      return res.status(401).json({ error: "User not authenticated" });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    let user = await Student.findOne({ _id: decoded.userId, "tokens.token": token }) ||
+               await Tutor.findOne({ _id: decoded.userId, "tokens.token": token });
+
+    if (!user) {
+      return res.status(401).json({ error: "User not authenticated" });
+    }
+
+    user.tokens = user.tokens.filter(t => t.token !== token);
+    await user.save();
+
+    res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+
+const logoutAllSessions = async (req, res) => {
+  try {
+    req.user.tokens = [];
+    await req.user.save();
+    res
+      .status(200)
+      .json({ message: "Logged out from all devices successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to logout from all devices" });
+  }
+};
+
+const authMiddleware = async (req, res, next) => {
+  try {
+    const token = req.header("Authorization")?.replace("Bearer ", "");
+    console.log("Received Token:", token); // Kiểm tra token có nhận hay không
+
+    if (!token) {
+      return res.status(401).json({ error: "Token missing" });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log("Decoded Token:", decoded); // Kiểm tra nội dung token
+
+    let user =
+      (await Student.findOne({ _id: decoded.userId, "tokens.token": token })) ||
+      (await Tutor.findOne({ _id: decoded.userId, "tokens.token": token }));
+
+    if (!user) {
+      return res.status(401).json({ error: "User not found or token invalid" });
+    }
+
+    req.user = user;
+    req.token = token;
+    next();
+  } catch (error) {
+    console.error("Auth error:", error);
+    res.status(401).json({ error: "Please authenticate" });
+  }
+};
+
+
 
 const approveAdmin = async (req, res) => {
   const { token } = req.query;
@@ -295,6 +352,44 @@ const updatePassword = async (req, res) => {
   }
 };
 
+const deleteUser = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Tìm người dùng theo email
+    let user = await Student.findOne({ email }).exec();
+    let role = "student";
+
+    if (!user) {
+      user = await Tutor.findOne({ email }).exec();
+      role = "tutor";
+    }
+
+    if (!user) {
+      return res.status(400).json({ error: "User not found" });
+    }
+
+    // Nếu là Student, cũng cần xóa họ khỏi danh sách của Tutor
+    if (role === "student") {
+      await Tutor.findByIdAndUpdate(user.tutorId, {
+        $pull: { studentId: user._id },
+      });
+      await Student.findByIdAndDelete(user._id);
+    } else {
+      await Tutor.findByIdAndDelete(user._id);
+    }
+
+    // Xóa bất kỳ OTP nào liên quan đến người dùng
+    await OTP.deleteMany({ email });
+    await OtpPassword.deleteMany({ email });
+
+    res.status(200).json({ message: "User deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    res.status(500).json({ error: "Failed to delete user" });
+  }
+};
+
 module.exports = {
   registerSendOTP,
   registerVerifyOTP,
@@ -303,4 +398,6 @@ module.exports = {
   forgotPasswordSendOTP,
   verifyOtp,
   updatePassword,
+  deleteUser,
+  logoutUser,
 };
