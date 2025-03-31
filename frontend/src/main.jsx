@@ -82,6 +82,7 @@ createRoot(document.getElementById("root")).render(
             element={<MeetingManagementPage />}
           />
         </Route>
+        <Route path="*" element={<LoginPage />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>

@@ -11,31 +11,21 @@ const transporter = nodemailer.createTransport({
 });
 
 // Hàm gửi email thông báo phê duyệt admin
-const sendAdminApprovalRequest = async () => {
+const sendAdminApprovalRequest = async (adminEmail, token) => {
   try {
-    // Tạo token phê duyệt cho admin
-    const token = jwt.sign(
-      { email: 'admin' },  // Thông tin của admin cần phê duyệt (có thể thay đổi)
-      process.env.JWT_SECRET,  // Mã bí mật của JWT từ file .env
-      { expiresIn: '1h' }  // Token hết hạn sau 1 giờ
-    );
+      const approvalLink = `http://localhost:5090/api/auth/approveAdmin?token=${token}`;
 
-    // Tạo link phê duyệt với token
-    const approvalLink = `http://localhost:5080/api/auth/approveAdmin?token=${token}`;
+      const approvalMailOptions = {
+          from: process.env.EMAIL_USERNAME,
+          to: adminEmail, // Use the admin's email
+          subject: "Admin Login Approval Request",
+          text: `An admin is trying to log in. Click the link below to approve:\n${approvalLink}`,
+      };
 
-    // Tạo nội dung email với link phê duyệt
-    const approvalMailOptions = {
-      from: process.env.EMAIL_USERNAME,  // Địa chỉ email gửi
-      to: "nguyenkhaccao1@gmail.com",   // Địa chỉ email admin nhận yêu cầu phê duyệt
-      subject: "Admin Login Approval Request",  // Tiêu đề email
-      text: `An admin is trying to log in. Click the link below to approve:\n${approvalLink}`,  // Nội dung email với link phê duyệt
-    };
-
-    // Gửi email phê duyệt admin
-    await transporter.sendMail(approvalMailOptions);
-    console.log("Admin approval request email sent successfully!");
+      await transporter.sendMail(approvalMailOptions);
+      console.log("Admin approval request email sent successfully!");
   } catch (error) {
-    console.error("Error sending admin approval request email:", error);
+      console.error("Error sending admin approval request email:", error);
   }
 };
 
@@ -66,5 +56,35 @@ const sendMailAssignNewTutor = async (studentEmail, tutorEmail) => {
     console.error("Error sending emails:", error);
   }
 };
+const sendMailAssignNewTutorAll = async (studentEmails, tutorEmail) => {
+  try {
+    // Gửi email cho từng học sinh
+    const studentMailPromises = studentEmails.map((studentEmail) => {
+      const studentMailOptions = {
+        from: process.env.EMAIL_USERNAME,
+        to: studentEmail,
+        subject: "Assign New Tutor",
+        text: `You have been assigned a new tutor. Your new tutor's email is: ${tutorEmail}`,
+      };
+      return transporter.sendMail(studentMailOptions);
+    });
 
-module.exports = { sendMailAssignNewTutor, sendAdminApprovalRequest };
+    // Gửi email cho giáo viên với danh sách học sinh mới
+    const tutorMailOptions = {
+      from: process.env.EMAIL_USERNAME,
+      to: tutorEmail,
+      subject: "New Students Assigned",
+      text: `You have been assigned new students. Their emails are:
+      ${studentEmails.join("\n")}`,
+    };
+
+    // Thực hiện gửi tất cả email đồng thời
+    await Promise.all([...studentMailPromises, transporter.sendMail(tutorMailOptions)]);
+
+    console.log("Emails sent successfully to tutor and students!");
+  } catch (error) {
+    console.error("Error sending bulk assignment emails:", error);
+  }
+};
+
+module.exports = { sendMailAssignNewTutor, sendAdminApprovalRequest, sendMailAssignNewTutorAll };
