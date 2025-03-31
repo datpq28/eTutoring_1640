@@ -38,9 +38,13 @@ export default function TutorLayout() {
     try {
       await logoutUser();
       message.success("Logout successful");
-      localStorage.removeItem("token");
   
-      // 🔴 Gửi thông báo logout cho tất cả tab khác
+      // Xóa token và thông tin user khỏi localStorage và sessionStorage
+      localStorage.removeItem("token");
+      localStorage.removeItem("loggedInUser"); // Xóa loggedInUser
+      sessionStorage.removeItem("token"); 
+  
+      // Gửi tín hiệu logout đến tất cả tab khác
       const logoutChannel = new BroadcastChannel("logout_channel");
       logoutChannel.postMessage("logout");
   
@@ -50,10 +54,13 @@ export default function TutorLayout() {
     }
   };
   
+  // Lắng nghe tín hiệu logout từ các tab khác
   useEffect(() => {
     const logoutChannel = new BroadcastChannel("logout_channel");
     logoutChannel.onmessage = () => {
       localStorage.removeItem("token");
+      localStorage.removeItem("loggedInUser"); // Xóa loggedInUser trên tất cả tab
+      sessionStorage.removeItem("token");
       navigate("/auth/login");
     };
   
@@ -61,7 +68,6 @@ export default function TutorLayout() {
       logoutChannel.close();
     };
   }, []);
-  
 
   const userMenu = (
     <Menu
