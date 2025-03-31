@@ -144,48 +144,67 @@ const registerVerifyOTP = async (req, res) => {
   }
 };
 
-let adminApproved = false;
+let adminApprovalTokens = {};
 
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
-  const deviceId = req.headers["user-agent"]; // Lấy thông tin thiết bị từ request
+  const deviceId = req.headers["user-agent"];
 
   let user = await Student.findOne({ email }).exec() || await Tutor.findOne({ email }).exec();
 
   if (!user) {
-    return res.status(400).json({ error: "User not found" });
+      return res.status(400).json({ error: "User not found" });
   }
 
   if (user.isLocked) {
-    return res.status(403).json({ error: "Account is locked. Please contact support." });
+      return res.status(403).json({ error: "Account is locked. Please contact support." });
   }
 
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
-    return res.status(400).json({ error: "Invalid credentials" });
+      return res.status(400).json({ error: "Invalid credentials" });
   }
 
   const role = user instanceof Student ? "student" : "tutor";
 
-  // ✅ Kiểm tra nếu user đã đăng nhập trên thiết bị khác
+  // ✅ Admin Login Verification
+  // if (email === "nguyenkhaccao1@gmail.com") {
+  //     // Generate a unique token for this login attempt
+  //     const adminToken = jwt.sign(
+  //         { email: email, loginTime: Date.now() },
+  //         process.env.JWT_SECRET,
+  //         { expiresIn: "10m" } // Token expires in 10 minutes (adjust as needed)
+  //     );
+
+  //     // Store the token (you might want to use a more persistent storage in production)
+  //     adminApprovalTokens[email] = adminToken;
+
+  //     // Send the approval email
+  //     await sendAdminApprovalRequest(email, adminToken);
+
+  //     return res.status(200).json({
+  //         message: "Admin login pending approval. Check your email.",
+  //         pendingApproval: true,
+  //     });
+  // }
+
+  // ✅ Normal User Login Flow (Student or Tutor)
   if (user.tokens.some(t => t.deviceId !== deviceId)) {
-    user.tokens = user.tokens.filter(t => t.deviceId === deviceId); // Giữ lại token của thiết bị hiện tại
+      user.tokens = user.tokens.filter(t => t.deviceId === deviceId);
   }
 
-  // ✅ Tạo token mới
   const token = jwt.sign({ userId: user._id, role: role }, process.env.JWT_SECRET, { expiresIn: "1h" });
-
-  // ✅ Lưu token mới vào database với thông tin thiết bị
   user.tokens.push({ token, deviceId });
   await user.save();
 
   res.status(200).json({
-    message: "Login successful",
-    token,
-    role,
-    userId: user._id,
+      message: "Login successful",
+      token,
+      role,
+      userId: user._id,
   });
 };
+
 
 
 const logoutUser = async (req, res) => {
@@ -260,24 +279,37 @@ const approveAdmin = async (req, res) => {
   const { token } = req.query;
 
   if (!token) {
-    return res.status(400).json({ error: "Token is required for approval." });
+      return res.status(400).json({ error: "Token is required for approval." });
   }
 
   try {
-    // Giải mã token để xác nhận tính hợp lệ
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const { email, loginTime } = decoded;
 
-    // Nếu token hợp lệ, phê duyệt admin
-    if (decoded.email === "nguyenkhaccao1@gmail.com") {
-      adminApproved = true;
-      return res.status(200).json({ message: "Admin approved successfully!" });
-    } else {
-      return res.status(400).json({ error: "Invalid token" });
-    }
+      // ✅ Verify the token and check if it matches the stored token
+      if (adminApprovalTokens[email] === token) {
+          delete adminApprovalTokens[email]; // Remove the token after successful approval
+
+          // ✅ Generate a final login token for the admin
+          const finalToken = jwt.sign(
+              { userId: "admin", role: "admin" }, // You might want to store admin ID somewhere
+              process.env.JWT_SECRET,
+              { expiresIn: "1h" }
+          );
+
+          return res.status(200).json({
+              message: "Admin approved successfully!",
+              token: finalToken, // Send the final token
+              role: "admin",
+          });
+      } else {
+          return res.status(400).json({ error: "Invalid or expired token" });
+      }
   } catch (error) {
-    return res.status(500).json({ error: "Failed to verify token" });
+      return res.status(500).json({ error: "Failed to verify token" });
   }
 };
+
 
 const forgotPasswordSendOTP = async (req, res) => {
   try {

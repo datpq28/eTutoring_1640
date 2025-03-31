@@ -64,3 +64,28 @@ export const updateMeetingStatus = async (meetingId, status) => {
     throw error;
   }
 };
+
+export const assignTutorToStudentAll = async (studentIds, tutorId) => {
+  try {
+    const response = await axios.post(`${API_URL}/api/auth/assignTutorToStudentAll`, {
+      studentIds,
+      tutorId,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi gán tutor cho học sinh:", error);
+    throw error;
+  }
+};
+
+export const viewListStudentByTutor = async (tutorId) => {
+  try {
+    const response = await axios.get(
+      `${API_URL}/api/auth/viewListStudentByTutor/${tutorId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách học sinh theo tutor:", error);
+    throw error;
+  }
+};
