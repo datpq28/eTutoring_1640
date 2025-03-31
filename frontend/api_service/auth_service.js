@@ -30,6 +30,36 @@ export const loginUser = async (email, password) => {
   }
 };
 
+export const logoutUser = async () => {
+  try {
+    const token = localStorage.getItem("token"); // Lấy token trước khi xóa
+
+    if (!token) {
+      throw new Error("No token found. User may already be logged out.");
+    }
+
+    await axios.post(
+      `${API_URL}/api/auth/logoutUser`,
+      {}, // Body rỗng
+      {
+        headers: {
+          Authorization: `Bearer ${token}`, // Gửi token lên server
+        },
+      }
+    );
+
+    // Xóa token sau khi server xác nhận logout thành công
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("userId");
+
+    return { message: "Logout successful" };
+  } catch (error) {
+    console.error("Error during logout:", error?.response?.data || error);
+    throw error;
+  }
+};
+
 export const registerVerifyOTP = async (email, otp) => {
   try {
     const response = await axios.post(`${API_URL}/api/auth/registerVerifyOTP`, {
@@ -53,6 +83,17 @@ export const registerSendOTP = async (
   filed,
   blogId
 ) => {
+  console.log("Data before sending API:", {
+    firstname,
+    lastname,
+    email,
+    password,
+    role,
+    description,
+    filed,
+    blogId,
+  }); // 👈 Log dữ liệu trước khi gửi
+
   try {
     const response = await axios.post(`${API_URL}/api/auth/registerSendOTP`, {
       firstname,
@@ -64,9 +105,10 @@ export const registerSendOTP = async (
       filed,
       blogId,
     });
+    console.log("API Response:", response.data); // 👈 Log response từ server
     return response.data;
   } catch (error) {
-    console.error("Error during login", error);
+    console.error("Error during register:", error?.response?.data || error);
     throw error;
   }
 };

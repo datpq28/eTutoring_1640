@@ -31,6 +31,18 @@ export const unLockUser = async (email) => {
   }
 };
 
+export const deleteUser = async (email) => {
+  try {
+    const response = await axios.post(`${API_URL}/api/auth/deleteUser`, {
+      email, 
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    throw error;
+  }
+};
+
 // 🆕 Lấy danh sách các cuộc họp đang chờ duyệt
 export const fetchAllMeetings = async () => {
   try {

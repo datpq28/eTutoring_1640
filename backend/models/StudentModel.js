@@ -5,6 +5,8 @@ const studentSchema = new mongoose.Schema({
   lastname: String,
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
+  tokens: [{ token: { type: String } }],
+  role: { type: String, enum: ["student", "admin", "tutor"], default: "student" },
   description: String,
   field: String,
   blogIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "Blog" }],

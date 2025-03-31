@@ -1,13 +1,18 @@
-import { Avatar, Badge, Dropdown, Layout, Menu, Space, Typography } from "antd";
+import { Avatar, Badge, Dropdown, Layout, Menu, Space, Typography, message } from "antd";
 import Logo from "../components/Logo/Logo.jsx";
 import MenuList from "../components/student/MenuList.jsx";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import { BellOutlined, LogoutOutlined, UserOutlined } from "@ant-design/icons";
 import { useEffect, useState } from "react";
+import { logoutUser } from "../../api_service/auth_service.js"; // Import API logout
+
 const { Header, Sider } = Layout;
 const { Title } = Typography;
+
 export default function StudentLayout() {
-  const [collapsed, setCollapsed] = useState(window.innerWidth < 992); // Mặc định true nếu màn hình nhỏ
+  const [collapsed, setCollapsed] = useState(window.innerWidth < 992);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const handleResize = () => {
@@ -17,8 +22,7 @@ export default function StudentLayout() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-  const navigate = useNavigate();
-  const location = useLocation();
+
   const titles = {
     "/student/dashboard": "🏠 Dashboard",
     "/student/calendar": "📅 Calendar",
@@ -27,6 +31,37 @@ export default function StudentLayout() {
     "/student/setting": "⚙️ Settings",
     "/student/blog": "📁 Blog",
   };
+
+ 
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+      message.success("Logout successful");
+      localStorage.removeItem("token");
+  
+      // 🔴 Gửi thông báo logout cho tất cả tab khác
+      const logoutChannel = new BroadcastChannel("logout_channel");
+      logoutChannel.postMessage("logout");
+  
+      navigate("/auth/login");
+    } catch (error) {
+      message.error("Logout failed!");
+    }
+  };
+  
+  useEffect(() => {
+    const logoutChannel = new BroadcastChannel("logout_channel");
+    logoutChannel.onmessage = () => {
+      localStorage.removeItem("token");
+      navigate("/auth/login");
+    };
+  
+    return () => {
+      logoutChannel.close();
+    };
+  }, []);
+  
+
   const userMenu = (
     <Menu
       items={[
@@ -40,11 +75,12 @@ export default function StudentLayout() {
           key: "logout",
           label: "Log out",
           icon: <LogoutOutlined />,
-          onClick: () => navigate("/auth/login"),
+          onClick: handleLogout,
         },
       ]}
     />
   );
+
   return (
     <Layout hasSider>
       <Sider
@@ -96,7 +132,7 @@ const inlineStyles = {
     alignItems: "center",
     padding: "0 1.6rem",
     height: "7rem",
-    background: "#1890ff", // Màu xanh đẹp của Ant Design
+    background: "#1890ff",
     color: "#fff",
   },
 };

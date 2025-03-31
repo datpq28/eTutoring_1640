@@ -61,36 +61,38 @@ export default function LoginPage() {
       alert("Please fill in all fields");
       return;
     }
-
-    // Check if login is for the admin account
-    if (email.value === "admin" && password.value === "admin") {
-      navigate("/admin/dashboard");
+  
+    // Kiểm tra nếu đã có tài khoản đăng nhập trong localStorage
+    const loggedInUser = localStorage.getItem("loggedInUser");
+    if (loggedInUser && loggedInUser !== email.value) {
+      alert("Another account is already logged in. Please log out first.");
       return;
     }
-
-    // Normal user login for student or tutor
+  
     setIsPending(true);
-    loginUser(email.value, password.value)
-      .then((response) => {
-        console.log("Login successful", response);
-        const role = response.role; // Giả sử response trả về có user và role
-        if (role === "student") {
-          navigate("/student/dashboard");
-        } else if (role === "tutor") {
-          navigate("/tutor/dashboard");
-        } else {
-          alert("Unknown role. Please contact support.");
-        }
-      })
-      .catch((error) => {
-        console.error("Login failed", error);
-        alert(error.response?.data?.message || "Login Failed");
-      })
-      .finally(() => {
-        setIsPending(false);
-      });
+    try {
+      const response = await loginUser(email.value, password.value);
+      
+      // Lưu tài khoản vào localStorage để ngăn đăng nhập tài khoản khác
+      localStorage.setItem("loggedInUser", email.value);
+  
+      const role = response.role;
+      if (role === "student") {
+        navigate("/student/dashboard");
+      } else if (role === "tutor") {
+        navigate("/tutor/dashboard");
+      } else {
+        alert("Unknown role. Please contact support.");
+      }
+    } catch (error) {
+      console.error("Login failed", error);
+      alert(error.response?.data?.message || "Login Failed");
+    } finally {
+      setIsPending(false);
+    }
   };
 
+  
   return (
     <Flex
       justify="space-between"
