@@ -1,6 +1,5 @@
 const Document = require("../../models/DocumentModel");
 const Tutor = require("../../models/TutorStudent");
-const Comment = require("../../models/CommentModel");
 const upload = require("../../middleware/upload");
 const path = require("path"); // Import path
 const fs = require("fs"); // Import fs để xử lý xóa file cũ
@@ -40,6 +39,47 @@ const createDocument = async (req, res) => {
         res.status(500).json({ error: error?.message || "Lỗi máy chủ nội bộ" });
     }
 };
+
+
+
+// const createDocument = async (req, res) => {
+//     try {
+//         const { title, description, subject, uploadedBy } = req.body;
+        
+//         if (!title || !subject || !uploadedBy || !req.file) {
+//             return res.status(400).json({ error: "Thiếu thông tin bắt buộc" });
+//         }
+
+//         const user = await Tutor.findById(uploadedBy);
+//         if (!user) {
+//             return res.status(404).json({ error: "Người dùng không tồn tại" });
+//         }
+
+//         // Kiểm tra quyền hạn
+//         if (user.role !== "tutor" && user.role !== "admin") {
+//             return res.status(403).json({ error: "Bạn không có quyền thực hiện hành động này" });
+//         }
+
+//         const fileUrl = `/uploads/${req.file.filename}`;
+//         const typeFile = req.file.mimetype;
+//         const sizeFile = req.file.size;
+
+//         const newDocument = new Document({
+//             title,
+//             description,
+//             subject,
+//             fileUrl,
+//             typeFile,
+//             sizeFile,
+//             uploadedBy,
+//         });
+
+//         await newDocument.save();
+//         res.status(201).json({ message: "Tài liệu đã được tải lên", document: newDocument });
+//     } catch (error) {
+//         res.status(500).json({ error: error?.message || "Lỗi máy chủ nội bộ" });
+//     }
+// };
 
 
 // Lấy danh sách tài liệu

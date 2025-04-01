@@ -7,6 +7,7 @@ export const createDocument = async (documentData) => {
     try {
         const userId = localStorage.getItem("userId");
         const token = localStorage.getItem("token");
+        const role = localStorage.getItem("role");
 
         if (!userId || !token) {
             throw new Error("User information is missing. Please log in again.");
@@ -114,7 +115,7 @@ export const deleteDocument = async (documentId) => {
 export const downloadDocument = async (documentId, fileName) => {
     try {
         const token = localStorage.getItem("token");
-        const response = await axios.get(`${API_URL}/api/document/download/${documentId}`, {
+        const response = await axios.get(`${API_URL}/api/document/documents/${documentId}/download`, {
             headers: { Authorization: `Bearer ${token}` },
             responseType: "blob",
         });
