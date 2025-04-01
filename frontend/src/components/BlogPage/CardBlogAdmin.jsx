@@ -166,7 +166,6 @@ export default function CardBlog({ blog, fetchBlogs }) {
       )}
       <Card
         extra={
-          blog.uploaderId._id === userId && (
             <Popover
               trigger="hover"
               content={
@@ -174,7 +173,6 @@ export default function CardBlog({ blog, fetchBlogs }) {
                   <Button type="text" onClick={handleOpenModalEditBlog}>
                     Edit
                   </Button>
-
                   <Button type="text" onClick={handleDelete}>
                     Delete
                   </Button>
@@ -185,8 +183,8 @@ export default function CardBlog({ blog, fetchBlogs }) {
                 <EllipsisOutlined />
               </Button>
             </Popover>
-          )
-        }
+          }
+          
       >
         <List.Item
           actions={listItemAction}
