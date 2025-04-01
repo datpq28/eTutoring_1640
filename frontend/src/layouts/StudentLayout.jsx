@@ -1,4 +1,13 @@
-import { Avatar, Badge, Dropdown, Layout, Menu, Space, Typography, message } from "antd";
+import {
+  Avatar,
+  Badge,
+  Dropdown,
+  Layout,
+  Menu,
+  Space,
+  Typography,
+  message,
+} from "antd";
 import Logo from "../components/Logo/Logo.jsx";
 import MenuList from "../components/student/MenuList.jsx";
 import { Outlet, useLocation, useNavigate } from "react-router";
@@ -32,27 +41,26 @@ export default function StudentLayout() {
     "/student/blog": "📁 Blog",
   };
 
- 
   const handleLogout = async () => {
     try {
       await logoutUser();
       message.success("Logout successful");
-  
+
       // Xóa token và thông tin user khỏi localStorage và sessionStorage
       localStorage.removeItem("token");
       localStorage.removeItem("loggedInUser"); // Xóa loggedInUser
-      sessionStorage.removeItem("token"); 
-  
+      sessionStorage.removeItem("token");
+
       // Gửi tín hiệu logout đến tất cả tab khác
       const logoutChannel = new BroadcastChannel("logout_channel");
       logoutChannel.postMessage("logout");
-  
+
       navigate("/auth/login");
     } catch (error) {
       message.error("Logout failed!");
     }
   };
-  
+
   // Lắng nghe tín hiệu logout từ các tab khác
   useEffect(() => {
     const logoutChannel = new BroadcastChannel("logout_channel");
@@ -62,7 +70,7 @@ export default function StudentLayout() {
       sessionStorage.removeItem("token");
       navigate("/auth/login");
     };
-  
+
     return () => {
       logoutChannel.close();
     };

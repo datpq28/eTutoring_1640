@@ -8,7 +8,7 @@ import RegisterPage from "./pages/auth/RegisterPage";
 import VerifyOTPPage from "./pages/auth/VerifyOTPPage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import SetNewPasswordPage from "./pages/auth/SetNewPasswordPage";
-import VerifyOTPPasswordPage from "./pages/auth/VerifyOTPForgotPassword.jsx"
+import VerifyOTPPasswordPage from "./pages/auth/VerifyOTPForgotPassword.jsx";
 
 //Student
 import StudentLayout from "./layouts/StudentLayout.jsx";
@@ -18,6 +18,7 @@ import StudentDocumentsPage from "./pages/student/DocumentsPage.jsx";
 import StudentBlogPage from "./pages/shared/BlogPage.jsx";
 import StudentMessagePage from "./pages/shared/MessagePage.jsx";
 import StudentMeetingPageShared from "./pages/shared/MeetingPageShared.jsx";
+import StudentProfilePage from "./pages/student/ProfilePage.jsx";
 
 //Tutor
 import TutorLayout from "./layouts/TutorLayout.jsx";
@@ -27,7 +28,7 @@ import TutorDocumentsPage from "./pages/tutor/DocumentsPage.jsx";
 import TutorBlogPage from "./pages/shared/BlogPage.jsx";
 import TutorMessagePage from "./pages/shared/MessagePage.jsx";
 import TutorMeetingPage from "./pages/tutor/MeetingPage.jsx";
-
+import TutorProfilePage from "./pages/tutor/ProfilePage.jsx";
 import TutorMeetingPageShared from "./pages/shared/MeetingPageShared.jsx";
 
 //Admin
@@ -47,14 +48,21 @@ createRoot(document.getElementById("root")).render(
         <Route path="auth/verify-otp" element={<VerifyOTPPage />} />
         <Route path="auth/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="auth/set-new-password" element={<SetNewPasswordPage />} />
-        <Route path="auth/verify-otp-forgot" element={<VerifyOTPPasswordPage />} />
+        <Route
+          path="auth/verify-otp-forgot"
+          element={<VerifyOTPPasswordPage />}
+        />
         <Route path="student" element={<StudentLayout />}>
           <Route path="dashboard" element={<StudentDashboardPage />} />
           <Route path="calendar" element={<StudentCalendarPage />} />
           <Route path="documents" element={<StudentDocumentsPage />} />
           <Route path="blog" element={<StudentBlogPage />} />
           <Route path="messages" element={<StudentMessagePage />} />
-          <Route path="meeting/:meetingId" element={<StudentMeetingPageShared />} />
+          <Route
+            path="meeting/:meetingId"
+            element={<StudentMeetingPageShared />}
+          />
+          <Route path="profile" element={<StudentProfilePage />} />
         </Route>
         <Route path="tutor" element={<TutorLayout />}>
           <Route path="dashboard" element={<TutorDashboardPage />} />
@@ -62,7 +70,11 @@ createRoot(document.getElementById("root")).render(
           <Route path="documents" element={<TutorDocumentsPage />} />
           <Route path="blog" element={<TutorBlogPage />} />
           <Route path="messages" element={<TutorMessagePage />} />
-          <Route path="meeting/:meetingId" element={<TutorMeetingPageShared />} />
+          <Route
+            path="meeting/:meetingId"
+            element={<TutorMeetingPageShared />}
+          />
+          <Route path="profile" element={<TutorProfilePage />} />
           {/* <Route path="meeting/:meetingId" element={<TutorMeetingPage />} /> */}
         </Route>
         <Route path="admin" element={<AdminLayout />}>
