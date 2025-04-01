@@ -15,7 +15,6 @@ require("dotenv").config();
 const app = express();
 const server = http.createServer(app); // Tạo server HTTP
 
-
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
@@ -66,9 +65,9 @@ io.on("connection", (socket) => {
   //meessege meeting
   socket.on("send_message", ({ meetingId, sender, text }) => {
     console.log(`📨 Message received in ${meetingId} from ${sender}: ${text}`); // ✅ Debug
-  
+
     io.to(meetingId).emit("receive_message", { sender, text });
-  
+
     console.log(`📤 Server sent message to meeting ${meetingId}`); // ✅ Debug
   });
 
@@ -76,9 +75,6 @@ io.on("connection", (socket) => {
     console.log("User disconnected:", socket.id);
   });
 });
-
-// Phục vụ file tĩnh trong thư mục uploads
-app.use("/uploads", express.static("uploads"));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/meeting", meetingRoutes);

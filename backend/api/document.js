@@ -1,31 +1,31 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const upload = require("../middleware/upload"); 
+const upload = require("../middleware/upload");
 const {
-    createDocument,
-    getDocuments,
-    getDocumentById,
-    editDocument,
-    deleteDocument,
-    downloadDocument,
-} = require('../controllers/document/documentController');
+  createDocument,
+  getDocuments,
+  getDocumentById,
+  editDocument,
+  deleteDocument,
+  downloadDocument,
+} = require("../controllers/document/documentController");
 
 // Tạo tài liệu
-router.post("/documents", upload.single("file"), createDocument);
+router.post("/upload", upload.single("file"), createDocument);
 
 // Lấy danh sách tài liệu
-router.get('/documents', getDocuments);
+router.get("/documents", getDocuments);
 
 // Lấy tài liệu theo ID
-router.get('/documents/:documentId', getDocumentById);
+router.get("/:documentId/", getDocumentById);
 
 // Cập nhật tài liệu
-router.put("/documents/:documentId", upload.single("file"), editDocument);
+router.put("/:documentId/edit", upload.single("file"), editDocument);
 
 // Xóa tài liệu
-router.delete('/documents/:documentId', deleteDocument);
+router.delete("/:documentId/delete", deleteDocument);
 
-router.get("/download/:documentId", downloadDocument);
-
+//Tải tài liệu
+router.get("/:documentId/download", downloadDocument);
 
 module.exports = router;

@@ -1,6 +1,6 @@
 import { Flex, Layout } from "antd";
-import DocumentActionsBar from "../../components/student/DocumentsPage/DocumentActionsBar.jsx";
-import DocumentList from "../../components/tutor/DocumentsPage/DocumentList.jsx";
+import DocumentActionsBar from "../../components/DocumentsPage/DocumentActionsBar.jsx";
+import DocumentList from "../../components/DocumentsPage/DocumentList.jsx";
 const { Content } = Layout;
 
 export default function DocumentsPage() {
