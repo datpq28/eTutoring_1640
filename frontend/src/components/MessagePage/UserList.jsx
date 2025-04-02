@@ -133,7 +133,6 @@ export default function UserList({
               );
               const lastMessage = item.lastMessage || "No messages yet";
               const conversationsIdByUser = item._id;
-              console.log("otherParticipant", otherParticipant);
               return (
                 <Card
                   key={item._id || index}

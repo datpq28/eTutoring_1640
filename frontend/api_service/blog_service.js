@@ -3,28 +3,26 @@ import axios from "axios";
 const API_URL = "http://localhost:5090";
 
 export const createBlog = async (blogData) => {
-    try {
-      const userId = localStorage.getItem("userId");
-      const role = localStorage.getItem("role");
-  
-      if (!userId || !role) {
-        throw new Error("User information is missing. Please log in again.");
-      }
-  
-      const response = await axios.post(`${API_URL}/api/blog/blogs`, {
-        ...blogData,
-        uploaderId: userId,
-        uploaderType: role, // Lấy role từ localStorage
-      });
-  
-      return response.data;
-    } catch (error) {
-      console.error("Error creating blog:", error);
-      throw error;
+  try {
+    const userId = localStorage.getItem("userId");
+    const role = localStorage.getItem("role");
+
+    if (!userId || !role) {
+      throw new Error("User information is missing. Please log in again.");
     }
-  };
-  
-  
+
+    const response = await axios.post(`${API_URL}/api/blog/blogs`, {
+      ...blogData,
+      uploaderId: userId,
+      uploaderType: role, // Lấy role từ localStorage
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error("Error creating blog:", error);
+    throw error;
+  }
+};
 
 // Lấy danh sách blog
 export const getBlogs = async () => {
@@ -52,9 +50,13 @@ export const getBlogById = async (blogId) => {
 export const editBlog = async (blogId, blogData) => {
   try {
     const token = localStorage.getItem("token");
-    const response = await axios.put(`${API_URL}/api/blog/blogs/${blogId}`, blogData, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axios.put(
+      `${API_URL}/api/blog/blogs/${blogId}`,
+      blogData,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
     return response.data;
   } catch (error) {
     console.error("Error editing blog:", error);
@@ -64,44 +66,44 @@ export const editBlog = async (blogId, blogData) => {
 
 export const likeBlog = async (blogId) => {
   try {
-      const userId = localStorage.getItem("userId");
-      const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("userId");
+    const token = localStorage.getItem("token");
 
-      if (!userId || !token) throw new Error("Người dùng chưa đăng nhập!");
+    if (!userId || !token) throw new Error("Người dùng chưa đăng nhập!");
 
-      const response = await axios.post(
-          `${API_URL}/api/blog/blogs/${blogId}/like`,
-          { userId }, 
-          { headers: { Authorization: `Bearer ${token}` } }
-      );
-      return response.data;
+    const response = await axios.post(
+      `${API_URL}/api/blog/blogs/${blogId}/like`,
+      { userId },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return response.data;
   } catch (error) {
-      console.error("Error liking blog:", error.response?.data || error.message);
-      throw error;
+    console.error("Error liking blog:", error.response?.data || error.message);
+    throw error;
   }
 };
 
 export const unlikeBlog = async (blogId) => {
   try {
-      const userId = localStorage.getItem("userId"); // ✅ Lấy userId từ localStorage
-      const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("userId"); // ✅ Lấy userId từ localStorage
+    const token = localStorage.getItem("token");
 
-      if (!userId || !token) throw new Error("Người dùng chưa đăng nhập!");
+    if (!userId || !token) throw new Error("Người dùng chưa đăng nhập!");
 
-      const response = await axios.post(
-          `${API_URL}/api/blog/blogs/${blogId}/unlike`,
-          { userId }, 
-          { headers: { Authorization: `Bearer ${token}` } }
-      );
-      return response.data;
+    const response = await axios.post(
+      `${API_URL}/api/blog/blogs/${blogId}/unlike`,
+      { userId },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return response.data;
   } catch (error) {
-      console.error("Error unliking blog:", error.response?.data || error.message);
-      throw error;
+    console.error(
+      "Error unliking blog:",
+      error.response?.data || error.message
+    );
+    throw error;
   }
 };
-
-
-  
 
 // Xóa bài blog
 export const deleteBlog = async (blogId) => {

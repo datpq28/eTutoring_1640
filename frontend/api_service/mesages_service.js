@@ -27,7 +27,6 @@ export const getConversations = async (userId, userModel) => {
       `${API_URL}/api/messages/conversations/${userId}/${userModel}`,
       { headers: { "Content-Type": "application/json" } }
     );
-    console.log("Conversations fetched:", response.data);
     return response.data;
   } catch (error) {
     console.error(
