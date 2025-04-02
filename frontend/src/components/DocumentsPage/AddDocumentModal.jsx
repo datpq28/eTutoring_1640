@@ -19,23 +19,23 @@ const userId = localStorage.getItem("userId");
 
 const selectSubject = [
   {
-    value: "math",
+    value: "Math",
     label: "Math",
   },
   {
-    value: "literature",
+    value: "Literature",
     label: "Literature",
   },
   {
-    value: "biology",
+    value: "Biology",
     label: "Biology",
   },
   {
-    value: "history",
+    value: "History",
     label: "History",
   },
   {
-    value: "geology",
+    value: "Geology",
     label: "Geology",
   },
 ];
@@ -69,13 +69,23 @@ export default function AddDocumentModal({
   };
 
   const handleBeforeUploadFile = (file) => {
+    // Kiểm tra loại file
     const isValidType = fileTypes.some((ext) => file.name.endsWith(ext));
     if (!isValidType) {
       message.error("Only PDF, Word, and PowerPoint files are allowed!");
       return isValidType;
     }
+
+    // Kiểm tra kích thước file (5MB = 5 * 1024 * 1024 bytes)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      message.error("File size must be less than 5MB!");
+      return false;
+    }
+
+    // Nếu hợp lệ, lưu file vào state
     setFile(file);
-    return false;
+    return false; // Trả về false để không thực hiện upload tự động (nếu cần)
   };
 
   // Xử lý khi submit form
