@@ -195,9 +195,17 @@ export default function MessagePage() {
         newMsg.senderModel,
         newMsg.content
       );
+      // setMessages((prevMessages) => {
+      //   const updatedMessages = [...prevMessages, newMsg].sort(
+      //     (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+      //   );
+      //   return updatedMessages;
+      // });
       setMessages((prevMessages) => {
         const updatedMessages = [...prevMessages, newMsg].sort(
-          (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+          (a, b) =>
+            dayjs(a.timestamp, "DD/MM/YYYY HH:mm") -
+            dayjs(b.timestamp, "DD/MM/YYYY HH:mm")
         );
         return updatedMessages;
       });

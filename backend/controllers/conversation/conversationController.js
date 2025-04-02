@@ -95,40 +95,40 @@ const addParticipantsToGroup = async (req, res) => {
 };
 
 //Xóa thành viên khỏi nhóm
-const removeParticipantFromGroup = async (req, res) => {
-  const { conversationId } = req.params;
-  const { participantId, participantModel } = req.body;
-
-  try {
-    const conversation = await Conversation.findByIdAndUpdate(
-      conversationId,
-      { $pull: { participants: { participantId, participantModel } } },
-      { new: true }
-    );
-
-    if (!conversation)
-      return res.status(404).json({ message: "Conversation not found" });
-    res.status(200).json(conversation);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-// Xóa toàn bộ cuộc trò chuyện luôn vì là nhắn tin 1 1
 // const removeParticipantFromGroup = async (req, res) => {
 //   const { conversationId } = req.params;
+//   const { participantId, participantModel } = req.body;
 
 //   try {
-//     const conversation = await Conversation.findByIdAndDelete(conversationId);
+//     const conversation = await Conversation.findByIdAndUpdate(
+//       conversationId,
+//       { $pull: { participants: { participantId, participantModel } } },
+//       { new: true }
+//     );
 
-//     if (!conversation) {
+//     if (!conversation)
 //       return res.status(404).json({ message: "Conversation not found" });
-//     }
-
-//     res.status(200).json({ message: "Conversation deleted successfully" });
+//     res.status(200).json(conversation);
 //   } catch (err) {
 //     res.status(500).json({ error: err.message });
 //   }
 // };
+// Xóa toàn bộ cuộc trò chuyện luôn vì là nhắn tin 1 1
+const removeParticipantFromGroup = async (req, res) => {
+  const { conversationId } = req.params;
+
+  try {
+    const conversation = await Conversation.findByIdAndDelete(conversationId);
+
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
+
+    res.status(200).json({ message: "Conversation deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
 
 module.exports = {
   createConversation,

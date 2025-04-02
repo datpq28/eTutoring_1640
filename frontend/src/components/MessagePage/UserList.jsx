@@ -81,17 +81,28 @@ export default function UserList({
       okText: "Yes",
       okType: "danger",
       cancelText: "No",
-      async onOk() {
-        await removeConversations(
-          conversationsIdByUser,
-          participantId,
-          participantModel
-        );
+      onOk: async () => {
+        try {
+          await removeConversations(
+            conversationsIdByUser,
+            participantId,
+            participantModel
+          );
+          notification.success({
+            message: "Conversation deleted",
+            duration: 3,
+          });
+        } catch (error) {
+          console.error("Error deleting conversation:", error);
+          notification.error({
+            message: "Failed to delete conversation",
+            description: error.message,
+            duration: 3,
+          });
+        }
+      },
+      afterClose: async () => {
         await fetchConversations();
-        notification.success({
-          message: "Conversation deleted",
-          duration: 3,
-        });
       },
     });
   };
@@ -122,6 +133,7 @@ export default function UserList({
               );
               const lastMessage = item.lastMessage || "No messages yet";
               const conversationsIdByUser = item._id;
+              console.log("otherParticipant", otherParticipant);
               return (
                 <Card
                   key={item._id || index}
@@ -139,47 +151,48 @@ export default function UserList({
                   hoverable
                   onClick={() => handleSelectUser(item._id, index)}
                 >
-                  {hoveredCardId === item._id && (
-                    <Popover
-                      placement="bottom"
-                      content={
-                        <Flex vertical gap="small">
-                          <Button
-                            color="default"
-                            variant="text"
-                            onClick={() =>
-                              showDeleteConfirm(conversationsIdByUser, user)
-                            }
-                          >
-                            <Space align="center" size="small">
-                              <Avatar
-                                size="small"
-                                style={{ backgroundColor: "#ccc" }}
-                                icon={<DeleteOutlined />}
-                              />
-                              Delete Conversation
-                            </Space>
-                          </Button>
-                        </Flex>
-                      }
-                      trigger="click"
-                    >
-                      <Button
-                        variant="filled"
-                        shape="circle"
-                        color="default"
-                        style={{
-                          position: "absolute",
-                          top: "50%",
-                          transform: "translateY(-50%)",
-                          right: "2rem",
-                        }}
-                        onClick={handleOpenOptionsCard}
+                  {hoveredCardId === item._id &&
+                    user?.participantModel === "tutor" && (
+                      <Popover
+                        placement="bottom"
+                        content={
+                          <Flex vertical gap="small">
+                            <Button
+                              color="default"
+                              variant="text"
+                              onClick={() =>
+                                showDeleteConfirm(conversationsIdByUser, user)
+                              }
+                            >
+                              <Space align="center" size="small">
+                                <Avatar
+                                  size="small"
+                                  style={{ backgroundColor: "#ccc" }}
+                                  icon={<DeleteOutlined />}
+                                />
+                                Delete Conversation
+                              </Space>
+                            </Button>
+                          </Flex>
+                        }
+                        trigger="click"
                       >
-                        <EllipsisOutlined />
-                      </Button>
-                    </Popover>
-                  )}
+                        <Button
+                          variant="filled"
+                          shape="circle"
+                          color="default"
+                          style={{
+                            position: "absolute",
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            right: "2rem",
+                          }}
+                          onClick={handleOpenOptionsCard}
+                        >
+                          <EllipsisOutlined />
+                        </Button>
+                      </Popover>
+                    )}
                   <Card.Meta
                     avatar={
                       <Avatar
