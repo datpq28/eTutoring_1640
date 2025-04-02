@@ -7,7 +7,7 @@ const {
   verifyOtp,
   updatePassword,
   deleteUser,
-  logoutUser
+  logoutUser,
 } = require("../controllers/authController");
 
 const {
@@ -19,7 +19,8 @@ const {
   fetchAllMeetings,
   updateMeetingStatus,
   assignTutorToStudentAll,
-  viewListStudentByTutor
+  viewListStudentByTutor,
+  viewListTutorByStudent,
 } = require("../controllers/admin/admin");
 
 const { approveAdmin } = require("../controllers/authController");
@@ -48,7 +49,7 @@ router.post("/assignTutorToStudentAll", assignTutorToStudentAll);
 router.get("/approveAdmin", verifyToken, approveAdmin);
 router.post("/sendAdminApprovalRequest", sendAdminApprovalRequest);
 router.get("/viewListStudentByTutor/:tutorId", viewListStudentByTutor);
-
+router.get("/viewListTutorByStudent/:studentId", viewListTutorByStudent);
 router.get("/meetings/all", fetchAllMeetings); // Lấy danh sách cuộc họp chờ duyệt
 router.put("/meetings/:meetingId/status", updateMeetingStatus); // Cập nhật trạng thái cuộc họp
 

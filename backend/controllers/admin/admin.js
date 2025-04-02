@@ -3,7 +3,10 @@ const Student = require("../../models/StudentModel");
 const Tutor = require("../../models/TutorStudent");
 
 const Meeting = require("../../models/MeetingModel");
-const { sendMailAssignNewTutor, sendMailAssignNewTutorAll  } = require("../mailService/mailService");
+const {
+  sendMailAssignNewTutor,
+  sendMailAssignNewTutorAll,
+} = require("../mailService/mailService");
 
 const viewListUser = async (req, res) => {
   try {
@@ -267,6 +270,48 @@ const viewListStudentByTutor = async (req, res) => {
   }
 };
 
+const viewListTutorByStudent = async (req, res) => {
+  try {
+    const { studentId } = req.params;
+
+    // Validate studentId
+    if (!mongoose.Types.ObjectId.isValid(studentId)) {
+      return res.status(400).json({ error: "Invalid Student ID" });
+    }
+
+    // Find the student
+    const student = await Student.findById(studentId);
+    if (!student) {
+      return res.status(404).json({ error: "Student not found" });
+    }
+
+    // Check if student has a tutor assigned
+    if (!student.tutorId) {
+      return res.status(200).json({
+        message: "No tutor assigned to this student",
+        tutor: null,
+      });
+    }
+
+    // Find the tutor
+    const tutor = await Tutor.findById(student.tutorId).select(
+      "firstname lastname email"
+    ); // Select specific fields if needed
+
+    if (!tutor) {
+      return res.status(404).json({ error: "Assigned tutor not found" });
+    }
+
+    res.status(200).json({
+      message: "Tutor retrieved successfully",
+      tutor,
+    });
+  } catch (error) {
+    console.error("Error fetching tutor by student:", error);
+    res.status(500).json({ error: "Failed to fetch tutor" });
+  }
+};
+
 module.exports = {
   viewListUser,
   lockUser,
@@ -276,5 +321,6 @@ module.exports = {
   updateMeetingStatus,
   fetchAllMeetings,
   assignTutorToStudentAll,
-  viewListStudentByTutor
+  viewListStudentByTutor,
+  viewListTutorByStudent,
 };
