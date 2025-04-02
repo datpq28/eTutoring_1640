@@ -20,10 +20,17 @@ import {
   downloadDocument,
 } from "../../../api_service/document_service.js";
 import AddDocumentModal from "./AddDocumentModal.jsx";
+import DetailDocumentModal from "./DetailDocumentModal.jsx";
 
+const role = localStorage.getItem("role");
+const userId = localStorage.getItem("userId");
 export default function DocumentList({ documents, fetchDocuments }) {
   const [isAddDocumentModalVisible, setIsAddDocumentModalVisible] =
     useState(false);
+  const [isDetailDocumentModalVisible, setIsDetailDocumentModalVisible] =
+    useState(false);
+  const [detailDocument, setDetailDocument] = useState(null);
+
   const [fileUpdate, setFileUpdate] = useState(null);
 
   const handleDeleteDocument = (id) => {
@@ -61,6 +68,15 @@ export default function DocumentList({ documents, fetchDocuments }) {
 
   const handleCloseAddDocumentModal = () => {
     setIsAddDocumentModalVisible(false);
+  };
+
+  const handleOpenDetailDocumentModal = (document) => {
+    setIsDetailDocumentModalVisible(true);
+    setDetailDocument(document);
+  };
+
+  const handleCloseDetailDocumentModal = () => {
+    setIsDetailDocumentModalVisible(false);
   };
 
   const columns = [
@@ -152,24 +168,35 @@ export default function DocumentList({ documents, fetchDocuments }) {
       key: "action",
       render: (_, record) => {
         console.log("record", record);
+        console.log("role", role);
         return (
           <Space size="middle">
-            <Button icon={<FileTextOutlined />}>Details</Button>
             <Button
-              onClick={() => handleOpenAddDocumentModal(record)}
-              color="orange"
-              variant="outlined"
-              icon={<EditOutlined />}
+              icon={<FileTextOutlined />}
+              onClick={() => handleOpenDetailDocumentModal(record)}
             >
-              Edit
+              Details
             </Button>
-            <Button
-              danger
-              onClick={() => handleDeleteDocument(record._id)}
-              icon={<DeleteOutlined />}
-            >
-              Xoá
-            </Button>
+            {role === "tutor" && record?.uploadedBy?._id === userId && (
+              <Button
+                onClick={() => handleOpenAddDocumentModal(record)}
+                color="orange"
+                variant="outlined"
+                icon={<EditOutlined />}
+              >
+                Edit
+              </Button>
+            )}
+
+            {role === "tutor" && record?.uploadedBy?._id === userId && (
+              <Button
+                danger
+                onClick={() => handleDeleteDocument(record._id)}
+                icon={<DeleteOutlined />}
+              >
+                Xoá
+              </Button>
+            )}
             <Button
               type="primary"
               download
@@ -192,6 +219,11 @@ export default function DocumentList({ documents, fetchDocuments }) {
         open={isAddDocumentModalVisible}
         onCancel={handleCloseAddDocumentModal}
         fileUpdate={fileUpdate}
+      />
+      <DetailDocumentModal
+        open={isDetailDocumentModalVisible}
+        onCancel={handleCloseDetailDocumentModal}
+        document={detailDocument}
       />
     </Card>
   );

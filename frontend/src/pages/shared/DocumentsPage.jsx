@@ -24,7 +24,11 @@ export default function DocumentsPage() {
   return (
     <Content style={stylesInline.content}>
       <Flex vertical gap="large">
-        <DocumentActionsBar fetchDocuments={fetchDocuments} />
+        <DocumentActionsBar
+          fetchDocuments={fetchDocuments}
+          documents={documents}
+          setDocuments={setDocuments}
+        />
         {isLoading ? (
           <LoadingSection length={3} />
         ) : (

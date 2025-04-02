@@ -41,7 +41,11 @@ export default function CommentBox({ onOpenModalComment, blogId }) {
   const fetchComments = useCallback(async () => {
     try {
       const commentsData = await getComments(blogId);
-      setComments(commentsData);
+      // Sắp xếp các bình luận theo createdAt (tăng dần)
+      const sortedComments = commentsData.sort(
+        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+      );
+      setComments(sortedComments);
     } catch (error) {
       message.error("Failed to load comments");
       console.error("Error fetching comments:", error);
@@ -50,8 +54,6 @@ export default function CommentBox({ onOpenModalComment, blogId }) {
   useEffect(() => {
     fetchComments();
   }, [fetchComments]);
-
-  console.log("comments", comments);
 
   const onCommentFinish = async () => {
     if (!commentContent.trim()) return;
@@ -113,8 +115,6 @@ export default function CommentBox({ onOpenModalComment, blogId }) {
     }
   };
 
-  console.log(comments);
-
   return (
     <Card
       title="Comments Box"
@@ -127,7 +127,7 @@ export default function CommentBox({ onOpenModalComment, blogId }) {
       }
     >
       <Flex vertical gap="middle">
-        <div style={{ height: "30rem", overflowY: "auto" }}>
+        <div style={{ maxHeight: "30rem", overflowY: "auto" }}>
           {comments.length === 0 ? (
             <Empty description="No comments yet. Be the first to comment!" />
           ) : (
@@ -137,8 +137,8 @@ export default function CommentBox({ onOpenModalComment, blogId }) {
               renderItem={(item) => (
                 <List.Item
                   actions={
-                    item.authorId._id === userId
-                      ? commentIsEditing === item._id
+                    item?.authorId?._id === userId
+                      ? commentIsEditing === item?._id
                         ? null
                         : [
                             <Button
@@ -147,7 +147,7 @@ export default function CommentBox({ onOpenModalComment, blogId }) {
                               variant="filled"
                               icon={<EditOutlined />}
                               onClick={() =>
-                                handleOpenEditComment(item.content, item._id)
+                                handleOpenEditComment(item?.content, item?._id)
                               }
                             >
                               Edit
@@ -159,7 +159,7 @@ export default function CommentBox({ onOpenModalComment, blogId }) {
                               okText="Yes"
                               cancelText="No"
                               placement="topRight"
-                              onConfirm={() => handleDeleteComment(item._id)}
+                              onConfirm={() => handleDeleteComment(item?._id)}
                             >
                               <Button
                                 color="danger"
@@ -176,26 +176,26 @@ export default function CommentBox({ onOpenModalComment, blogId }) {
                   <List.Item.Meta
                     avatar={
                       <Avatar
-                        src={`https://api.dicebear.com/7.x/miniavs/svg?seed=${item.authorId._id}`}
+                        src={`https://api.dicebear.com/7.x/miniavs/svg?seed=${item?.authorId?._id}`}
                       />
                     }
                     title={
                       <Space size="small" align="center">
                         <Typography.Text strong>
-                          {`${item.authorId.firstname} ${item.authorId.lastname}`}
+                          {`${item?.authorId?.firstname} ${item?.authorId?.lastname}`}
                         </Typography.Text>
                         <Typography.Text
                           type="secondary"
                           style={{ fontSize: "1.2rem" }}
                         >
-                          at {formatTime(item.createdAt)}
+                          at {formatTime(item?.createdAt)}
                         </Typography.Text>
                       </Space>
                     }
                     //item.content
                     description={
-                      commentIsEditing === item._id &&
-                      item.authorId._id === userId ? (
+                      commentIsEditing === item?._id &&
+                      item?.authorId._id === userId ? (
                         <Form form={editForm} onFinish={onEditCommentFinish}>
                           <Flex gap="small" align="center">
                             <Input.TextArea
@@ -227,7 +227,7 @@ export default function CommentBox({ onOpenModalComment, blogId }) {
                           </Flex>
                         </Form>
                       ) : (
-                        item.content
+                        item?.content
                       )
                     }
                   />
