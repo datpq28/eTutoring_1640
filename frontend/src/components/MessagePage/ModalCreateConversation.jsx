@@ -57,23 +57,7 @@ export default function ModalCreateConversation({
     selectedUserModel
   ) => {
     console.log("userListMap", userListMap);
-    const selectedUserIdToCreateNewConversationWith = conversationsByUser
-      .find((conversation) =>
-        conversation.participants.some(
-          (participant) => participant.participantId !== userId
-        )
-      )
-      ?.participants.find(
-        (participant) => participant.participantId !== userId
-      )?.participantId;
-
-    if (selectedUserIdToCreateNewConversationWith === selectedUserId) {
-      notification.error({
-        message: "This conversation already exists.",
-        duration: 3,
-      });
-      return;
-    }
+    console.log("conversationsByUser", conversationsByUser);
     if (!selectedUserId) {
       notification.error({
         message: "Please select a person to continue.",
@@ -81,6 +65,21 @@ export default function ModalCreateConversation({
       });
       return;
     }
+    // Kiểm tra xem đã có cuộc trò chuyện với selectedUserId chưa
+    const conversationExists = conversationsByUser.some((conversation) =>
+      conversation.participants.some(
+        (participant) => participant.participantId === selectedUserId
+      )
+    );
+
+    if (conversationExists) {
+      notification.error({
+        message: "This conversation already exists.",
+        duration: 3,
+      });
+      return;
+    }
+
     try {
       const participants = [
         { participantId: userId, participantModel: userModel },
@@ -88,9 +87,9 @@ export default function ModalCreateConversation({
       ];
 
       await createConversations(participants);
-      onCancel();
       setUser(null);
       await fetchConversations();
+      onCancel();
     } catch (error) {
       console.error("Error creating conversation:", error);
     }
