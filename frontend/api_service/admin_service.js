@@ -23,7 +23,9 @@ export const lockUser = async (email) => {
 
 export const unLockUser = async (email) => {
   try {
-    const response = await axios.put(`${API_URL}/api/auth/unLockUser`, { email });
+    const response = await axios.put(`${API_URL}/api/auth/unLockUser`, {
+      email,
+    });
     return response.data;
   } catch (error) {
     console.error("Error:", error);
@@ -34,7 +36,7 @@ export const unLockUser = async (email) => {
 export const deleteUser = async (email) => {
   try {
     const response = await axios.post(`${API_URL}/api/auth/deleteUser`, {
-      email, 
+      email,
     });
     return response.data;
   } catch (error) {
@@ -57,20 +59,29 @@ export const fetchAllMeetings = async () => {
 // 🆕 Cập nhật trạng thái cuộc họp (duyệt hoặc từ chối)
 export const updateMeetingStatus = async (meetingId, status) => {
   try {
-    const response = await axios.put(`${API_URL}/api/auth/meetings/${meetingId}/status`, { status }); // ⚠️ Kiểm tra đường dẫn
+    const response = await axios.put(
+      `${API_URL}/api/auth/meetings/${meetingId}/status`,
+      { status }
+    ); // ⚠️ Kiểm tra đường dẫn
     return response.data;
   } catch (error) {
-    console.error(`Lỗi khi cập nhật trạng thái cuộc họp ${status}:`, error.response?.data || error.message);
+    console.error(
+      `Lỗi khi cập nhật trạng thái cuộc họp ${status}:`,
+      error.response?.data || error.message
+    );
     throw error;
   }
 };
 
 export const assignTutorToStudentAll = async (studentIds, tutorId) => {
   try {
-    const response = await axios.post(`${API_URL}/api/auth/assignTutorToStudentAll`, {
-      studentIds,
-      tutorId,
-    });
+    const response = await axios.post(
+      `${API_URL}/api/auth/assignTutorToStudentAll`,
+      {
+        studentIds,
+        tutorId,
+      }
+    );
     return response.data;
   } catch (error) {
     console.error("Lỗi khi gán tutor cho học sinh:", error);
@@ -86,6 +97,18 @@ export const viewListStudentByTutor = async (tutorId) => {
     return response.data;
   } catch (error) {
     console.error("Lỗi khi lấy danh sách học sinh theo tutor:", error);
+    throw error;
+  }
+};
+
+export const viewListTutorByStudent = async (studentId) => {
+  try {
+    const response = await axios.get(
+      `${API_URL}/api/auth/viewListTutorByStudent/${studentId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching tutor by student:", error);
     throw error;
   }
 };
