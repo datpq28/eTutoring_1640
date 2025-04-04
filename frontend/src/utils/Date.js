@@ -14,6 +14,12 @@ dayjs.extend(localizedFormat);
 dayjs.extend(isToday);
 dayjs.extend(isSameOrAfter);
 
+function getDayName(dateString) {
+  const date = new Date(dateString);
+  const dayName = date.toLocaleString("en-US", { weekday: "long" });
+  return dayName;
+}
+
 const formatTime = (input) => {
   const now = dayjs();
   const date = dayjs(input);
@@ -44,4 +50,4 @@ const formatTime = (input) => {
   return date.format("DD/MM/YYYY");
 };
 
-export { formatCustomDate, formatTime };
+export { formatCustomDate, formatTime, getDayName };

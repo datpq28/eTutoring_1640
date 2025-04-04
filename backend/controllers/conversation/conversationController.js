@@ -130,6 +130,29 @@ const removeParticipantFromGroup = async (req, res) => {
   }
 };
 
+// Lấy tất cả các cuộc trò chuyện trong hệ thống
+const getAllConversations = async (req, res) => {
+  try {
+    // Lấy tất cả các cuộc trò chuyện, sắp xếp theo thời gian cập nhật gần nhất
+    const conversations = await Conversation.find({})
+      .sort({ updatedAt: -1 })
+      .lean(); // Sử dụng .lean() để tăng hiệu suất nếu không cần đối tượng Mongoose đầy đủ
+
+    if (!conversations || conversations.length === 0) {
+      return res
+        .status(200)
+        .json({ message: "No conversations found", data: [] });
+    }
+
+    res.status(200).json({
+      message: "All conversations retrieved successfully",
+      data: conversations,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 module.exports = {
   createConversation,
   getConversations,
@@ -137,4 +160,5 @@ module.exports = {
   deleteConversation,
   addParticipantsToGroup,
   removeParticipantFromGroup,
+  getAllConversations,
 };
