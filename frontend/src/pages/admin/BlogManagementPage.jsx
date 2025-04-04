@@ -1,18 +1,7 @@
-import {
-  Card,
-  Flex,
-  Layout,
-  List,
-  message,
-  Table,
-  Button,
-  Popconfirm,
-  Tag,
-} from "antd";
+import { Card, Layout, message, Table, Button, Popconfirm, Tag } from "antd";
 import { deleteBlog, getBlogs } from "../../../api_service/blog_service.js";
 import { useEffect, useState } from "react";
 import LoadingSection from "../../components/common/LoadingSection.jsx";
-import EmptySection from "../../components/common/EmptySection.jsx";
 import dayjs from "dayjs";
 const { Content } = Layout;
 
