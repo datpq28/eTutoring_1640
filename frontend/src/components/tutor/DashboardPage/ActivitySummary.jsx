@@ -7,34 +7,20 @@ import {
 import { Avatar, Card, Col, Flex, Row, Typography } from "antd";
 import { useEffect, useState } from "react";
 import { getConversations } from "../../../../api_service/mesages_service";
-import { getDocuments } from "../../../../api_service/document_service";
-import { getCommentsByDocument } from "../../../../api_service/commentdocument_service";
 import { getBlogs } from "../../../../api_service/blog_service";
+import { getDocuments } from "../../../../api_service/document_service";
+
 const { Title, Text } = Typography;
 const userId = localStorage.getItem("userId");
 const role = localStorage.getItem("role");
 export default function ActivitySummary() {
   const [conversations, setConversations] = useState([]);
-  const [commentsDoc, setCommentsDoc] = useState([]);
   const [blogs, setBlogs] = useState([]);
+  const [documents, setDocuments] = useState([]);
   useEffect(() => {
     const fetchConversations = async () => {
       const conversations = await getConversations(userId, role);
       setConversations(conversations);
-    };
-    const fetchCommentsDocuments = async () => {
-      const documents = await getDocuments();
-      const allComments = [];
-
-      for (const item of documents) {
-        const data = await getCommentsByDocument(item._id);
-        const filteredComments = data
-          .filter((comment) => comment?.authorId._id === userId) // Chỉ lấy comment của user hiện tại
-          .map((comment) => comment?.authorId);
-
-        allComments.push(...filteredComments);
-      }
-      setCommentsDoc(allComments);
     };
     const fetchBlogs = async () => {
       const blogs = await getBlogs();
@@ -43,12 +29,18 @@ export default function ActivitySummary() {
       );
       setBlogs(filteredBlogs);
     };
-
+    const fetchDocuments = async () => {
+      const documents = await getDocuments();
+      console.log("documents", documents);
+      const filteredDocuments = documents.filter(
+        (document) => document.uploaderId._id === userId
+      );
+      setDocuments(filteredDocuments);
+    };
     fetchConversations();
-    fetchCommentsDocuments();
     fetchBlogs();
+    fetchDocuments();
   }, []);
-  console.log("blogs", blogs);
   return (
     <Card
       title={
@@ -110,7 +102,7 @@ export default function ActivitySummary() {
               />
             }
             title="Documents"
-            value={commentsDoc?.length || 1}
+            value={documents?.length}
           />
         </Col>
         <Col span={6}>
