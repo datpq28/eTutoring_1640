@@ -1,24 +1,29 @@
-import { Card, Flex, Layout, List, message } from "antd";
-import BlogActionBar from "../../components/BlogPage/BlogActionBar.jsx";
-import { getBlogs } from "../../../api_service/blog_service.js";
+import {
+  Card,
+  Flex,
+  Layout,
+  List,
+  message,
+  Table,
+  Button,
+  Popconfirm,
+  Tag,
+} from "antd";
+import { deleteBlog, getBlogs } from "../../../api_service/blog_service.js";
 import { useEffect, useState } from "react";
 import LoadingSection from "../../components/common/LoadingSection.jsx";
 import EmptySection from "../../components/common/EmptySection.jsx";
-import CardBlogAdmin from "../../components/BlogPage/CardBlogAdmin.jsx";
-import ModalBlogActions from "../../components/BlogPage/ModalBlogActions.jsx";
-const userId = localStorage.getItem("userId");
+import dayjs from "dayjs";
 const { Content } = Layout;
-export default function BlogPage() {
+
+export default function BlogManagementPage() {
   const [blogs, setBlogs] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isModalBlogActionsVisible, setIsModalBlogActionsVisible] =
-    useState(false);
-  const [searchValue, setSearchValue] = useState("");
-  const [optionSearch, setOptionSearch] = useState("all");
-  const [userSegmented, setUserSegmented] = useState("all_blogs");
+
   useEffect(() => {
     fetchBlogs();
   }, []);
+
   const fetchBlogs = async () => {
     setIsLoading(true);
     try {
@@ -31,87 +36,106 @@ export default function BlogPage() {
       setIsLoading(false);
     }
   };
-  const handleOkForm = () => {
-    setIsModalBlogActionsVisible(false);
-    fetchBlogs();
+
+  const handleDelete = async (id) => {
+    // Giả lập xóa, bạn có thể gọi API xóa tại đây
+    setBlogs((prev) => prev.filter((blog) => blog._id !== id));
+    await deleteBlog(id);
+    message.success("Deleted successfully");
   };
 
-  const handleCancelForm = () => {
-    setIsModalBlogActionsVisible(false);
-  };
+  const columns = [
+    {
+      title: "Title",
+      dataIndex: "title",
+      key: "title",
+      render: (text) => <strong>{text}</strong>,
+    },
+    {
+      title: "Uploader Name",
+      dataIndex: "uploaderName",
+      key: "uploaderName",
+    },
+    {
+      title: "Email",
+      dataIndex: "email",
+      key: "email",
+    },
+    {
+      title: "Uploader Type",
+      dataIndex: "uploaderType",
+      key: "uploaderType",
+      render: (type) => (
+        <Tag color={type === "Tutor" ? "geekblue" : "green"}>{type}</Tag>
+      ),
+    },
+    {
+      title: "Tags",
+      dataIndex: "tags",
+      key: "tags",
+      render: (tags) =>
+        tags?.map((tag) => (
+          <Tag key={tag} color="purple">
+            {tag}
+          </Tag>
+        )),
+    },
+    {
+      title: "Likes",
+      dataIndex: "likes",
+      key: "likes",
+    },
+    {
+      title: "Created At",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      render: (text) => dayjs(text).format("YYYY-MM-DD HH:mm"),
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      render: (_, record) => (
+        <Popconfirm
+          title="Are you sure to delete this blog?"
+          onConfirm={() => handleDelete(record.key)}
+          okText="Yes"
+          cancelText="No"
+        >
+          <Button danger type="link">
+            Delete
+          </Button>
+        </Popconfirm>
+      ),
+    },
+  ];
 
-  const handleOpenModalActions = () => {
-    setIsModalBlogActionsVisible(true);
-  };
-
-  const handleChangeOptionSearch = (value) => {
-    setOptionSearch(value);
-  };
-
-  const handleChangeUserSegmented = (value) => {
-    setUserSegmented(value);
-  };
-
-  const handleChangeSearchValue = (value) => {
-    setSearchValue(value);
-  };
-  const filteredBlogs = blogs.filter((blog) => {
-    const matchesSearch =
-      !searchValue ||
-      (optionSearch === "title" &&
-        blog.title.toLowerCase().includes(searchValue.toLowerCase())) ||
-      (optionSearch === "tags" &&
-        blog.tags.some((tag) =>
-          tag.toLowerCase().includes(searchValue.toLowerCase())
-        )) ||
-      optionSearch === "all";
-
-    const matchesUser =
-      userSegmented === "all_blogs" ||
-      (userSegmented === "my_blogs" && blog.uploaderId._id === userId);
-
-    return matchesSearch && matchesUser;
-  });
+  const dataSource = blogs.map((blog) => ({
+    key: blog._id,
+    title: blog.title,
+    uploaderName: `${blog.uploaderId?.firstname || ""} ${
+      blog.uploaderId?.lastname || ""
+    }`,
+    email: blog.uploaderId?.email || "N/A",
+    uploaderType: blog.uploaderType,
+    tags: blog.tags,
+    likes: blog.likes,
+    createdAt: blog.createdAt,
+  }));
 
   return (
-    <>
-      {isModalBlogActionsVisible && (
-        <ModalBlogActions
-          isModalOpen={isModalBlogActionsVisible}
-          onOK={handleOkForm}
-          onCancel={handleCancelForm}
-          blogProp={null}
-        />
-      )}
-      <Content style={stylesInline.content}>
-        <Flex vertical gap="middle">
-          <BlogActionBar
-            onChangeSearchValue={handleChangeSearchValue}
-            onChangeOptionSearch={handleChangeOptionSearch}
-            onChangeUserSegmented={handleChangeUserSegmented}
-            onOpenModalActions={handleOpenModalActions}
+    <Content style={stylesInline.content}>
+      {isLoading ? (
+        <LoadingSection />
+      ) : (
+        <Card title="Blog Management">
+          <Table
+            dataSource={dataSource}
+            columns={columns}
+            pagination={{ pageSize: 5 }}
           />
-          {isLoading ? (
-            <LoadingSection length={3} />
-          ) : filteredBlogs.length === 0 ? (
-            <EmptySection />
-          ) : (
-            <>
-              <Card>
-                <List
-                  itemLayout="vertical"
-                  size="large"
-                  dataSource={filteredBlogs}
-                  renderItem={(blog, index) => (
-                    <CardBlogAdmin key={index} blog={blog} fetchBlogs={fetchBlogs} />
-                  )}
-                />
-              </Card>
-            </>
-          )}
-        </Flex>
-      </Content>
-    </>
+        </Card>
+      )}
+    </Content>
   );
 }
 

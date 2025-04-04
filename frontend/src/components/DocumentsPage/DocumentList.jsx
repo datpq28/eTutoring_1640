@@ -24,7 +24,11 @@ import DetailDocumentModal from "./DetailDocumentModal.jsx";
 
 const role = localStorage.getItem("role");
 const userId = localStorage.getItem("userId");
-export default function DocumentList({ documents, fetchDocuments }) {
+export default function DocumentList({
+  documents,
+  fetchDocuments,
+  admin = false,
+}) {
   const [isAddDocumentModalVisible, setIsAddDocumentModalVisible] =
     useState(false);
   const [isDetailDocumentModalVisible, setIsDetailDocumentModalVisible] =
@@ -189,6 +193,15 @@ export default function DocumentList({ documents, fetchDocuments }) {
             )}
 
             {role === "tutor" && record?.uploadedBy?._id === userId && (
+              <Button
+                danger
+                onClick={() => handleDeleteDocument(record._id)}
+                icon={<DeleteOutlined />}
+              >
+                Xoá
+              </Button>
+            )}
+            {admin && (
               <Button
                 danger
                 onClick={() => handleDeleteDocument(record._id)}
