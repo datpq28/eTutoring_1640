@@ -1,111 +1,204 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Layout, Button, List, Input } from "antd";
-import Peer from "peerjs";
+import { Layout, Button, List, Input,Space } from "antd";
 import { io } from "socket.io-client";
 import { useParams } from "react-router-dom";
 
 const { Content } = Layout;
 
 export default function MeetingPageShared() {
-  const { meetingId } = useParams();
-  const [peerId, setPeerId] = useState("");
+  const { meetingId } = useParams(); // Get meetingId from the URL
   const [peers, setPeers] = useState({});
   const [messages, setMessages] = useState([]);
   const [messageInput, setMessageInput] = useState("");
 
-  const peer = useRef(null);
-  const socket = useRef(io("http://localhost:5090"));
-  const userStream = useRef(null);
+  const socket = useRef(io("http://localhost:5090")); // Connect to the Socket.IO server
+  const localStream = useRef(null);
+  const peerConnections = useRef({}); // Store WebRTC peer connections
+  const videoRefs = useRef({}); // Store video elements for each peer
+  const [socketId, setSocketId] = useState(null);
 
   useEffect(() => {
     if (!meetingId) return;
 
-    peer.current = new Peer();
-
-    peer.current.on("open", (id) => {
-      setPeerId(id);
-      socket.current.emit("join_meeting", { meetingId, peerId: id });
-    });
-
+    // Get user media (camera and microphone)
     navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
-      userStream.current = stream;
+      localStream.current = stream;
 
+      // Display the local video stream
       setPeers((prev) => ({
         ...prev,
-        [peer.current.id]: { stream },
+        local: { stream },
       }));
-    });
 
-    socket.current.on("user_connected", ({ peerId }) => {
-      console.log(`🔗 User connected: ${peerId}`);
-      setPeers((prev) => ({
-        ...prev,
-        [peerId]: { stream: null },
-      }));
-    });
+      const userId = localStorage.getItem("userId");
+      const role = localStorage.getItem("role");
+    
+      if (userId && role) {
+        socket.emit("register_user", { userId, role });
+        console.log("Socket registered:", userId);
+      }
 
-    peer.current.on("call", (call) => {
-      console.log("📞 Incoming call from", call.peer);
-      call.answer(userStream.current);
+      // Join the meeting room
+      socket.current.emit("join_room", { meetingId });
 
-      call.on("stream", (remoteStream) => {
-        console.log("🎥 Received remote stream from", call.peer);
-        setPeers((prev) => ({
-          ...prev,
-          [call.peer]: { stream: remoteStream },
-        }));
+      // Listen for the 'connect' event to get the socket ID
+      socket.current.on("connect", () => {
+        setSocketId(socket.current.id); // Store the socket ID in state
+        console.log("🔗 Connected to Socket.IO server with ID:", socket.current.id);
       });
-    });
 
-    socket.current.on("receive_message", ({ sender, text }) => {
-      console.log(`📩 Received message from ${sender}: ${text}`); // ✅ Debug
-      setMessages((prev) => [...prev, { sender, text }]);
+      // Handle new user joining the room
+      socket.current.on("user_joined", ({ userId }) => {
+        console.log(`🔗 User joined: ${userId}`);
+        createPeerConnection(userId, true);
+      });
+
+      // Handle receiving an offer
+      socket.current.on("offer", async ({ userId, offer }) => {
+        console.log(`📩 Received offer from ${userId}`);
+        const peerConnection = createPeerConnection(userId, false);
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        socket.current.emit("answer", { userId, answer });
+      });
+
+      // Handle receiving an answer
+      socket.current.on("answer", async ({ userId, answer }) => {
+        console.log(`📩 Received answer from ${userId}`);
+        const peerConnection = peerConnections.current[userId];
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+      });
+
+      // Handle receiving ICE candidates
+      socket.current.on("ice_candidate", ({ userId, candidate }) => {
+        console.log(`📩 Received ICE candidate from ${userId}`);
+        const peerConnection = peerConnections.current[userId];
+        if (peerConnection) {
+          peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+        }
+      });
+
+      // Handle user leaving the room
+      socket.current.on("user_left", ({ userId }) => {
+        console.log(`❌ User left: ${userId}`);
+        if (peerConnections.current[userId]) {
+          peerConnections.current[userId].close();
+          delete peerConnections.current[userId];
+        }
+        setPeers((prev) => {
+          const updatedPeers = { ...prev };
+          delete updatedPeers[userId];
+          return updatedPeers;
+        });
+      });
+
+       // Handle disconnection
+  socket.current.on("disconnect", () => {
+    console.log("❌ Disconnected from Socket.IO server");
+    setSocketId(null); // Reset the socket ID on disconnect
+  });
     });
 
     return () => {
-      peer.current.destroy();
+      // Cleanup on component unmount
+      socket.current.emit("leave_room", { meetingId });
+      Object.values(peerConnections.current).forEach((peerConnection) => peerConnection.close());
       socket.current.disconnect();
-      socket.current.off("receive_message");
+      socket.current.off("connect");
+      socket.current.off("disconnect");
     };
   }, [meetingId]);
 
-  const startCall = () => {
-    if (!userStream.current) return;
+  useEffect(() => {
+    console.log("Current socketId:", socket.current);
+  }, [socketId]);
 
-    Object.keys(peers).forEach((remotePeerId) => {
-      if (remotePeerId !== peer.current.id) {
-        console.log(`📞 Calling ${remotePeerId}`);
-        const call = peer.current.call(remotePeerId, userStream.current);
-
-        call.on("stream", (remoteStream) => {
-          console.log(`🎥 Received remote stream from ${remotePeerId}`);
-          setPeers((prev) => ({
-            ...prev,
-            [remotePeerId]: { stream: remoteStream },
-          }));
-        });
-      }
+  const createPeerConnection = (userId, isInitiator) => {
+    const peerConnection = new RTCPeerConnection({
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
     });
+  
+    // Add local stream tracks to the peer connection
+    localStream.current.getTracks().forEach((track) => {
+      peerConnection.addTrack(track, localStream.current);
+    });
+  
+    // Handle receiving remote streams
+    peerConnection.ontrack = (event) => {
+      console.log(`🎥 Received remote stream from ${userId}`);
+      setPeers((prev) => ({
+        ...prev,
+        [userId]: { stream: event.streams[0] },
+      }));
+    };
+  
+    // Handle ICE candidates
+    peerConnection.onicecandidate = (event) => {
+      if (event.candidate) {
+        socket.current.emit("ice_candidate", { userId, candidate: event.candidate });
+      }
+    };
+  
+    peerConnections.current[userId] = peerConnection;
+  
+    if (isInitiator) {
+      peerConnection.createOffer().then((offer) => {
+        peerConnection.setLocalDescription(offer);
+        socket.current.emit("offer", { userId, offer });
+      });
+    }
+  
+    return peerConnection;
   };
 
   const sendMessage = () => {
-    if (messageInput.trim() === "") return; 
-    const messageData = { sender: peerId, text: messageInput };
+    if (messageInput.trim() === "") return;
+    const socketId = socket.current.id; // Get the socket ID from the current socket instance
+    console.log("Current socket ID:", socketId); // Log the socket ID for debugging
   
-    console.log("📤 Sending message:", messageData); // ✅ Debug
+    if (!socketId) {
+      console.error("❌ Socket ID is not available yet.");
+      return;
+    }
   
-    socket.current.emit("send_message", { meetingId, ...messageData });
+    const messageData = {
+      meetingId, // Include the meetingId
+      sender: socketId, // Use the socket ID as the sender
+      text: messageInput,
+    };
   
-    // Không thêm tin nhắn ngay tại đây nữa, chờ server phản hồi để đồng bộ
+    console.log("📤 Sending message:", messageData);
+  
+    // Emit the message to the backend
+    socket.current.emit("send_message", messageData);
+  
+    // Add the message to the local chat
+    setMessages((prev) => [
+      ...prev,
+      { sender: "You", text: messageInput, createdAt: new Date() },
+    ]);
     setMessageInput("");
   };
+  
+  useEffect(() => {
+    // Handle real-time chat messages
+    socket.current.on("receive_message", ({ sender, text }) => {
+      console.log(`📩 Received message from ${sender}: ${text}`);
+      setMessages((prev) => [...prev, { sender, text }]);
+    });
+  
+    return () => {
+      socket.current.off("receive_message");
+    };
+  }, []);
 
+  
   return (
     <Content style={{ padding: "2rem" }}>
       <h2>Meeting Room: {meetingId || "Loading..."}</h2>
-      <p>Your Peer ID: {peerId}</p>
-      <Button onClick={startCall} type="primary">Start Call</Button>
 
+      {/* Video Streams */}
       <div style={{ display: "flex", flexWrap: "wrap", marginTop: "20px" }}>
         {Object.entries(peers).map(([id, { stream }]) => (
           <video
@@ -117,7 +210,7 @@ export default function MeetingPageShared() {
             }}
             autoPlay
             playsInline
-            style={{ width: "30%", border: "1px solid black" }}
+            style={{ width: "30%", border: "1px solid black", margin: "10px" }}
           />
         ))}
       </div>
@@ -136,7 +229,7 @@ export default function MeetingPageShared() {
           )}
           style={{ height: "300px", overflowY: "auto" }}
         />
-        <Input.Group compact>
+        <Space.Compact style={{ width: "100%" }}>
           <Input
             style={{ width: "80%" }}
             value={messageInput}
@@ -146,7 +239,7 @@ export default function MeetingPageShared() {
           <Button type="primary" onClick={sendMessage}>
             Send
           </Button>
-        </Input.Group>
+        </Space.Compact>
       </div>
     </Content>
   );
