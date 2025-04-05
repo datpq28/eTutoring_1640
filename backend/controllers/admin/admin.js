@@ -3,7 +3,10 @@ const Student = require("../../models/StudentModel");
 const Tutor = require("../../models/TutorStudent");
 
 const Meeting = require("../../models/MeetingModel");
-const { sendMailAssignNewTutor } = require("../mailService/mailService");
+const {
+  sendMailAssignNewTutor,
+  sendMailAssignNewTutorAll,
+} = require("../mailService/mailService");
 
 const viewListUser = async (req, res) => {
   try {
@@ -155,7 +158,59 @@ const fetchAllMeetings = async (req, res) => {
   }
 };
 
+const assignTutorToStudentAll = async (req, res) => {
+  try {
+    const { studentIds, tutorId } = req.body;
 
+    // Kiểm tra tutor có tồn tại không
+    const tutor = await Tutor.findById(tutorId);
+    if (!tutor) {
+      return res.status(400).json({ error: "Not found Tutor" });
+    }
+
+    let assignedStudents = [];
+    let studentEmails = [];
+
+    // Lặp qua danh sách học sinh
+    for (const studentId of studentIds) {
+      const student = await Student.findById(studentId);
+      if (!student) {
+        console.warn(`Student ID ${studentId} not found`);
+        continue;
+      }
+
+      // Nếu học sinh đã có tutor trước đó, xóa khỏi danh sách tutor cũ
+      if (student.tutorId) {
+        await Tutor.findByIdAndUpdate(student.tutorId, {
+          $pull: { studentId: student._id },
+        });
+      }
+
+      // Gán tutor mới cho học sinh
+      student.tutorId = tutorId;
+      await student.save();
+
+      // Thêm học sinh vào danh sách của tutor
+      tutor.studentId.push(student._id);
+
+      // Lưu email để gửi thông báo
+      studentEmails.push(student.email);
+      assignedStudents.push(studentId);
+    }
+
+    await tutor.save();
+
+    // Gửi email thông báo cho học sinh và giáo viên
+    if (studentEmails.length > 0) {
+      await sendMailAssignNewTutorAll(studentEmails, tutor.email);
+    }
+
+    res.status(200).json({ message: "Assign success", assignedStudents });
+  } catch (error) {
+    console.error("Error assigning Tutor to multiple students:", error);
+    res.status(500).json({ error: "Error" });
+  }
+};
 
 const updateMeetingStatus = async (req, res) => {
   try {
@@ -193,6 +248,70 @@ const updateMeetingStatus = async (req, res) => {
   }
 };
 
+const viewListStudentByTutor = async (req, res) => {
+  try {
+    const { tutorId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(tutorId)) {
+      return res.status(400).json({ error: "Invalid Tutor ID" });
+    }
+
+    const tutor = await Tutor.findById(tutorId);
+    if (!tutor) {
+      return res.status(404).json({ error: "Tutor not found" });
+    }
+
+    const students = await Student.find({ tutorId: tutorId });
+
+    res.status(200).json(students);
+  } catch (error) {
+    console.error("Error fetching students by tutor:", error);
+    res.status(500).json({ error: "Failed to fetch students" });
+  }
+};
+
+const viewListTutorByStudent = async (req, res) => {
+  try {
+    const { studentId } = req.params;
+
+    // Validate studentId
+    if (!mongoose.Types.ObjectId.isValid(studentId)) {
+      return res.status(400).json({ error: "Invalid Student ID" });
+    }
+
+    // Find the student
+    const student = await Student.findById(studentId);
+    if (!student) {
+      return res.status(404).json({ error: "Student not found" });
+    }
+
+    // Check if student has a tutor assigned
+    if (!student.tutorId) {
+      return res.status(200).json({
+        message: "No tutor assigned to this student",
+        tutor: null,
+      });
+    }
+
+    // Find the tutor
+    const tutor = await Tutor.findById(student.tutorId).select(
+      "firstname lastname email"
+    ); // Select specific fields if needed
+
+    if (!tutor) {
+      return res.status(404).json({ error: "Assigned tutor not found" });
+    }
+
+    res.status(200).json({
+      message: "Tutor retrieved successfully",
+      tutor,
+    });
+  } catch (error) {
+    console.error("Error fetching tutor by student:", error);
+    res.status(500).json({ error: "Failed to fetch tutor" });
+  }
+};
+
 module.exports = {
   viewListUser,
   lockUser,
@@ -200,5 +319,8 @@ module.exports = {
   removeTutorFromStudent,
   assignTutorToStudent,
   updateMeetingStatus,
-  fetchAllMeetings
+  fetchAllMeetings,
+  assignTutorToStudentAll,
+  viewListStudentByTutor,
+  viewListTutorByStudent,
 };

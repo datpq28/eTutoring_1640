@@ -7,6 +7,39 @@ const socket = io("http://localhost:5090", {
 
 const API_URL = "http://localhost:5090";
 
+// Hàm lấy tất cả các tin nhắn trong hệ thống
+export const getAllMessages = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/api/messages/messages/all`, {
+      headers: { "Content-Type": "application/json" },
+    });
+    console.log("All messages fetched:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error fetching all messages:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+
+export const getAllConversations = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/api/messages/conversations`, {
+      headers: { "Content-Type": "application/json" },
+    });
+    console.log("All conversations fetched:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error fetching all conversations:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+
 // Hàm lấy một đoạn chat theo ID
 export const getConversationById = async (conversationId) => {
   try {
@@ -27,7 +60,6 @@ export const getConversations = async (userId, userModel) => {
       `${API_URL}/api/messages/conversations/${userId}/${userModel}`,
       { headers: { "Content-Type": "application/json" } }
     );
-    console.log("Conversations fetched:", response.data);
     return response.data;
   } catch (error) {
     console.error(

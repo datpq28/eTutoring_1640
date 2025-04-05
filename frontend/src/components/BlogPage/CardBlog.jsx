@@ -33,6 +33,8 @@ const DEFAULT_IMAGE_URL =
   "https://images.unsplash.com/photo-1550895030-823330fc2551?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
 
 const userId = localStorage.getItem("userId");
+const userRole = localStorage.getItem("userRole");
+
 
 export default function CardBlog({ blog, fetchBlogs }) {
   const [likes, setLikes] = useState(blog.likes);

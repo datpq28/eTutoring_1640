@@ -5,7 +5,9 @@ const {
   loginUser,
   forgotPasswordSendOTP,
   verifyOtp,
-  updatePassword
+  updatePassword,
+  deleteUser,
+  logoutUser,
 } = require("../controllers/authController");
 
 const {
@@ -16,6 +18,9 @@ const {
   assignTutorToStudent,
   fetchAllMeetings,
   updateMeetingStatus,
+  assignTutorToStudentAll,
+  viewListStudentByTutor,
+  viewListTutorByStudent,
 } = require("../controllers/admin/admin");
 
 const { approveAdmin } = require("../controllers/authController");
@@ -32,16 +37,19 @@ router.post("/loginUser", loginUser);
 router.post("/forgotPasswordSendOTP", forgotPasswordSendOTP);
 router.post("/verifyOtp", verifyOtp);
 router.post("/updatePassword", updatePassword);
+router.post("/deleteUser", deleteUser);
+router.post("/logoutUser", logoutUser);
 
 router.post("/viewListUser", viewListUser);
 router.put("/lockUser", lockUser);
 router.put("/unLockUser", unLockUser);
 router.post("/removeTutorFromStudent", removeTutorFromStudent);
 router.post("/assignTutorToStudent", assignTutorToStudent);
-
+router.post("/assignTutorToStudentAll", assignTutorToStudentAll);
 router.get("/approveAdmin", verifyToken, approveAdmin);
 router.post("/sendAdminApprovalRequest", sendAdminApprovalRequest);
-
+router.get("/viewListStudentByTutor/:tutorId", viewListStudentByTutor);
+router.get("/viewListTutorByStudent/:studentId", viewListTutorByStudent);
 router.get("/meetings/all", fetchAllMeetings); // Lấy danh sách cuộc họp chờ duyệt
 router.put("/meetings/:meetingId/status", updateMeetingStatus); // Cập nhật trạng thái cuộc họp
 

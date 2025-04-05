@@ -1,20 +1,32 @@
-import BlogList from "../../components/student/DashboardPage/BlogList.jsx";
-import DocumentList from "../../components/student/DashboardPage/DocumentList.jsx";
-import RecentMessages from "../../components/student/DashboardPage/RecentMessages.jsx";
-import StudentDashboardOverview from "../../components/student/DashboardPage/StudentDashboardOverview.jsx";
-import StudySchedule from "../../components/student/DashboardPage/StudySchedule.jsx";
-import { Card, Col, Flex, Layout, Row } from "antd";
+import { Flex, Layout, Typography } from "antd";
 const { Content } = Layout;
-
+import PersonalTutor from "../../components/student/DashboardPage/PersonalTutor";
+import UpcomingMeetings from "../../components/student/DashboardPage/UpcomingMeetings";
+import ActivitySummary from "../../components/student/DashboardPage/ActivitySummary";
+import Resources from "../../components/student/DashboardPage/Resources";
+const { Title, Text } = Typography;
 export default function DashboardPage() {
   return (
     <Content style={stylesInline.content}>
       <Flex vertical gap="middle">
-        <StudentDashboardOverview />
-        <StudySchedule />
-        <DocumentList />
-        <BlogList />
-        <RecentMessages />
+        <Flex vertical gap="middle">
+          <Title level={2} style={{ margin: 0 }}>
+            Student Dashboard
+          </Title>
+          <Text type="secondary" style={{ margin: 0 }}>
+            Welcome back! Here&apos;s an overview of your tutoring activities.
+          </Text>
+        </Flex>
+        <Flex gap="middle">
+          <Flex vertical gap="middle" style={{ width: "40rem" }}>
+            <PersonalTutor />
+            <UpcomingMeetings />
+          </Flex>
+          <Flex gap="middle" vertical style={{ flex: 1 }}>
+            <ActivitySummary />
+            <Resources />
+          </Flex>
+        </Flex>
       </Flex>
     </Content>
   );

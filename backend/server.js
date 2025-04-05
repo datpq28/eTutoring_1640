@@ -7,7 +7,8 @@ const messageRoutes = require("./api/messages");
 const blogRoutes = require("./api/blog");
 const commentRoutes = require("./api/comment");
 const documentRoutes = require("./api/document");
-const notificationRoutes = require("./api/notification");
+
+const commentDocumentRoutes = require("./api/commentdocument");
 
 const { Server } = require("socket.io");
 require("dotenv").config();
@@ -15,6 +16,7 @@ require("dotenv").config();
 const app = express();
 const server = http.createServer(app); // Tạo server HTTP
 
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 connectDB();
@@ -24,7 +26,7 @@ app.use(
   cors({
     origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "x-user-role"],
   })
 );
 
@@ -70,23 +72,13 @@ io.on("connection", (socket) => {
     io.emit("receiveMessage", message); // Gửi lại tất cả client
   });
 
-  //Meeting events
-  socket.on("join_room", ({ meetingId }) => {
-    console.log(`🔗 User ${socket.id} joined room: ${meetingId}`);
-    socket.join(meetingId);
-    socket.to(meetingId).emit("user_joined", { userId: socket.id });
-  });
+  //meessege meeting
+  socket.on("send_message", ({ meetingId, sender, text }) => {
+    console.log(`📨 Message received in ${meetingId} from ${sender}: ${text}`); // ✅ Debug
 
-  socket.on("offer", ({ userId, offer }) => {
-    socket.to(userId).emit("offer", { userId: socket.id, offer });
-  });
+    io.to(meetingId).emit("receive_message", { sender, text });
 
-  socket.on("answer", ({ userId, answer }) => {
-    socket.to(userId).emit("answer", { userId: socket.id, answer });
-  });
-
-  socket.on("ice_candidate", ({ userId, candidate }) => {
-    socket.to(userId).emit("ice_candidate", { userId: socket.id, candidate });
+    console.log(`📤 Server sent message to meeting ${meetingId}`); // ✅ Debug
   });
 
   socket.on("send_message", ({ meetingId, text }) => {
@@ -111,7 +103,9 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/blog", blogRoutes);
 app.use("/api/comment", commentRoutes);
 app.use("/api/document", documentRoutes);
-app.use("/api/notification", notificationRoutes);
+
+app.use("/api/commentdocument", commentDocumentRoutes);
+
 
 const PORT = process.env.PORT;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
