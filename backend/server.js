@@ -9,6 +9,7 @@ const commentRoutes = require("./api/comment");
 const documentRoutes = require("./api/document");
 
 const commentDocumentRoutes = require("./api/commentdocument");
+const notificationRoutes = require("./api/notification");
 
 const { Server } = require("socket.io");
 require("dotenv").config();
@@ -106,6 +107,7 @@ app.use("/api/document", documentRoutes);
 
 app.use("/api/commentdocument", commentDocumentRoutes);
 
+app.use("/api/notification", notificationRoutes);
 
 const PORT = process.env.PORT;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
