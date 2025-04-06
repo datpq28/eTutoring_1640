@@ -422,6 +422,38 @@ const deleteUser = async (req, res) => {
   }
 };
 
+const updatePasswordLoggedIn = async (req, res) => {
+  try {
+    const { email, oldPassword, newPassword } = req.body;
+
+    // Tìm user trong student hoặc tutor
+    const student = await Student.findOne({ email });
+    const tutor = await Tutor.findOne({ email });
+
+    let user = student || tutor;
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Kiểm tra mật khẩu cũ
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ error: "Old password is incorrect" });
+    }
+
+    // Cập nhật mật khẩu mới
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+
+    return res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Update password error:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 module.exports = {
   registerSendOTP,
   registerVerifyOTP,
@@ -432,4 +464,5 @@ module.exports = {
   updatePassword,
   deleteUser,
   logoutUser,
+  updatePasswordLoggedIn
 };
