@@ -190,3 +190,34 @@ export const updatePassword = async (email, newPassword) => {
     throw error;
   }
 };
+
+export const updatePasswordLoggedIn = async (email ,oldPassword, newPassword) => {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    throw new Error("No token found. Please log in again.");
+  }
+
+  try {
+    const response = await axios.post(
+      `${API_URL}/api/auth/updatePasswordLoggedIn`,
+      { 
+        email,
+        oldPassword,
+        newPassword,
+        
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Error updating password (logged-in):", error?.response?.data || error);
+    throw error;
+  }
+};
+
