@@ -1,23 +1,21 @@
 const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
 
-// Tạo transporter cho nodemailer
 const transporter = nodemailer.createTransport({
-  service: "gmail", // Hoặc bạn có thể dùng dịch vụ khác như SendGrid, Mailgun, v.v.
+  service: "gmail", 
   auth: {
-    user: process.env.EMAIL_USERNAME,  // Đảm bảo bạn đã cấu hình đúng EMAIL_USERNAME trong .env
-    pass: process.env.EMAIL_PASSWORD,  // Đảm bảo bạn đã cấu hình đúng EMAIL_PASSWORD trong .env
+    user: process.env.EMAIL_USERNAME,  
+    pass: process.env.EMAIL_PASSWORD,  
   },
 });
 
-// Hàm gửi email thông báo phê duyệt admin
 const sendAdminApprovalRequest = async (adminEmail, token) => {
   try {
       const approvalLink = `http://localhost:5090/api/auth/approveAdmin?token=${token}`;
 
       const approvalMailOptions = {
           from: process.env.EMAIL_USERNAME,
-          to: adminEmail, // Use the admin's email
+          to: adminEmail, 
           subject: "Admin Login Approval Request",
           text: `An admin is trying to log in. Click the link below to approve:\n${approvalLink}`,
       };
@@ -29,7 +27,6 @@ const sendAdminApprovalRequest = async (adminEmail, token) => {
   }
 };
 
-// Hàm gửi email khi gán tutor mới cho student
 const sendMailAssignNewTutor = async (studentEmail, tutorEmail) => {
   try {
     const studentMailOptions = {
@@ -58,7 +55,6 @@ const sendMailAssignNewTutor = async (studentEmail, tutorEmail) => {
 };
 const sendMailAssignNewTutorAll = async (studentEmails, tutorEmail) => {
   try {
-    // Gửi email cho từng học sinh
     const studentMailPromises = studentEmails.map((studentEmail) => {
       const studentMailOptions = {
         from: process.env.EMAIL_USERNAME,
@@ -69,16 +65,13 @@ const sendMailAssignNewTutorAll = async (studentEmails, tutorEmail) => {
       return transporter.sendMail(studentMailOptions);
     });
 
-    // Gửi email cho giáo viên với danh sách học sinh mới
     const tutorMailOptions = {
       from: process.env.EMAIL_USERNAME,
       to: tutorEmail,
       subject: "New Students Assigned",
       text: `You have been assigned new students. Their emails are:
       ${studentEmails.join("\n")}`,
-    };
-
-    // Thực hiện gửi tất cả email đồng thời
+    };i
     await Promise.all([...studentMailPromises, transporter.sendMail(tutorMailOptions)]);
 
     console.log("Emails sent successfully to tutor and students!");

@@ -15,12 +15,6 @@ export const loginUser = async (email, password) => {
       localStorage.setItem("token", token);
       localStorage.setItem("role", role);
       localStorage.setItem("userId", userId);
-      // const userInfo = {
-      //   token,
-      //   role,
-      //   userId,
-      // };
-      // localStorage.setItem(userId, JSON.stringify(userInfo));
     }
 
     return response.data;
@@ -32,7 +26,7 @@ export const loginUser = async (email, password) => {
 
 export const logoutUser = async () => {
   try {
-    const token = localStorage.getItem("token"); // Lấy token trước khi xóa
+    const token = localStorage.getItem("token"); 
 
     if (!token) {
       throw new Error("No token found. User may already be logged out.");
@@ -40,15 +34,13 @@ export const logoutUser = async () => {
 
     await axios.post(
       `${API_URL}/api/auth/logoutUser`,
-      {}, // Body rỗng
+      {}, 
       {
         headers: {
-          Authorization: `Bearer ${token}`, // Gửi token lên server
+          Authorization: `Bearer ${token}`, 
         },
       }
     );
-
-    // Xóa token sau khi server xác nhận logout thành công
     localStorage.removeItem("token");
     localStorage.removeItem("role");
     localStorage.removeItem("userId");
@@ -92,7 +84,7 @@ export const registerSendOTP = async (
     description,
     filed,
     blogId,
-  }); // 👈 Log dữ liệu trước khi gửi
+  }); 
 
   try {
     const response = await axios.post(`${API_URL}/api/auth/registerSendOTP`, {
@@ -105,7 +97,7 @@ export const registerSendOTP = async (
       filed,
       blogId,
     });
-    console.log("API Response:", response.data); // 👈 Log response từ server
+    console.log("API Response:", response.data); 
     return response.data;
   } catch (error) {
     console.error("Error during register:", error?.response?.data || error);
@@ -124,7 +116,7 @@ export const approveAdmin = async () => {
 };
 
 export const sendAdminApprovalRequest = async () => {
-  const token = localStorage.getItem("token"); // Lấy token từ localStorage
+  const token = localStorage.getItem("token"); 
 
   if (!token) {
     alert("Token is missing. Please log in again.");
