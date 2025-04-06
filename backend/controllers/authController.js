@@ -454,6 +454,34 @@ const updatePasswordLoggedIn = async (req, res) => {
   }
 };
 
+const getInformationById = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    let user = await Student.findById(userId).exec();
+    if (!user) {
+      user = await Tutor.findById(userId).exec();
+    }
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    res.status(200).json({
+      message: "User information retrieved successfully",
+      user: {
+        firstname: user.firstname,
+        lastname: user.lastname,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error("Error retrieving user information:", error);
+    res.status(500).json({ error: "Failed to retrieve user information" });
+  }
+};
+
+
 module.exports = {
   registerSendOTP,
   registerVerifyOTP,
@@ -464,5 +492,6 @@ module.exports = {
   updatePassword,
   deleteUser,
   logoutUser,
-  updatePasswordLoggedIn
+  updatePasswordLoggedIn,
+  getInformationById
 };

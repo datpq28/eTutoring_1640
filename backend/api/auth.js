@@ -8,7 +8,8 @@ const {
   updatePassword,
   deleteUser,
   logoutUser,
-  updatePasswordLoggedIn
+  updatePasswordLoggedIn,
+  getInformationById
 } = require("../controllers/authController");
 
 const {
@@ -41,6 +42,7 @@ router.post("/updatePassword", updatePassword);
 router.post("/deleteUser", deleteUser);
 router.post("/logoutUser", logoutUser);
 router.post("/updatePasswordLoggedIn", updatePasswordLoggedIn);
+router.get("/getInformationById/:userId", getInformationById);
 
 router.post("/viewListUser", viewListUser);
 router.put("/lockUser", lockUser);
