@@ -221,3 +221,16 @@ export const updatePasswordLoggedIn = async (email ,oldPassword, newPassword) =>
   }
 };
 
+export const getInformationById = async (userId) => {
+  try {
+    const response = await axios.get(`${API_URL}/api/auth/getInformationById/${userId}`);
+    
+    const user = response.data.user;
+    console.log("User Information:", user); 
+
+    return user;
+  } catch (error) {
+    console.error("Error retrieving user information:", error?.response?.data || error);
+    throw error;
+  }
+};
