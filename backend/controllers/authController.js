@@ -285,21 +285,18 @@ const approveAdmin = async (req, res) => {
   try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       const { email, loginTime } = decoded;
-
-      // ✅ Verify the token and check if it matches the stored token
       if (adminApprovalTokens[email] === token) {
-          delete adminApprovalTokens[email]; // Remove the token after successful approval
+          delete adminApprovalTokens[email]; 
 
-          // ✅ Generate a final login token for the admin
           const finalToken = jwt.sign(
-              { userId: "admin", role: "admin" }, // You might want to store admin ID somewhere
+              { userId: "admin", role: "admin" }, 
               process.env.JWT_SECRET,
               { expiresIn: "1h" }
           );
 
           return res.status(200).json({
               message: "Admin approved successfully!",
-              token: finalToken, // Send the final token
+              token: finalToken,
               role: "admin",
           });
       } else {
@@ -352,19 +349,13 @@ const verifyOtp = async (req, res) => {
 const updatePassword = async (req, res) => {
   try {
     const { email, newPassword } = req.body;
-
-    // Find the OTP record by email
     const otpRecord = await OtpPassword.findOne({ email }).exec();
 
-    // Check if the OTP record exists, is used, and is valid (not expired)
     if (!otpRecord || !otpRecord.used || new Date() > otpRecord.expiry) {
       return res.status(400).json({ error: "OTP not verified or expired" });
     }
 
-    // Hash the new password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    // Update the password for the user (Student or Tutor)
     let user =
       (await Student.findOneAndUpdate(
         { email },
@@ -376,7 +367,6 @@ const updatePassword = async (req, res) => {
       return res.status(400).json({ error: "User not found" });
     }
 
-    // Return success response
     res.status(200).json({ message: "Password updated successfully" });
   } catch (error) {
     console.error("Password update error:", error);
@@ -388,7 +378,6 @@ const deleteUser = async (req, res) => {
   try {
     const { email } = req.body;
 
-    // Tìm người dùng theo email
     let user = await Student.findOne({ email }).exec();
     let role = "student";
 
@@ -401,7 +390,6 @@ const deleteUser = async (req, res) => {
       return res.status(400).json({ error: "User not found" });
     }
 
-    // Nếu là Student, cũng cần xóa họ khỏi danh sách của Tutor
     if (role === "student") {
       await Tutor.findByIdAndUpdate(user.tutorId, {
         $pull: { studentId: user._id },
@@ -411,7 +399,6 @@ const deleteUser = async (req, res) => {
       await Tutor.findByIdAndDelete(user._id);
     }
 
-    // Xóa bất kỳ OTP nào liên quan đến người dùng
     await OTP.deleteMany({ email });
     await OtpPassword.deleteMany({ email });
 
@@ -425,8 +412,6 @@ const deleteUser = async (req, res) => {
 const updatePasswordLoggedIn = async (req, res) => {
   try {
     const { email, oldPassword, newPassword } = req.body;
-
-    // Tìm user trong student hoặc tutor
     const student = await Student.findOne({ email });
     const tutor = await Tutor.findOne({ email });
 
@@ -436,13 +421,11 @@ const updatePasswordLoggedIn = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Kiểm tra mật khẩu cũ
     const isMatch = await bcrypt.compare(oldPassword, user.password);
     if (!isMatch) {
       return res.status(400).json({ error: "Old password is incorrect" });
     }
 
-    // Cập nhật mật khẩu mới
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
     await user.save();

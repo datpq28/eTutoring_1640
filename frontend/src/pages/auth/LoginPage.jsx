@@ -87,13 +87,10 @@ export default function LoginPage() {
           alert("Please fill in all fields");
           return;
       }
-  
-      // Kiểm tra đăng nhập admin trực tiếp
       if (email.value === "admin" && password.value === "admin") {
           navigate("/admin/dashboard");
           return;
       }
-  
       setIsPending(true);
       try {
           const response = await loginUser(email.value, password.value);
