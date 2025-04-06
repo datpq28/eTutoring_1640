@@ -147,7 +147,7 @@ export default function CalendarPage() {
         <Menu.Item style={{ fontWeight: "bold", textAlign: "center", background: "#f0f2f5" }}>
             Thông báo
         </Menu.Item>
-        {notifications.length > 0 ? (
+        {Array.isArray(notifications) && notifications.length > 0 ?  (
             notifications.map((notif) => (
                 <Menu.Item 
                     key={notif._id} 
@@ -215,7 +215,9 @@ export default function CalendarPage() {
         <p><strong>Mô tả:</strong> {meeting.description || "Không có mô tả"}</p>
         <p>
           <strong>Học sinh tham gia:</strong>{" "}
-          {meeting.studentIds.map((student) => `${student.firstname} ${student.lastname}`).join(", ")}
+          {Array.isArray(meeting.studentIds)
+            ? meeting.studentIds.map((student) => `${student.firstname} ${student.lastname}`).join(", ")
+            : "Không có dữ liệu"}
         </p>
 
         {/* Conditionally render buttons based on the meeting date */}
