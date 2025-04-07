@@ -10,73 +10,70 @@ const dayjs = require('dayjs');
 
   const createMeeting = async (req, res) => {
     try {
-      let { name, type, description, tutorId, startTime, endTime, dayOfWeek } = req.body;
+      let { name, description, tutorId, startTime, endTime, dayOfWeek } = req.body;
   
       if (!dayOfWeek) {
-        return res.status(400).json({ error: "Vui lòng chọn ngày họp" });
+        return res.status(400).json({ error: "Please select a meeting date" });
       }
   
-      // Kiểm tra `dayOfWeek` lớn hơn ngày hiện tại
+      // Check `dayOfWeek`
       const today = dayjs();
       const meetingDate = dayjs(dayOfWeek);
       if (meetingDate.isBefore(today, 'day')) {
-        return res.status(400).json({ error: "Ngày họp phải lớn hơn ngày hiện tại" });
+        return res.status(400).json({ error: "Meeting date must be greater than current date" });
       }
   
       // Validate `startTime` and `endTime`
       if (!dayjs(startTime).isValid() || !dayjs(endTime).isValid()) {
-        return res.status(400).json({ error: "Thời gian không hợp lệ" });
+        return res.status(400).json({ error: "Invalid time" });
       }
   
       // Ensure `endTime` is at least 2 hours after `startTime`
       if (dayjs(endTime).diff(dayjs(startTime), "hour") < 2) {
-        return res.status(400).json({ error: "Thời gian kết thúc phải cách thời gian bắt đầu ít nhất 2 tiếng" });
+        return res.status(400).json({ error: "The end time must be at least 2 hours from the start time." });
       }
   
       // Check for overlapping meetings
       const overlappingMeeting = await Meeting.findOne({
         tutorId,
         dayOfWeek,
-        startTime: { $lt: endTime }, // Existing meeting starts before the new meeting ends
-        endTime: { $gt: startTime }, // Existing meeting ends after the new meeting starts
+        startTime: { $lt: endTime },
+        endTime: { $gt: startTime },
       });
   
       if (overlappingMeeting) {
         return res.status(400).json({
-          error: `Thời gian họp bị trùng với cuộc họp khác (${overlappingMeeting.name}) từ ${new Date(overlappingMeeting.startTime).toLocaleTimeString()} đến ${new Date(overlappingMeeting.endTime).toLocaleTimeString()}`,
+          error: `Meeting time overlaps with another meeting (${overlappingMeeting.name}) 
+          start at ${new Date(overlappingMeeting.startTime).toLocaleTimeString()} to ${new Date(overlappingMeeting.endTime).toLocaleTimeString()}`,
         });
       }
   
-      // Kiểm tra tutor có tồn tại không
       const tutor = await Tutor.findById(tutorId);
       if (!tutor) {
-        return res.status(403).json({ error: "Chỉ giáo viên hợp lệ mới có thể tạo cuộc họp" });
+        return res.status(403).json({ error: "Only authorized teachers can create meetings." });
       }
   
-      // Lấy danh sách học sinh của tutor
       const students = await Student.find({ _id: { $in: tutor.studentId } });
   
       if (students.length === 0) {
-        return res.status(400).json({ error: "Tutor phải có ít nhất một học sinh để tạo cuộc họp" });
+        return res.status(400).json({ error: "Tutor must have at least one student to create a meeting" });
       }
-  
-      // Tạo cuộc họp mới
+
       const newMeeting = new Meeting({
         name,
-        type,
         description,
         tutorId,
         studentIds: students.map(student => student._id),
-        startTime, // Directly use the `startTime` from the frontend
-        endTime, // Directly use the `endTime` from the frontend
+        startTime, 
+        endTime,
         dayOfWeek,
-        joinedUsers: [],
       });
   
       await newMeeting.save();
   
-      // ======================== TẠO NOTIFICATION ========================
-      const notificationText = `📅 Cuộc họp mới "${name}" đã được tạo vào ngày ${dayOfWeek} từ ${dayjs(startTime).format("HH:mm")} đến ${dayjs(endTime).format("HH:mm")}`;
+      // ======================== Create NOTIFICATION ========================
+      const notificationText = `📅 New meeting "${name}" was created on ${dayOfWeek} 
+      start ${dayjs(startTime).format("HH:mm")} to ${dayjs(endTime).format("HH:mm")}`;
   
       const newNotification = new Notification({
         meetingId: newMeeting._id,
@@ -89,7 +86,7 @@ const dayjs = require('dayjs');
       await newNotification.save();
       console.log("✅ Notification saved:", newNotification);
     
-      res.status(201).json({ message: "Cuộc họp đã được tạo", meeting: newMeeting });
+      res.status(201).json({ message: "Meeting has been created", meeting: newMeeting });
   
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -100,30 +97,24 @@ const dayjs = require('dayjs');
   const editMeeting = async (req, res) => {
     try {
         const { meetingId } = req.params;
-        const { name, type, description, startTime, endTime, dayOfWeek } = req.body;
+        const { name, description, startTime, endTime, dayOfWeek } = req.body;
 
         const meeting = await Meeting.findById(meetingId);
         if (!meeting) {
-            return res.status(404).json({ error: "Cuộc họp không tồn tại" });
+            return res.status(404).json({ error: "Meeting does not exist" });
         }
-
-        // Kiểm tra `dayOfWeek` lớn hơn ngày hiện tại
         const today = new Date();
         const meetingDate = new Date(dayOfWeek);
         if (meetingDate <= today) {
-            return res.status(400).json({ error: "Ngày họp phải lớn hơn ngày hiện tại" });
+            return res.status(400).json({ error: "Meeting date must be greater than current date" });
         }
-
-        // Kiểm tra `endTime` phải cách `startTime` ít nhất 2 tiếng
         const start = new Date(startTime);
         const end = new Date(endTime);
         if ((end - start) / (1000 * 60 * 60) < 2) {
-            return res.status(400).json({ error: "Thời gian kết thúc phải cách thời gian bắt đầu ít nhất 2 tiếng" });
+            return res.status(400).json({ error: "The end time must be at least 2 hours from the start time." });
         }
-
-        // Kiểm tra xem cuộc họp mới có bị trùng thời gian với cuộc họp khác không
         const overlappingMeeting = await Meeting.findOne({
-            _id: { $ne: meetingId }, // Loại trừ chính cuộc họp đang được chỉnh sửa
+            _id: { $ne: meetingId },
             tutorId: meeting.tutorId,
             dayOfWeek,
             $or: [
@@ -133,13 +124,12 @@ const dayjs = require('dayjs');
 
         if (overlappingMeeting) {
             return res.status(400).json({
-                error: `Thời gian họp bị trùng với cuộc họp khác (${overlappingMeeting.name}) từ ${new Date(overlappingMeeting.startTime).toLocaleTimeString()} đến ${new Date(overlappingMeeting.endTime).toLocaleTimeString()}`,
+                error: `Meeting time overlaps with another meeting (${overlappingMeeting.name})
+                 start ${new Date(overlappingMeeting.startTime).toLocaleTimeString()} to ${new Date(overlappingMeeting.endTime).toLocaleTimeString()}`,
             });
         }
 
-        // Cập nhật cuộc họp
         meeting.name = name || meeting.name;
-        meeting.type = type || meeting.type;
         meeting.description = description || meeting.description;
         meeting.startTime = startTime || meeting.startTime;
         meeting.endTime = endTime || meeting.endTime;
@@ -147,8 +137,8 @@ const dayjs = require('dayjs');
 
         await meeting.save();
 
-        // ======================== TẠO NOTIFICATION ========================
-        const notificationText = `📅 Cuộc họp "${meeting.name}" ngày ${dayOfWeek} từ ${dayjs(startTime).format("HH:mm")} đến ${dayjs(endTime).format("HH:mm")} đã được chỉnh sửa. Vui lòng kiểm tra lại thông tin.`;
+        const notificationText = `📅 Meeting "${meeting.name}" on ${dayOfWeek} 
+        start ${dayjs(startTime).format("HH:mm")} to ${dayjs(endTime).format("HH:mm")} has been edited. Please check the information again.`;
 
         const newNotification = new Notification({
             meetingId: meeting._id,
@@ -162,7 +152,7 @@ const dayjs = require('dayjs');
         console.log("✅ Notification saved:", newNotification);
 
 
-        res.json({ message: "Cập nhật cuộc họp thành công", meeting });
+        res.json({ message: "Meeting update successful", meeting });
 
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -174,17 +164,15 @@ const deleteMeeting = async (req, res) => {
   try {
       const { meetingId } = req.params;
 
-      // Find the meeting by ID
       const meeting = await Meeting.findById(meetingId);
       if (!meeting) {
-          return res.status(404).json({ error: "Cuộc họp không tồn tại" });
+          return res.status(404).json({ error: "Meeting does not exist" });
       }
 
-      // Extract dayOfWeek, startTime, and endTime from the meeting object
       const { dayOfWeek, startTime, endTime } = meeting;
 
-      // ======================== TẠO NOTIFICATION ========================
-      const notificationText = `❌ Cuộc họp "${meeting.name}" ngày ${dayOfWeek} từ ${dayjs(startTime).format("HH:mm")} đến ${dayjs(endTime).format("HH:mm")} đã bị hủy.`;
+      const notificationText = `❌ Meeting "${meeting.name}" on ${dayOfWeek} 
+      start ${dayjs(startTime).format("HH:mm")} to ${dayjs(endTime).format("HH:mm")} has been canceled.`;
 
       const newNotification = new Notification({
           meetingId: meeting._id,
@@ -197,9 +185,8 @@ const deleteMeeting = async (req, res) => {
       await newNotification.save();
       console.log("✅ Notification saved:", newNotification);
 
-      // Delete the meeting
       await Meeting.findByIdAndDelete(meetingId);
-      res.json({ message: "Cuộc họp đã bị xóa thành công" });
+      res.json({ message: "The meeting was successfully deleted." });
 
   } catch (error) {
       console.error("Error deleting meeting:", error);
@@ -208,25 +195,6 @@ const deleteMeeting = async (req, res) => {
 };
 
 
-
-const getMeetingsByUser = async (req, res) => {
-  try {
-    const { userId, role } = req.params;
-    let meetings;
-
-    if (role === "tutor") {
-      meetings = await Meeting.find({ tutorId: userId });
-    } else if (role === "student") {
-      meetings = await Meeting.find({ studentIds: userId });
-    } else {
-      return res.status(400).json({ error: "Role không hợp lệ" });
-    }
-
-    res.json(meetings);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
 
 const joinMeeting = async (req, res) => {
   try {
@@ -296,22 +264,17 @@ const getStudentsByTutor = async (req, res) => {
     const tutor = await Tutor.findById(tutorId);
 
     if (!tutor) {
-      return res.status(404).json({ error: "Tutor không tồn tại" });
+      return res.status(404).json({ error: "Tutor does not exist" });
     }
-
-    // Lấy danh sách studentId từ Tutor
     const studentIds = tutor.studentId || [];
 
-    // Truy vấn thông tin học sinh từ model Student
     const students = await Student.find(
       { _id: { $in: studentIds } }, 
-      { firstname: 1, lastname: 1 } // Dùng đúng tên trường
+      { firstname: 1, lastname: 1 }
     );
-
-    // Định dạng lại dữ liệu trả về
     const studentList = students.map(student => ({
       id: student._id,
-      name: `${student.firstname} ${student.lastname}` // Đổi firstName -> firstname
+      name: `${student.firstname} ${student.lastname}` 
     }));
 
     res.json({ students: studentList });
@@ -322,11 +285,10 @@ const getStudentsByTutor = async (req, res) => {
 
 const fetchTutors = async (req, res) => {
   try {
-    // Truy vấn danh sách tất cả các tutor
     const tutors = await Tutor.find({}, "firstname lastname email"); 
 
     if (!tutors || tutors.length === 0) {
-      return res.status(404).json({ error: "Không có tutor nào được tìm thấy" });
+      return res.status(404).json({ error: "Tutor does not exist" });
     }
 
     res.json({ tutors });
@@ -344,8 +306,8 @@ const fetchAllMeetings = async (req, res) => {
 
     res.status(200).json(meetings);
   } catch (error) {
-    console.error("Lỗi khi lấy danh sách tất cả cuộc họp:", error);
-    res.status(500).json({ error: "Không thể lấy danh sách cuộc họp" });
+    console.error("Error while getting list of all meetings:", error);
+    res.status(500).json({ error: "Unable to get meeting list" });
   }
 };
 
@@ -353,7 +315,6 @@ const fetchAllMeetings = async (req, res) => {
 
 module.exports = {
   createMeeting,
-  getMeetingsByUser,
   joinMeeting,
   getMeetingsByTutor,
   getMeetingsByStudent,

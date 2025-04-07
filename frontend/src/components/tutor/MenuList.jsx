@@ -17,7 +17,7 @@ const menuItems = [
   { key: "messages", label: "Messages", icon: <MessageOutlined /> },
   { key: "documents", label: "Documents", icon: <FolderOpenOutlined /> },
   { key: "blog", label: "Blog", icon: <FileOutlined /> },
-  { key: "meeting", label: "Meeting", icon: <VideoCameraOutlined /> },
+  // { key: "meeting", label: "Meeting", icon: <VideoCameraOutlined /> },
 ];
 
 const bottomItems = [
