@@ -1,7 +1,7 @@
 import {
   Avatar,
-  Badge,
   Dropdown,
+  Flex,
   Layout,
   Menu,
   Space,
@@ -11,9 +11,10 @@ import {
 import Logo from "../components/Logo/Logo.jsx";
 import MenuList from "../components/student/MenuList.jsx";
 import { Outlet, useLocation, useNavigate } from "react-router";
-import { BellOutlined, LogoutOutlined, UserOutlined } from "@ant-design/icons";
+import { LogoutOutlined, UserOutlined } from "@ant-design/icons";
 import { useEffect, useState } from "react";
 import { logoutUser } from "../../api_service/auth_service.js"; // Import API logout
+import { getAllUser } from "../../api_service/mesages_service.js";
 
 const { Header, Sider } = Layout;
 const { Title } = Typography;
@@ -21,6 +22,7 @@ const { Title } = Typography;
 export default function StudentLayout() {
   const [collapsed, setCollapsed] = useState(window.innerWidth < 992);
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
   const location = useLocation();
 
   useEffect(() => {
@@ -57,7 +59,7 @@ export default function StudentLayout() {
 
       navigate("/auth/login");
     } catch (error) {
-      message.error("Logout failed!");
+      message.error("Logout failed!", error);
     }
   };
 
@@ -76,6 +78,18 @@ export default function StudentLayout() {
     };
   }, []);
 
+  useEffect(() => {
+    const fetchUser = async () => {
+      const storedUserId = localStorage.getItem("userId");
+      const users = await getAllUser();
+      const currentUser = users.students.find(
+        (user) => user._id === storedUserId
+      );
+      setUser(currentUser);
+    };
+    fetchUser();
+  }, []);
+  console.log("user", user);
   const userMenu = (
     <Menu
       items={[
@@ -115,12 +129,16 @@ export default function StudentLayout() {
             size="large"
             style={{ marginLeft: "auto", alignItems: "center" }}
           >
-            <Badge count={5} size="small">
-              <Avatar icon={<BellOutlined />} />
-            </Badge>
-
             <Dropdown overlay={userMenu} placement="bottomRight">
-              <Avatar icon={<UserOutlined />} />
+              <Flex gap="small" align="center" style={{ cursor: "pointer" }}>
+                <p style={{ margin: 0 }}>{user?.email}</p>
+                <Avatar
+                  icon={<UserOutlined />}
+                  src={`https://api.dicebear.com/7.x/miniavs/svg?seed=${
+                    user?._id || 1
+                  }`}
+                />
+              </Flex>
             </Dropdown>
           </Space>
         </Header>

@@ -26,6 +26,7 @@ export default function MessagePage() {
     useState(false); // Modal thêm cuộc trò chuyện
   const [sendingMessage, setSendingMessage] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
   const fetchConversations = useCallback(async () => {
     setIsLoading(true);
     const userId = localStorage.getItem("userId");
@@ -176,6 +177,7 @@ export default function MessagePage() {
       console.error("Error loading conversation messages:", error);
     }
   };
+
   const handleSendMessage = async (newMessage) => {
     if (newMessage.trim() === "") return;
 
@@ -195,12 +197,6 @@ export default function MessagePage() {
         newMsg.senderModel,
         newMsg.content
       );
-      // setMessages((prevMessages) => {
-      //   const updatedMessages = [...prevMessages, newMsg].sort(
-      //     (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
-      //   );
-      //   return updatedMessages;
-      // });
       setMessages((prevMessages) => {
         const updatedMessages = [...prevMessages, newMsg].sort(
           (a, b) =>
