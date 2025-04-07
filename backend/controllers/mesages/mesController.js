@@ -83,7 +83,7 @@ const deleteMessage = async (req, res) => {
 const getAllMessages = async (req, res) => {
   try {
     // Lấy tất cả tin nhắn, sắp xếp theo thời gian tạo gần nhất
-    const messages = await Message.find({}).sort({ createdAt: -1 }).lean(); // Tăng hiệu suất bằng cách trả về plain object
+    const messages = await Message.find({}).sort({ createdAt: -1 }).lean();
 
     if (!messages || messages.length === 0) {
       return res.status(200).json({ message: "No messages found", data: [] });

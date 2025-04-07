@@ -1,6 +1,5 @@
 import {
   Avatar,
-  Badge,
   Dropdown,
   Layout,
   Menu,
@@ -12,12 +11,12 @@ import {
   Card,
   Select,
   Input,
+  Flex,
 } from "antd";
 import Logo from "../components/Logo/Logo.jsx";
 import MenuList from "../components/tutor/MenuList.jsx";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import {
-  BellOutlined,
   LogoutOutlined,
   UserOutlined,
   InfoCircleOutlined,
@@ -25,6 +24,7 @@ import {
 import { useEffect, useState } from "react";
 import { logoutUser } from "../../api_service/auth_service.js";
 import { viewListStudentByTutor } from "../../api_service/admin_service.js";
+import { getAllUser } from "../../api_service/mesages_service.js";
 
 const { Header, Sider } = Layout;
 const { Title } = Typography;
@@ -37,6 +37,7 @@ export default function TutorLayout() {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [loggedInUser, setLoggedInUser] = useState(null);
   const [userId, setUserId] = useState(null);
+  const [user, setUser] = useState(null);
   const [selectedListItem, setSelectedListItem] = useState(null);
   const [filterText, setFilterText] = useState("");
   const [sortOption, setSortOption] = useState("name");
@@ -72,6 +73,18 @@ export default function TutorLayout() {
     }
   }, []);
 
+  useEffect(() => {
+    const fetchUser = async () => {
+      const storedUserId = localStorage.getItem("userId");
+      const users = await getAllUser();
+      const currentUser = users.tutors.find(
+        (user) => user._id === storedUserId
+      );
+      setUser(currentUser);
+    };
+    fetchUser();
+  }, []);
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -99,7 +112,7 @@ export default function TutorLayout() {
 
       navigate("/auth/login");
     } catch (error) {
-      message.error("Logout failed!");
+      message.error("Logout failed!", error);
     }
   };
 
@@ -172,17 +185,25 @@ export default function TutorLayout() {
 
   const filteredAndSortedStudents = studentList
     .map((student) => {
-      const username = student.username || `${student.firstname} ${student.lastname}`;
+      const username =
+        student.username || `${student.firstname} ${student.lastname}`;
       return { ...student, username };
     })
-    .filter((student) =>
-      student.username && student.username.toLowerCase().includes(filterText.toLowerCase())
+    .filter(
+      (student) =>
+        student.username &&
+        student.username.toLowerCase().includes(filterText.toLowerCase())
     )
     .sort((a, b) => {
       if (sortOption === "name") {
-        return a.username && b.username ? a.username.localeCompare(b.username) : 0;
+        return a.username && b.username
+          ? a.username.localeCompare(b.username)
+          : 0;
       } else {
-        return (b.blogIds ? b.blogIds.length : 0) - (a.blogIds ? a.blogIds.length : 0);
+        return (
+          (b.blogIds ? b.blogIds.length : 0) -
+          (a.blogIds ? a.blogIds.length : 0)
+        );
       }
     });
 
@@ -202,13 +223,21 @@ export default function TutorLayout() {
           <Title level={3} style={{ margin: 0, color: "#fff" }}>
             {titles[location.pathname] || "Student Panel"}
           </Title>
-          <Space size="large" style={{ marginLeft: "auto", alignItems: "center" }}>
-            <Badge count={5} size="small">
-              <Avatar icon={<BellOutlined />} />
-            </Badge>
-
+          <Space
+            size="large"
+            style={{ marginLeft: "auto", alignItems: "center" }}
+          >
             <Dropdown overlay={userMenu} placement="bottomRight">
-              <Avatar icon={<UserOutlined />} />
+              <Flex gap="small" align="center" style={{ cursor: "pointer" }}>
+                <p style={{ margin: 0 }}>{user?.email}</p>
+
+                <Avatar
+                  src={`https://api.dicebear.com/7.x/miniavs/svg?seed=${
+                    userId || 1
+                  }`}
+                  icon={<UserOutlined />}
+                />
+              </Flex>
             </Dropdown>
           </Space>
         </Header>
@@ -243,10 +272,20 @@ export default function TutorLayout() {
                 style={{
                   cursor: "pointer",
                   transition: "background-color 0.3s",
-                  backgroundColor: selectedListItem === student._id ? "#e6f7ff" : "transparent",
+                  backgroundColor:
+                    selectedListItem === student._id
+                      ? "#e6f7ff"
+                      : "transparent",
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f0f0f0")}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = selectedListItem === student._id ? "#e6f7ff" : "transparent")}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.backgroundColor = "#f0f0f0")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.backgroundColor =
+                    selectedListItem === student._id
+                      ? "#e6f7ff"
+                      : "transparent")
+                }
               >
                 <List.Item.Meta
                   title={student.username}
@@ -257,10 +296,15 @@ export default function TutorLayout() {
           />
           {selectedStudent && (
             <Card title={selectedStudent.username}>
-              <p>Name: {selectedStudent.firstname} {selectedStudent.lastname}</p>
+              <p>
+                Name: {selectedStudent.firstname} {selectedStudent.lastname}
+              </p>
               <p>Email: {selectedStudent.email}</p>
               <p>Phone: {selectedStudent.phonenumber}</p>
-              <p>Blog Count: {selectedStudent.blogIds ? selectedStudent.blogIds.length : 0}</p>
+              <p>
+                Blog Count:{" "}
+                {selectedStudent.blogIds ? selectedStudent.blogIds.length : 0}
+              </p>
             </Card>
           )}
         </Modal>

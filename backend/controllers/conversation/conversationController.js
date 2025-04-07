@@ -94,26 +94,6 @@ const addParticipantsToGroup = async (req, res) => {
   }
 };
 
-//Xóa thành viên khỏi nhóm
-// const removeParticipantFromGroup = async (req, res) => {
-//   const { conversationId } = req.params;
-//   const { participantId, participantModel } = req.body;
-
-//   try {
-//     const conversation = await Conversation.findByIdAndUpdate(
-//       conversationId,
-//       { $pull: { participants: { participantId, participantModel } } },
-//       { new: true }
-//     );
-
-//     if (!conversation)
-//       return res.status(404).json({ message: "Conversation not found" });
-//     res.status(200).json(conversation);
-//   } catch (err) {
-//     res.status(500).json({ error: err.message });
-//   }
-// };
-// Xóa toàn bộ cuộc trò chuyện luôn vì là nhắn tin 1 1
 const removeParticipantFromGroup = async (req, res) => {
   const { conversationId } = req.params;
 
@@ -136,7 +116,7 @@ const getAllConversations = async (req, res) => {
     // Lấy tất cả các cuộc trò chuyện, sắp xếp theo thời gian cập nhật gần nhất
     const conversations = await Conversation.find({})
       .sort({ updatedAt: -1 })
-      .lean(); // Sử dụng .lean() để tăng hiệu suất nếu không cần đối tượng Mongoose đầy đủ
+      .lean();
 
     if (!conversations || conversations.length === 0) {
       return res
