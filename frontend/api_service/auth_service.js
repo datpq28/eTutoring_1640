@@ -1,3 +1,4 @@
+import { notification } from "antd";
 import axios from "axios";
 
 const API_URL = "http://localhost:5090";
@@ -26,7 +27,7 @@ export const loginUser = async (email, password) => {
 
 export const logoutUser = async () => {
   try {
-    const token = localStorage.getItem("token"); 
+    const token = localStorage.getItem("token");
 
     if (!token) {
       throw new Error("No token found. User may already be logged out.");
@@ -34,10 +35,10 @@ export const logoutUser = async () => {
 
     await axios.post(
       `${API_URL}/api/auth/logoutUser`,
-      {}, 
+      {},
       {
         headers: {
-          Authorization: `Bearer ${token}`, 
+          Authorization: `Bearer ${token}`,
         },
       }
     );
@@ -84,7 +85,7 @@ export const registerSendOTP = async (
     description,
     filed,
     blogId,
-  }); 
+  });
 
   try {
     const response = await axios.post(`${API_URL}/api/auth/registerSendOTP`, {
@@ -97,7 +98,7 @@ export const registerSendOTP = async (
       filed,
       blogId,
     });
-    console.log("API Response:", response.data); 
+    console.log("API Response:", response.data);
     return response.data;
   } catch (error) {
     console.error("Error during register:", error?.response?.data || error);
@@ -116,10 +117,13 @@ export const approveAdmin = async () => {
 };
 
 export const sendAdminApprovalRequest = async () => {
-  const token = localStorage.getItem("token"); 
+  const token = localStorage.getItem("token");
 
   if (!token) {
-    alert("Token is missing. Please log in again.");
+    notification.error({
+      message: "Token is missing. Please log in again.",
+      duration: 3,
+    });
     console.error("Token is missing.");
     throw new Error("Token is required.");
   }
@@ -183,7 +187,11 @@ export const updatePassword = async (email, newPassword) => {
   }
 };
 
-export const updatePasswordLoggedIn = async (email ,oldPassword, newPassword) => {
+export const updatePasswordLoggedIn = async (
+  email,
+  oldPassword,
+  newPassword
+) => {
   const token = localStorage.getItem("token");
 
   if (!token) {
@@ -193,11 +201,10 @@ export const updatePasswordLoggedIn = async (email ,oldPassword, newPassword) =>
   try {
     const response = await axios.post(
       `${API_URL}/api/auth/updatePasswordLoggedIn`,
-      { 
+      {
         email,
         oldPassword,
         newPassword,
-        
       },
       {
         headers: {
@@ -208,21 +215,29 @@ export const updatePasswordLoggedIn = async (email ,oldPassword, newPassword) =>
 
     return response.data;
   } catch (error) {
-    console.error("Error updating password (logged-in):", error?.response?.data || error);
+    console.error(
+      "Error updating password (logged-in):",
+      error?.response?.data || error
+    );
     throw error;
   }
 };
 
 export const getInformationById = async (userId) => {
   try {
-    const response = await axios.get(`${API_URL}/api/auth/getInformationById/${userId}`);
-    
+    const response = await axios.get(
+      `${API_URL}/api/auth/getInformationById/${userId}`
+    );
+
     const user = response.data.user;
-    console.log("User Information:", user); 
+    console.log("User Information:", user);
 
     return user;
   } catch (error) {
-    console.error("Error retrieving user information:", error?.response?.data || error);
+    console.error(
+      "Error retrieving user information:",
+      error?.response?.data || error
+    );
     throw error;
   }
 };

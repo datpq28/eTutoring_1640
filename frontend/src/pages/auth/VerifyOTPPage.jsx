@@ -1,4 +1,4 @@
-import { Flex, Image } from "antd";
+import { Flex, Image, notification } from "antd";
 import styles from "../../assets/css/VerifyOTPPage.module.css";
 import auth_01 from "../../assets/imgs/auth-01.png";
 import AuthBackButton from "../../components/auth/AuthBackButton";
@@ -47,7 +47,10 @@ export default function VerifyOTPPage() {
   }
   function handleSubmitForm() {
     if (!email) {
-      alert("Email not found, please register again.");
+      notification.error({
+        message: "Email not found, please register again.",
+        duration: 3,
+      });
       navigate("/auth/register");
       return;
     }
@@ -59,7 +62,10 @@ export default function VerifyOTPPage() {
       })
       .catch((error) => {
         console.error("Wrong OTP", error);
-        alert(error.response?.data?.message || "Verify Failed");
+        notification.error({
+          message: error.response?.data?.message || "Verify Failed",
+          duration: 3,
+        });
       });
   }
   return (
