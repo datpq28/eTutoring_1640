@@ -7,6 +7,7 @@ const { Content } = Layout;
 
 export default function MeetingManagementPage() {
   const [meetings, setMeetings] = useState([]);
+  const now = dayjs(); // Get the current time in Hanoi
 
   useEffect(() => {
     loadMeetings();
@@ -15,64 +16,44 @@ export default function MeetingManagementPage() {
   const loadMeetings = async () => {
     try {
       const data = await fetchAllMeetings();
-      setMeetings(data);
+      const sortedMeetings = data.sort((a, b) => dayjs(b.startTime).valueOf() - dayjs(a.startTime).valueOf());
+      setMeetings(sortedMeetings);
     } catch (error) {
-      notification.error({ message: "Không thể tải danh sách cuộc họp" });
-    }
-  };
-
-  const handleUpdateMeeting = async (meetingId, status) => {
-    console.log("meetingId", meetingId);
-    console.log("status", status);
-    try {
-      await updateMeetingStatus(meetingId, status);
-      notification.success({ message: `Cuộc họp đã được ${status === "approved" ? "duyệt" : "từ chối"}` });
-      loadMeetings();
-    } catch (error) {
-      notification.error({ message: "Không thể cập nhật trạng thái cuộc họp" });
+      notification.error({ message: "Unable to load meeting list" });
     }
   };
 
   const columns = [
-    { title: "Tên", dataIndex: "name" },
+    { title: "Meeting name", dataIndex: "name" },
     {
-      title: "Giáo viên",
+      title: "Tutor",
       dataIndex: "tutorId",
-      render: (tutor) => tutor ? `${tutor.firstname} ${tutor.lastname}` : "Không xác định",
+      render: (tutor) => tutor ? `${tutor.firstname} ${tutor.lastname}` : "Unknown",
     },
     {
-      title: "Thời gian",
+      title: "Time",
       render: (_, record) =>
         `${dayjs(record.startTime).format("HH:mm")} - ${dayjs(record.endTime).format("HH:mm")} (${dayjs(record.startTime).format("DD/MM/YYYY")})`,
     },
-    { title: "Mô tả", dataIndex: "description", render: (text) => text || "Không có mô tả" },
+    { title: "Description", dataIndex: "description", render: (text) => text || "No description" },
     {
-      title: "Trạng thái",
-      dataIndex: "status",
-      render: (status) => {
-        const color = status === "pending" ? "orange" : status === "approved" ? "green" : "red";
-        return <Tag color={color}>{status.toUpperCase()}</Tag>;
+      title: "Status",
+      render: (_, record) => {
+        const startTime = dayjs(record.startTime);
+        if (startTime.isBefore(now, 'day')) {
+          return <Tag color="gray">Attended</Tag>;
+        } else if (startTime.isSame(now, 'day')) {
+          return <Tag color="green">Studying</Tag>;
+        } else {
+          return <Tag color="blue">IsComing</Tag>;
+        }
       },
-    },
-    {
-      title: "Hành động",
-      render: (_, record) =>
-        record.status === "pending" && (
-          <>
-            <Button type="primary" onClick={() => handleUpdateMeeting(record._id, "approved")}>
-              Duyệt
-            </Button>
-            <Button type="danger" onClick={() => handleUpdateMeeting(record._id, "rejected")} style={{ marginLeft: "10px" }}>
-              Từ chối
-            </Button>
-          </>
-        ),
     },
   ];
 
   return (
     <Content style={{ padding: "2rem" }}>
-      <h2>Quản lý cuộc họp</h2>
+      <h2>Meeting Management</h2>
       <Table dataSource={meetings} rowKey="_id" columns={columns} />
     </Content>
   );

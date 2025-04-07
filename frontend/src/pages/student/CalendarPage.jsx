@@ -199,9 +199,6 @@ export default function CalendarPage() {
             <List.Item key={meeting._id}>
               <h3>{meeting.name}</h3>
               <p>
-                <strong>Loại:</strong> {meeting.type === "group" ? "Nhóm" : "Riêng tư"}
-              </p>
-              <p>
                 <strong>Thời gian:</strong>{" "}
                 {dayjs(meeting.startTime).format("HH:mm")} -{" "}
                 {dayjs(meeting.endTime).format("HH:mm")}

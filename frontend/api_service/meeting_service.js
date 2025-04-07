@@ -5,10 +5,10 @@ const API_URL = "http://localhost:5090";
 export const fetchStudentsByTutor = async (tutorId) => {
     try {
       const response = await fetch(`${API_URL}/api/meeting/students/${tutorId}`);
-      if (!response.ok) throw new Error("Lỗi khi lấy danh sách học sinh");
+      if (!response.ok) throw new Error("Error when getting student list");
   
       const data = await response.json();
-      return data.students || []; // Trả về danh sách students thay vì studentIds
+      return data.students || []; 
     } catch (error) {
       console.error(error);
       return [];
@@ -24,7 +24,7 @@ export const fetchStudentsByTutor = async (tutorId) => {
       });
   
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Lỗi khi tạo cuộc họp");
+      if (!response.ok) throw new Error(data.error || "Error creating meeting");
   
       return data;
     } catch (error) {
@@ -36,7 +36,7 @@ export const fetchStudentsByTutor = async (tutorId) => {
   export const fetchMeetingsByTutor = async (tutorId) => {
     try {
       const response = await fetch(`${API_URL}/api/meeting/meetings/${tutorId}`);
-      if (!response.ok) throw new Error("Lỗi khi lấy danh sách cuộc họp");
+      if (!response.ok) throw new Error("Error while getting meeting list");
   
       return await response.json();
     } catch (error) {
@@ -49,7 +49,7 @@ export const fetchStudentsByTutor = async (tutorId) => {
     try {
       const response = await fetch(`${API_URL}/api/meeting/meetings/student/${studentId}`);
       if (!response.ok) {
-        throw new Error(`Lỗi khi lấy danh sách cuộc họp: ${response.statusText}`);
+        throw new Error(`Error while getting meeting list: ${response.statusText}`);
       }
       
       const data = await response.json();
@@ -63,7 +63,7 @@ export const fetchStudentsByTutor = async (tutorId) => {
   export const fetchTutors = async () => {
     try {
       const response = await fetch("http://localhost:5090/api/meeting/tutors");
-      if (!response.ok) throw new Error("Lỗi khi lấy danh sách tutor");
+      if (!response.ok) throw new Error("Error getting tutor list");
   
       const data = await response.json();
       return data.tutors || [];
@@ -76,7 +76,7 @@ export const fetchStudentsByTutor = async (tutorId) => {
   export const fetchAllMeetings = async () => {
     try {
       const response = await fetch(`${API_URL}/api/meeting/all`);
-      if (!response.ok) throw new Error("Lỗi khi lấy danh sách tất cả cuộc họp");
+      if (!response.ok) throw new Error("Error while getting list of all meetings");
   
       return await response.json();
     } catch (error) {
@@ -94,7 +94,7 @@ export const fetchStudentsByTutor = async (tutorId) => {
       });
   
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Lỗi khi chỉnh sửa cuộc họp");
+      if (!response.ok) throw new Error(data.error || "Error editing meeting");
   
       return data;
     } catch (error) {
@@ -110,7 +110,7 @@ export const fetchStudentsByTutor = async (tutorId) => {
       });
   
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Lỗi khi xóa cuộc họp");
+      if (!response.ok) throw new Error(data.error || "Error while deleting meeting");
   
       return data;
     } catch (error) {

@@ -82,7 +82,7 @@ export default function TutorLayout() {
     "/tutor/documents": " Documents",
     "/tutor/setting": "⚙️ Settings",
     "/tutor/blog": " Blog",
-    "/tutor/meeting": " Meeting",
+    // "/tutor/meeting": " Meeting",
   };
 
   const handleLogout = async () => {

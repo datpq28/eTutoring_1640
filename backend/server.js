@@ -61,40 +61,80 @@ io.on("connection", (socket) => {
     }
   });
   
-
-  socket.on("start_call", ({ meetingId }) => {
-    console.log("Start Call Triggered for Meeting:", meetingId); // ✅ Debug
-    io.emit("meeting_started", { meetingId }); // Gửi sự kiện đến tất cả student
-  });
-
   // Nhận tin nhắn từ client
   socket.on("sendMessage", (message) => {
     console.log("Message received:", message);
     io.emit("receiveMessage", message); // Gửi lại tất cả client
   });
 
-  //meessege meeting
-  socket.on("send_message", ({ meetingId, sender, text }) => {
-    console.log(`📨 Message received in ${meetingId} from ${sender}: ${text}`); // ✅ Debug
-
-    io.to(meetingId).emit("receive_message", { sender, text });
-
-    console.log(`📤 Server sent message to meeting ${meetingId}`); // ✅ Debug
+  socket.on("start_call", ({ meetingId }) => {
+    console.log("Start Call Triggered for Meeting:", meetingId); // ✅ Debug
+    io.emit("meeting_started", { meetingId }); // Gửi sự kiện đến tất cả student
   });
 
-  socket.on("send_message", ({ meetingId, text }) => {
-    const sender = socket.id; // Use socket.id as the sender
-    console.log(`📩 Message received in meeting ${meetingId} from ${sender}: ${text}`);
-    io.to(meetingId).emit("receive_message", { sender, text }); // Broadcast to the room
+  socket.on("join_room", ({ meetingId }) => {
+    socket.join(meetingId);
+    if (!meetings[meetingId]) {
+      meetings[meetingId] = [];
+    }
+    if (!meetings[meetingId].includes(socket.id)) {
+      meetings[meetingId].push(socket.id);
+    }
+    console.log(`User ${socket.id} joined room ${meetingId}. Users in room:`, meetings[meetingId]);
+
+    // Inform existing users about the new joiner
+    socket.to(meetingId).emit("user_joined", { userId: socket.id });
+
+    // Send the list of all participants (including the new one) to everyone in the room
+    io.to(meetingId).emit("room_participants", { participants: meetings[meetingId].filter(id => id !== socket.id) });
+  });
+
+  socket.on("offer", ({ userId, offer }) => {
+    socket.to(userId).emit("offer", { userId: socket.id, offer });
+    console.log(`📤 Sent offer from ${socket.id} to ${userId}`);
+  });
+
+  socket.on("answer", ({ userId, answer }) => {
+    socket.to(userId).emit("answer", { userId: socket.id, answer });
+    console.log(`📤 Sent answer from ${socket.id} to ${userId}`);
+  });
+
+  socket.on("ice_candidate", ({ userId, candidate }) => {
+    socket.to(userId).emit("ice_candidate", { userId: socket.id, candidate });
+    console.log(`📤 Sent ICE candidate from ${socket.id} to ${userId}`);
+  });
+
+  socket.on("send_message", ({ meetingId, sender, text }) => {
+    console.log(`📨 Message in ${meetingId} from ${sender}: ${text}`);
+    io.to(meetingId).emit("receive_message", { sender, text });
   });
 
   socket.on("leave_room", ({ meetingId }) => {
-    socket.to(meetingId).emit("user_left", { userId: socket.id });
+    socket.leave(meetingId);
+    if (meetings[meetingId]) {
+      meetings[meetingId] = meetings[meetingId].filter((id) => id !== socket.id);
+      socket.to(meetingId).emit("user_left", { userId: socket.id });
+      console.log(`User ${socket.id} left room ${meetingId}. Remaining users:`, meetings[meetingId]);
+      if (meetings[meetingId].length === 0) {
+        delete meetings[meetingId];
+      }
+    }
   });
-
 
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id);
+    for (const roomId in meetings) {
+      meetings[roomId] = meetings[roomId].filter((id) => id !== socket.id);
+      io.to(roomId).emit("user_left", { userId: socket.id });
+      if (meetings[roomId].length === 0) {
+        delete meetings[roomId];
+      }
+    }
+    userSocketMap.forEach((socketId, userId) => {
+      if (socketId === socket.id) {
+        userSocketMap.delete(userId);
+      }
+    });
   });
 });
 
