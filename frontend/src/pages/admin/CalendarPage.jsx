@@ -42,19 +42,18 @@ export default function AdminCalendarPage() {
 
     const formattedData = {
       name,
-      type,
       description,
       tutorId,
-      dayOfWeek: dayOfWeek.format("YYYY-MM-DD"), // Ensure the date is in the correct format
-      startTime: `${dayOfWeek.format("YYYY-MM-DD")}T${startTime.format("HH:mm")}:00`, // Combine date and time
-      endTime: `${dayOfWeek.format("YYYY-MM-DD")}T${endTime.format("HH:mm")}:00`, // Combine date and time
+      dayOfWeek: dayOfWeek.format("YYYY-MM-DD"), 
+      startTime: `${dayOfWeek.format("YYYY-MM-DD")}T${startTime.format("HH:mm")}:00`, 
+      endTime: `${dayOfWeek.format("YYYY-MM-DD")}T${endTime.format("HH:mm")}:00`, 
     };
 
     const response = await createMeeting(formattedData);
     if (response.error) {
         message.error(response.error);
     } else {
-        message.success("Cuộc họp đã được tạo thành công!");
+        message.success("Meeting created successfully!");
         form.resetFields();
         setIsCreateMeetingVisible(false);
         loadAllMeetings();
@@ -68,19 +67,18 @@ export default function AdminCalendarPage() {
   
     const updatedMeeting = {
       name,
-      type,
       description,
       tutorId,
-      dayOfWeek: dayOfWeek.format("YYYY-MM-DD"), // Ensure the date is in the correct format
-      startTime: `${dayOfWeek.format("YYYY-MM-DD")}T${startTime.format("HH:mm")}:00`, // Combine date and time
-      endTime: `${dayOfWeek.format("YYYY-MM-DD")}T${endTime.format("HH:mm")}:00`, // Combine date and time
+      dayOfWeek: dayOfWeek.format("YYYY-MM-DD"), 
+      startTime: `${dayOfWeek.format("YYYY-MM-DD")}T${startTime.format("HH:mm")}:00`,
+      endTime: `${dayOfWeek.format("YYYY-MM-DD")}T${endTime.format("HH:mm")}:00`,
     };
   
     const response = await editMeeting(editingMeeting._id, updatedMeeting);
     if (response.error) {
       message.error(response.error);
     } else {
-      message.success("Cập nhật cuộc họp thành công!");
+      message.success("Meeting update successfully!");
       setIsEditMeetingVisible(false);
       loadAllMeetings();
     }
@@ -92,18 +90,13 @@ export default function AdminCalendarPage() {
     if (response.error) {
       message.error(response.error);
     } else {
-      message.success("Xóa cuộc họp thành công!");
-      
-      // Cập nhật danh sách cuộc họp sau khi xóa
+      message.success("Meeting deleted successfully!");
       const updatedMeetings = selectedDateMeetings.filter(meeting => meeting._id !== meetingId);
       setSelectedDateMeetings(updatedMeetings);
-  
-      // Nếu không còn cuộc họp nào, đóng modal
+
       if (updatedMeetings.length === 0) {
         setIsMeetingListVisible(false);
       }
-  
-      // Tải lại toàn bộ lịch
       loadAllMeetings();
     }
   };
@@ -112,7 +105,6 @@ export default function AdminCalendarPage() {
     setEditingMeeting(meeting);
     form.setFieldsValue({
       name: meeting.name,
-      type: meeting.type,
       description: meeting.description,
       tutorId: meeting.tutorId,
       dayOfWeek: dayjs(meeting.dayOfWeek),
@@ -159,9 +151,9 @@ export default function AdminCalendarPage() {
         <Calendar dateCellRender={dateCellRender} />
       </Card>
 
-      {/* Modal danh sách cuộc họp */}
+      {/* Meeting list modal */}
       <Modal
-        title="Danh sách cuộc họp"
+        title="Meeting List"
         open={isMeetingListVisible}
         onCancel={() => setIsMeetingListVisible(false)}
         footer={null}
@@ -171,24 +163,23 @@ export default function AdminCalendarPage() {
           dataSource={selectedDateMeetings}
           renderItem={(meeting) => (
             <List.Item key={meeting._id} actions={[
-              <Button type="link" onClick={() => openEditModal(meeting)}>Chỉnh sửa</Button>,
-              <Popconfirm title="Bạn có chắc chắn muốn xóa?" onConfirm={() => handleDeleteMeeting(meeting._id)} okText="Xóa" cancelText="Hủy">
-                <Button type="link" danger>Xóa</Button>
+              <Button type="link" onClick={() => openEditModal(meeting)}>Edit</Button>,
+              <Popconfirm title="Are you sure you want to delete?" onConfirm={() => handleDeleteMeeting(meeting._id)} okText="Delete" cancelText="Cancel">
+                <Button type="link" danger>Delete</Button>
               </Popconfirm>
             ]}>
               <h3>{meeting.name}</h3>
-              <p><strong>Loại:</strong> {meeting.type === "group" ? "Nhóm" : "Riêng tư"}</p>
-              <p><strong>Thời gian:</strong> {dayjs(meeting.startTime).format("HH:mm")} - {dayjs(meeting.endTime).format("HH:mm")}</p>
-              <p><strong>Mô tả:</strong> {meeting.description || "Không có mô tả"}</p>
+              <p><strong>Time:</strong> {dayjs(meeting.startTime).format("HH:mm")} - {dayjs(meeting.endTime).format("HH:mm")}</p>
+              <p><strong>Description:</strong> {meeting.description || "No description"}</p>
               
             </List.Item>
           )}
         />
       </Modal>
 
-       {/* Modal tạo cuộc họp */}
+       {/* Meeting creation modal */}
        <Modal
-        title="Tạo cuộc họp mới"
+        title="Create new meeting"
         open={isCreateMeetingVisible}
         onCancel={() => {
           form.resetFields(); // Reset all form fields to empty values
@@ -197,71 +188,64 @@ export default function AdminCalendarPage() {
         footer={null}
       >
         <Form form={form} onFinish={handleCreateMeeting} layout="vertical">
-          <Form.Item name="name" label="Tên cuộc họp" rules={[{ required: true, message: "Vui lòng nhập tên cuộc họp!" }]}>
+          <Form.Item name="name" label="Meeting Name" rules={[{ required: true, message: "Please enter meeting name!" }]}>
             <Input />
           </Form.Item>
 
-          <Form.Item name="type" label="Loại cuộc họp" rules={[{ required: true }]}>
-            <Select>
-              <Option value="group">Nhóm</Option>
-              <Option value="private">Riêng tư</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item name="description" label="Mô tả">
+          <Form.Item name="description" label="Description">
             <Input.TextArea rows={3} />
           </Form.Item>
 
-          <Form.Item name="tutorId" label="Gia sư" rules={[{ required: true }]}>
+          <Form.Item name="tutorId" label="Tutor" rules={[{ required: true }]}>
             <Select onChange={handleTutorChange}>
               {tutors.map(tutor => (
                 <Option key={tutor._id} value={tutor._id}>{tutor.firstname} {tutor.lastname}</Option>
               ))}
             </Select>
           </Form.Item>
-          <Form.Item name="dayOfWeek" label="Ngày họp" rules={[{ required: true }]}>
+          <Form.Item name="dayOfWeek" label="Day of week" rules={[{ required: true }]}>
             <DatePicker />
           </Form.Item>
 
-          <Form.Item name="startTime" label="Giờ bắt đầu" rules={[{ required: true }]}>
+          <Form.Item name="startTime" label="StartTime" rules={[{ required: true }]}>
   <TimePicker format="HH:mm" />
 </Form.Item>
 
-<Form.Item name="endTime" label="Giờ kết thúc" rules={[{ required: true }]}>
+<Form.Item name="endTime" label="EndTime" rules={[{ required: true }]}>
   <TimePicker format="HH:mm" />
 </Form.Item>
 
           <Form.Item>
-            <Button type="primary" htmlType="submit">Tạo cuộc họp</Button>
+            <Button type="primary" htmlType="submit">Create</Button>
           </Form.Item>
         </Form>
       </Modal>
 
-      {/* Modal chỉnh sửa cuộc họp */}
+      {/* Meeting edit modal */}
       <Modal
-        title="Chỉnh sửa cuộc họp"
+        title="Edit Meeting"
         open={isEditMeetingVisible}
         onCancel={() => setIsEditMeetingVisible(false)}
         footer={null}
       >
         <Form form={form} onFinish={handleEditMeeting} layout="vertical">
-          <Form.Item name="name" label="Tên cuộc họp" rules={[{ required: true }]}>
+          <Form.Item name="name" label="Meeting name" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="description" label="Mô tả">
+          <Form.Item name="description" label="Description">
             <Input.TextArea rows={3} />
           </Form.Item>
-          <Form.Item name="dayOfWeek" label="Ngày họp" rules={[{ required: true }]}>
+          <Form.Item name="dayOfWeek" label="Day of week" rules={[{ required: true }]}>
             <DatePicker />
           </Form.Item>
-          <Form.Item name="startTime" label="Giờ bắt đầu" rules={[{ required: true }]}>
+          <Form.Item name="startTime" label="StartTime" rules={[{ required: true }]}>
             <TimePicker format="HH:mm" />
           </Form.Item>
-          <Form.Item name="endTime" label="Giờ kết thúc" rules={[{ required: true }]}>
+          <Form.Item name="endTime" label="EndTime" rules={[{ required: true }]}>
             <TimePicker format="HH:mm" />
           </Form.Item>
           <Form.Item>
-            <Button type="primary" htmlType="submit">Lưu thay đổi</Button>
+            <Button type="primary" htmlType="submit">Save</Button>
           </Form.Item>
         </Form>
       </Modal>

@@ -1,4 +1,4 @@
-import { Flex, Image, Typography } from "antd";
+import { Flex, Image, notification, Typography } from "antd";
 import { Link as LinkRouter } from "react-router";
 import auth_02 from "../../assets/imgs/auth-02.png";
 import styles from "../../assets/css/RegisterPage.module.css";
@@ -155,11 +155,17 @@ export default function RegisterPage() {
         null
       );
       console.log("Register response:", response);
-      alert("OTP sent to your email!");
+      notification.success({
+        message: "OTP sent to your email!",
+        duration: 3,
+      });
       navigate("/auth/verify-otp", { state: { email: email.value } });
     } catch (error) {
       console.error("Error during registration:", error);
-      alert("Failed to register. Please try again.");
+      notification.error({
+        message: "Failed to register. Please try again.",
+        duration: 3,
+      });
     }
   }
   

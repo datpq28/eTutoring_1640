@@ -9,7 +9,7 @@ const getNotificationsByTutor = async (req, res) => {
         const { tutorId } = req.params;
 
         if (!tutorId) {
-            return res.status(400).json({ error: "Tutor ID là bắt buộc" });
+            return res.status(400).json({ error: "Tutor ID is required" });
         }
 
         const notifications = await Notification.find({ tutorId }).sort({ time: -1 });
@@ -21,14 +21,12 @@ const getNotificationsByTutor = async (req, res) => {
     }
 };
 
-
-// Lấy thông báo theo studentId
 const getNotificationsByStudent = async (req, res) => {
     try {
         const { studentId } = req.params;
 
         if (!studentId) {
-            return res.status(400).json({ error: "Student ID là bắt buộc" });
+            return res.status(400).json({ error: "Student ID is required" });
         }
 
         const notifications = await Notification.find({ studentIds: studentId }).sort({ time: -1 });
@@ -44,12 +42,12 @@ const markNotificationAsRead = async (req, res) => {
         const { notificationId } = req.params;
 
         if (!notificationId) {
-            return res.status(400).json({ error: "Notification ID là bắt buộc" });
+            return res.status(400).json({ error: "Notification ID is required" });
         }
 
         await Notification.findByIdAndUpdate(notificationId, { isRead: true });
 
-        res.status(200).json({ message: "Thông báo đã được đánh dấu là đã đọc" });
+        res.status(200).json({ message: "Notification has been marked as read" });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

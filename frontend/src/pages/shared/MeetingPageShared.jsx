@@ -1,130 +1,164 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Layout, Button, List, Input,Space } from "antd";
+import { Layout, Button, List, Input, Space, Row, Col } from "antd";
 import { io } from "socket.io-client";
-import { useParams } from "react-router-dom";
+import { useParams,useNavigate } from "react-router-dom";
+import { VideoCameraOutlined, CloseCircleOutlined, AudioMutedOutlined, AudioOutlined } from '@ant-design/icons';
 
 const { Content } = Layout;
 
 export default function MeetingPageShared() {
-  const { meetingId } = useParams(); // Get meetingId from the URL
+  const { meetingId } = useParams();
   const [peers, setPeers] = useState({});
   const [messages, setMessages] = useState([]);
   const [messageInput, setMessageInput] = useState("");
+  const [localStream, setLocalStream] = useState(null);
+  const socket = useRef(null); // Initialize socket as null
+  const peerConnections = useRef({});
+  const videoRefs = useRef({});
+  const [isConnected, setIsConnected] = useState(false);
+  const [isCameraEnabled, setIsCameraEnabled] = useState(true);
+  const [isMicEnabled, setIsMicEnabled] = useState(true);
 
-  const socket = useRef(io("http://localhost:5090")); // Connect to the Socket.IO server
-  const localStream = useRef(null);
-  const peerConnections = useRef({}); // Store WebRTC peer connections
-  const videoRefs = useRef({}); // Store video elements for each peer
-  const [socketId, setSocketId] = useState(null);
+  const userRole = localStorage.getItem("role");
+  const isLeaving = useRef(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!meetingId) return;
 
-    // Get user media (camera and microphone)
-    navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
-      localStream.current = stream;
+    socket.current = io("http://localhost:5090"); // Initialize socket here
 
-      // Display the local video stream
-      setPeers((prev) => ({
-        ...prev,
-        local: { stream },
-      }));
+    let currentLocalStream;
 
-      const userId = localStorage.getItem("userId");
-      const role = localStorage.getItem("role");
-    
-      if (userId && role) {
-        socket.emit("register_user", { userId, role });
-        console.log("Socket registered:", userId);
+    const getMedia = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        setLocalStream(stream);
+        currentLocalStream = stream;
+        setPeers((prev) => ({ ...prev, local: { stream } }));
+      } catch (error) {
+        console.error("Error accessing media devices:", error);
       }
+    };
 
-      // Join the meeting room
-      socket.current.emit("join_room", { meetingId });
+    getMedia();
 
-      // Listen for the 'connect' event to get the socket ID
-      socket.current.on("connect", () => {
-        setSocketId(socket.current.id); // Store the socket ID in state
-        console.log("🔗 Connected to Socket.IO server with ID:", socket.current.id);
-      });
+    const userId = localStorage.getItem("userId");
+    const role = localStorage.getItem("role");
 
-      // Handle new user joining the room
-      socket.current.on("user_joined", ({ userId }) => {
-        console.log(`🔗 User joined: ${userId}`);
-        createPeerConnection(userId, true);
-      });
+    if (userId && role) {
+      socket.current.emit("register_user", { userId, role });
+      console.log("Socket registered:", userId);
+    }
 
-      // Handle receiving an offer
-      socket.current.on("offer", async ({ userId, offer }) => {
-        console.log(`📩 Received offer from ${userId}`);
-        const peerConnection = createPeerConnection(userId, false);
+    socket.current.emit("join_room", { meetingId });
+
+    socket.current.on("connect", () => {
+      setIsConnected(true);
+      console.log("🔗 Connected to Socket.IO server with ID:", socket.current.id);
+    });
+
+    socket.current.on("user_joined", ({ userId }) => {
+      console.log(`🔗 User joined: ${userId}`);
+      createPeerConnection(userId, true, currentLocalStream);
+    });
+
+    socket.current.on("offer", async ({ userId, offer }) => {
+      console.log(`📩 Received offer from ${userId}`);
+      if (!peerConnections.current[userId]) {
+        const peerConnection = createPeerConnection(userId, false, currentLocalStream);
         await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
         const answer = await peerConnection.createAnswer();
         await peerConnection.setLocalDescription(answer);
         socket.current.emit("answer", { userId, answer });
-      });
+      } else {
+        await peerConnections.current[userId].setRemoteDescription(new RTCSessionDescription(offer));
+        const answer = await peerConnections.current[userId].createAnswer();
+        await peerConnections.current[userId].setLocalDescription(answer);
+        socket.current.emit("answer", { userId, answer });
+      }
+    });
 
-      // Handle receiving an answer
-      socket.current.on("answer", async ({ userId, answer }) => {
-        console.log(`📩 Received answer from ${userId}`);
-        const peerConnection = peerConnections.current[userId];
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
-      });
+    socket.current.on("answer", async ({ userId, answer }) => {
+      console.log(`📩 Received answer from ${userId}`);
+      if (peerConnections.current[userId]) {
+        await peerConnections.current[userId].setRemoteDescription(new RTCSessionDescription(answer));
+      }
+    });
 
-      // Handle receiving ICE candidates
-      socket.current.on("ice_candidate", ({ userId, candidate }) => {
-        console.log(`📩 Received ICE candidate from ${userId}`);
-        const peerConnection = peerConnections.current[userId];
-        if (peerConnection) {
-          peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+    socket.current.on("ice_candidate", async ({ userId, candidate }) => {
+      console.log(`📩 Received ICE candidate from ${userId}`);
+      if (peerConnections.current[userId]) {
+        try {
+          await peerConnections.current[userId].addIceCandidate(new RTCIceCandidate(candidate));
+        } catch (error) {
+          console.error("Error adding ICE candidate:", error);
         }
-      });
+      }
+    });
 
-      // Handle user leaving the room
-      socket.current.on("user_left", ({ userId }) => {
-        console.log(`❌ User left: ${userId}`);
-        if (peerConnections.current[userId]) {
-          peerConnections.current[userId].close();
-          delete peerConnections.current[userId];
-        }
-        setPeers((prev) => {
-          const updatedPeers = { ...prev };
-          delete updatedPeers[userId];
-          return updatedPeers;
-        });
+    socket.current.on("user_left", ({ userId }) => {
+      console.log(`❌ User left: ${userId}`);
+      if (peerConnections.current[userId]) {
+        peerConnections.current[userId].close();
+        delete peerConnections.current[userId];
+      }
+      setPeers((prev) => {
+        const updatedPeers = { ...prev };
+        delete updatedPeers[userId];
+        return updatedPeers;
       });
+    });
 
-       // Handle disconnection
-  socket.current.on("disconnect", () => {
-    console.log("❌ Disconnected from Socket.IO server");
-    setSocketId(null); // Reset the socket ID on disconnect
-  });
+    socket.current.on("disconnect", () => {
+      console.log("❌ Disconnected from Socket.IO server");
+      setIsConnected(false);
+    });
+
+    socket.current.on("receive_message", ({ sender, text }) => {
+      console.log(`📩 Received message from ${sender}: ${text}`);
+      if (sender !== socket.current?.id) {
+        setMessages((prev) => [...prev, { sender, text }]);
+      }
     });
 
     return () => {
-      // Cleanup on component unmount
-      socket.current.emit("leave_room", { meetingId });
-      Object.values(peerConnections.current).forEach((peerConnection) => peerConnection.close());
-      socket.current.disconnect();
-      socket.current.off("connect");
-      socket.current.off("disconnect");
+      if (socket.current) {
+        socket.current.emit("leave_room", { meetingId });
+        Object.values(peerConnections.current).forEach((peerConnection) => peerConnection.close());
+        socket.current.off("connect");
+        socket.current.off("user_joined");
+        socket.current.off("offer");
+        socket.current.off("answer");
+        socket.current.off("ice_candidate");
+        socket.current.off("user_left");
+        socket.current.off("disconnect");
+        socket.current.off("receive_message");
+        socket.current.disconnect();
+      }
+      if (currentLocalStream) {
+        currentLocalStream.getTracks().forEach((track) => track.stop());
+      }
+      if (isLeaving.current && socket.current) {
+        socket.current.emit("leave_room", { meetingId });
+        Object.values(peerConnections.current).forEach((peerConnection) => peerConnection.close());
+        if (currentLocalStream) {
+          currentLocalStream.getTracks().forEach((track) => track.stop());
+        }
+        socket.current.disconnect();
+      }
     };
-  }, [meetingId]);
+  }, [meetingId,navigate, userRole]);
 
-  useEffect(() => {
-    console.log("Current socketId:", socket.current);
-  }, [socketId]);
-
-  const createPeerConnection = (userId, isInitiator) => {
+  const createPeerConnection = (userId, isInitiator, stream) => {
     const peerConnection = new RTCPeerConnection({
       iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
     });
-  
-    // Add local stream tracks to the peer connection
-    localStream.current.getTracks().forEach((track) => {
-      peerConnection.addTrack(track, localStream.current);
+
+    stream?.getTracks().forEach((track) => {
+      peerConnection.addTrack(track, stream);
     });
-  
-    // Handle receiving remote streams
+
     peerConnection.ontrack = (event) => {
       console.log(`🎥 Received remote stream from ${userId}`);
       setPeers((prev) => ({
@@ -132,74 +166,133 @@ export default function MeetingPageShared() {
         [userId]: { stream: event.streams[0] },
       }));
     };
-  
-    // Handle ICE candidates
+
     peerConnection.onicecandidate = (event) => {
-      if (event.candidate) {
+      if (event.candidate && socket.current) {
         socket.current.emit("ice_candidate", { userId, candidate: event.candidate });
       }
     };
-  
+
     peerConnections.current[userId] = peerConnection;
-  
+
     if (isInitiator) {
       peerConnection.createOffer().then((offer) => {
         peerConnection.setLocalDescription(offer);
-        socket.current.emit("offer", { userId, offer });
+        if (socket.current) {
+          socket.current.emit("offer", { userId, offer });
+        }
       });
     }
-  
+
     return peerConnection;
   };
 
   const sendMessage = () => {
+    if (!isConnected || !socket.current) {
+      console.error("❌ Not connected to the server or socket not initialized. Cannot send message.");
+      return;
+    }
     if (messageInput.trim() === "") return;
-    const socketId = socket.current.id; // Get the socket ID from the current socket instance
-    console.log("Current socket ID:", socketId); // Log the socket ID for debugging
-  
-    if (!socketId) {
+    const currentSocketId = socket.current.id;
+    if (!currentSocketId) {
       console.error("❌ Socket ID is not available yet.");
       return;
     }
-  
+
     const messageData = {
-      meetingId, // Include the meetingId
-      sender: socketId, // Use the socket ID as the sender
+      meetingId,
+      sender: currentSocketId,
       text: messageInput,
     };
-  
+
     console.log("📤 Sending message:", messageData);
-  
-    // Emit the message to the backend
     socket.current.emit("send_message", messageData);
-  
-    // Add the message to the local chat
-    setMessages((prev) => [
-      ...prev,
-      { sender: "You", text: messageInput, createdAt: new Date() },
-    ]);
+    setMessages((prev) => [...prev, { sender: "You", text: messageInput }]);
     setMessageInput("");
   };
-  
-  useEffect(() => {
-    // Handle real-time chat messages
-    socket.current.on("receive_message", ({ sender, text }) => {
-      console.log(`📩 Received message from ${sender}: ${text}`);
-      setMessages((prev) => [...prev, { sender, text }]);
-    });
-  
-    return () => {
-      socket.current.off("receive_message");
-    };
-  }, []);
 
-  
+  const handleLeaveCleanup = () => {
+    if (socket.current && meetingId) {
+      socket.current.emit("leave_room", { meetingId });
+      Object.values(peerConnections.current).forEach((peerConnection) => peerConnection.close());
+      peerConnections.current = {};
+      setPeers({});
+      if (localStream) {
+        localStream.getTracks().forEach((track) => track.stop());
+        setLocalStream(null);
+      }
+      socket.current.disconnect();
+    }
+  };
+
+  const handleLeaveMeeting = () => {
+    isLeaving.current = true;
+    // Disable camera and mic before leaving
+    if (localStream) {
+      localStream.getVideoTracks().forEach(track => track.enabled = false);
+      localStream.getAudioTracks().forEach(track => track.enabled = false);
+      setLocalStream(null); // Optionally set localStream to null to reflect UI change
+    }
+    handleLeaveCleanup(); // Perform the cleanup actions
+    if (userRole === "tutor") {
+      navigate('/tutor/calendar');
+    } else if (userRole === "student") {
+      navigate('/student/calendar');
+    } else {
+      navigate('/'); // Default redirect
+    }
+  };
+
+  const toggleCamera = () => {
+    if (localStream) {
+      const videoTracks = localStream.getVideoTracks();
+      if (videoTracks.length > 0) {
+        videoTracks[0].enabled = !isCameraEnabled;
+        setIsCameraEnabled(!isCameraEnabled);
+      }
+    }
+  };
+
+  const toggleMic = () => {
+    if (localStream) {
+      const audioTracks = localStream.getAudioTracks();
+      if (audioTracks.length > 0) {
+        audioTracks[0].enabled = !isMicEnabled;
+        setIsMicEnabled(!isMicEnabled);
+      }
+    }
+  };
+
   return (
     <Content style={{ padding: "2rem" }}>
-      <h2>Meeting Room: {meetingId || "Loading..."}</h2>
+      <Row justify="space-between" align="middle" style={{ marginBottom: "1rem" }}>
+        <h2>Meeting Room: {meetingId || "Loading..."}</h2>
+        <Button onClick={handleLeaveMeeting}>Leave Meeting</Button>
+      </Row>
+      
 
-      {/* Video Streams */}
+      
       <div style={{ display: "flex", flexWrap: "wrap", marginTop: "20px" }}>
+        {localStream && (
+          <div style={{ border: "1px solid blue", margin: "10px", width: "200px", position: 'relative' }}>
+            <video
+              key="local"
+              ref={(el) => {
+                if (el && localStream && el.srcObject !== localStream) {
+                  el.srcObject = localStream;
+                }
+              }}
+              autoPlay
+              playsInline
+              muted
+              style={{ width: "100%" }}
+            />
+            <div style={{ position: 'absolute', bottom: '5px', left: '5px', backgroundColor: 'rgba(0, 0, 0, 0.5)', padding: '5px', borderRadius: '5px' }}>
+              <Button icon={isCameraEnabled ? <VideoCameraOutlined /> : <CloseCircleOutlined />} size="small" onClick={toggleCamera} style={{ marginRight: '5px' }} />
+              <Button icon={isMicEnabled ? <AudioOutlined /> : <AudioMutedOutlined />} size="small" onClick={toggleMic} />
+            </div>
+          </div>
+        )}
         {Object.entries(peers).map(([id, { stream }]) => (
           <video
             key={id}
@@ -215,7 +308,6 @@ export default function MeetingPageShared() {
         ))}
       </div>
 
-      {/* Chat Box */}
       <div style={{ flex: 1, border: "1px solid #ddd", padding: "10px", borderRadius: "5px", marginTop: "20px" }}>
         <h3>Chat</h3>
         <List
@@ -224,7 +316,7 @@ export default function MeetingPageShared() {
           dataSource={messages}
           renderItem={(item) => (
             <List.Item>
-              <strong>{item.sender}:</strong> {item.text}
+              <strong>{item.sender === socket.current?.id ? "You" : item.sender}:</strong> {item.text}
             </List.Item>
           )}
           style={{ height: "300px", overflowY: "auto" }}
@@ -236,11 +328,12 @@ export default function MeetingPageShared() {
             onChange={(e) => setMessageInput(e.target.value)}
             placeholder="Type a message..."
           />
-          <Button type="primary" onClick={sendMessage}>
+          <Button type="primary" onClick={sendMessage} disabled={!isConnected || !socket.current}>
             Send
           </Button>
         </Space.Compact>
       </div>
+
     </Content>
   );
 }

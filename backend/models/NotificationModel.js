@@ -2,32 +2,18 @@ const mongoose = require("mongoose");
 
 const NotificationSchema = new mongoose.Schema({
     meetingId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Meeting",
-        required: true
+        type: mongoose.Schema.Types.ObjectId, ref: "Meeting", required: true
     },
     tutorId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Tutor",
-        required: true
+        type: mongoose.Schema.Types.ObjectId, ref: "Tutor", required: true
     },
-    studentIds: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Student"
-        }
+    studentIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "Student"}
     ],
-    text: {
-        type: String,
-        required: true
+    text: { type: String, required: true
     },
-    time: {
-        type: Date,
-        default: Date.now
+    time: { type: Date, default: Date.now
     },
-    isRead: {
-        type: Boolean,
-        default: false
+    isRead: { type: Boolean, default: false
     }
 });
 

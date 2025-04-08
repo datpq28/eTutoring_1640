@@ -2,30 +2,28 @@ import axios from "axios";
 
 const API_URL = "http://localhost:5090";
 
-// Lấy danh sách thông báo theo tutorId
 export const getNotificationsByTutor = async (tutorId) => {
     try {
       const response = await fetch(`${API_URL}/api/notification/tutor/${tutorId}`);
       
-      if (!response.ok) throw new Error("Lỗi khi lấy danh sách thông báo cho tutor");
+      if (!response.ok) throw new Error("Error while getting notification list for tutor");
   
       const data = await response.json();
-      return data || []; // Trả về danh sách thông báo hoặc mảng rỗng nếu không có dữ liệu
+      return data || []; 
     } catch (error) {
       console.error(error);
       return [];
     }
   };
   
-  // Lấy danh sách thông báo theo studentId
   export const getNotificationsByStudent = async (studentId) => {
     try {
       const response = await fetch(`${API_URL}/api/notification/student/${studentId}`);
       
-      if (!response.ok) throw new Error("Lỗi khi lấy danh sách thông báo cho student");
+      if (!response.ok) throw new Error("Error while getting notification list for student");
   
       const data = await response.json();
-      return data || []; // Trả về danh sách thông báo hoặc mảng rỗng nếu không có dữ liệu
+      return data || []; 
     } catch (error) {
       console.error(error);
       return [];
@@ -38,7 +36,7 @@ export const getNotificationsByTutor = async (tutorId) => {
             method: "PUT",
         });
 
-        if (!response.ok) throw new Error("Lỗi khi đánh dấu thông báo là đã đọc");
+        if (!response.ok) throw new Error("Error marking notification as read");
 
         return await response.json();
     } catch (error) {

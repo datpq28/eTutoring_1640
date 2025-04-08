@@ -1,4 +1,4 @@
-import { Flex, Image } from "antd";
+import { Flex, Image, notification } from "antd";
 import styles from "../../assets/css/ForgotPasswordPage.module.css";
 import auth_03 from "../../assets/imgs/auth-03.png";
 import AuthBackButton from "../../components/auth/AuthBackButton";
@@ -7,9 +7,8 @@ import AuthDescription from "../../components/auth/AuthDescription";
 import TextInputGroup from "../../components/auth/TextInputGroup";
 import AuthButton from "../../components/auth/AuthButton";
 import { useReducer } from "react";
-import {forgotPasswordSendOTP} from "../../../api_service/auth_service";
+import { forgotPasswordSendOTP } from "../../../api_service/auth_service";
 import { useNavigate } from "react-router";
-
 
 function formReducer(state, action) {
   switch (action.type) {
@@ -46,9 +45,11 @@ export default function ForgotPasswordPage() {
     dispatch(action);
   }
   function handleSubmitForm() {
-
     if (!email.value) {
-      alert("Please enter a valid email address.");
+      notification.error({
+        message: "Please enter a valid email address.",
+        duration: 3,
+      });
       return;
     }
 
@@ -60,10 +61,14 @@ export default function ForgotPasswordPage() {
         navigate("/auth/verify-otp-forgot");
       })
       .catch((error) => {
-
         console.error("Error sending OTP:", error);
-        const errorMessage = error.response?.data?.message || "Something went wrong. Please try again later.";
-        alert(errorMessage); 
+        const errorMessage =
+          error.response?.data?.message ||
+          "Something went wrong. Please try again later.";
+        notification.error({
+          message: errorMessage,
+          duration: 3,
+        });
       });
   }
   return (
