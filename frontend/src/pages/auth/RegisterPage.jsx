@@ -121,7 +121,28 @@ export default function RegisterPage() {
     };
     dispatch(action);
   }
+  function validatePassword(password) {
+    const isValidLength = password.length >= 8;
+    const hasNumber = /\d/.test(password);
+    return isValidLength && hasNumber;
+  }
+  
   async function handleRegister() {
+    if (!validatePassword(password.value)) {
+      alert("Password must be at least 8 characters long and contain at least 1 number.");
+      return;
+    }
+  
+    if (password.value !== confirmPassword.value) {
+      alert("Passwords do not match.");
+      return;
+    }
+  
+    if (!confirmChecked.checked) {
+      alert("Please agree to the terms and privacy policy.");
+      return;
+    }
+  
     try {
       const response = await registerSendOTP(
         firstName.value,
@@ -147,6 +168,7 @@ export default function RegisterPage() {
       });
     }
   }
+  
 
   return (
     <Flex

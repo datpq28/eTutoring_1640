@@ -94,24 +94,33 @@ export default function ProfilePage() {
                 <Input.Password placeholder="Old Password" />
               </Form.Item>
               <Form.Item
-                label="New Password"
-                name="new_password"
-                rules={[
-                  { required: true, message: "Please enter new password" },
-                  ({ getFieldValue }) => ({
-                    validator(_, value) {
-                      if (!value || getFieldValue("old_password") !== value) {
-                        return Promise.resolve();
-                      }
-                      return Promise.reject(
-                        new Error("New password cannot be the same as the old password!")
-                      );
-                    },
-                  }),
-                ]}
-              >
-                <Input.Password placeholder="New Password" />
-              </Form.Item>
+  label="New Password"
+  name="new_password"
+  rules={[
+    { required: true, message: "Please enter new password" },
+    {
+      validator: (_, value) => {
+        if (!value) {
+          return Promise.resolve();
+        }
+        if (value.length < 8) {
+          return Promise.reject(new Error("Password must be at least 8 characters"));
+        }
+        if (!/\d/.test(value)) {
+          return Promise.reject(new Error("Password must contain at least one number"));
+        }
+        if (formPassword.getFieldValue("old_password") === value) {
+          return Promise.reject(
+            new Error("New password cannot be the same as the old password!")
+          );
+        }
+        return Promise.resolve();
+      },
+    },
+  ]}
+>
+  <Input.Password placeholder="New Password" />
+</Form.Item>
               <Form.Item
                 label="Confirm New Password"
                 name="confirm_new_password"

@@ -43,34 +43,35 @@ export default function TutorLayout() {
   const [sortOption, setSortOption] = useState("name");
 
   useEffect(() => {
-    const handleResize = () => {
-      setCollapsed(window.innerWidth < 992);
-    };
+      const handleResize = () => {
+          setCollapsed(window.innerWidth < 992);
+      };
 
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("loggedInUser");
-    if (storedUser) {
-      try {
-        const user = JSON.parse(storedUser);
-        setLoggedInUser(user);
-      } catch (error) {
-        console.error("Lỗi phân tích loggedInUser từ localStorage:", error);
-        setLoggedInUser(null);
+      const storedUser = localStorage.getItem("loggedInUser");
+      if (storedUser) {
+          try {
+              const user = JSON.parse(storedUser);
+              setLoggedInUser(user);
+          } catch (error) {
+              console.error("Lỗi phân tích loggedInUser từ localStorage:", error);
+              setLoggedInUser(null);
+              localStorage.removeItem("loggedInUser"); // Remove invalid data
+          }
       }
-    }
   }, []);
 
   useEffect(() => {
-    const storedUserId = localStorage.getItem("userId");
-    if (storedUserId) {
-      setUserId(storedUserId);
-    } else {
-      console.error("userId không tìm thấy trong localStorage");
-    }
+      const storedUserId = localStorage.getItem("userId");
+      if (storedUserId) {
+          setUserId(storedUserId);
+      } else {
+          console.error("userId không tìm thấy trong localStorage");
+      }
   }, []);
 
   useEffect(() => {
@@ -99,16 +100,16 @@ export default function TutorLayout() {
   };
 
   const handleLogout = async () => {
-    try {
-      await logoutUser();
-      message.success("Logout successful");
+      try {
+          await logoutUser();
+          message.success("Logout successful");
 
-      localStorage.removeItem("token");
-      localStorage.removeItem("loggedInUser");
-      sessionStorage.removeItem("token");
+          localStorage.removeItem("token");
+          localStorage.removeItem("loggedInUser");
+          sessionStorage.removeItem("token");
 
-      const logoutChannel = new BroadcastChannel("logout_channel");
-      logoutChannel.postMessage("logout");
+          const logoutChannel = new BroadcastChannel("logout_channel");
+          logoutChannel.postMessage("logout");
 
       navigate("/auth/login");
     } catch (error) {
@@ -117,70 +118,70 @@ export default function TutorLayout() {
   };
 
   useEffect(() => {
-    const logoutChannel = new BroadcastChannel("logout_channel");
-    logoutChannel.onmessage = () => {
-      localStorage.removeItem("token");
-      localStorage.removeItem("loggedInUser");
-      sessionStorage.removeItem("token");
-      navigate("/auth/login");
-    };
+      const logoutChannel = new BroadcastChannel("logout_channel");
+      logoutChannel.onmessage = () => {
+          localStorage.removeItem("token");
+          localStorage.removeItem("loggedInUser");
+          sessionStorage.removeItem("token");
+          navigate("/auth/login");
+      };
 
-    return () => {
-      logoutChannel.close();
-    };
-  }, []);
+      return () => {
+          logoutChannel.close();
+      };
+  }, [navigate]); // Added navigate as a dependency
 
   const handleInformationOfStudent = async () => {
-    setIsModalVisible(true);
-    try {
-      if (userId) {
-        const students = await viewListStudentByTutor(userId);
-        setStudentList(students);
-      } else {
-        setStudentList([]);
-        message.error("User ID not found");
+      setIsModalVisible(true);
+      try {
+          if (userId) {
+              const students = await viewListStudentByTutor(userId);
+              setStudentList(students);
+          } else {
+              setStudentList([]);
+              message.error("User ID not found");
+          }
+      } catch (error) {
+          console.error("Error fetching students:", error);
+          message.error("Failed to fetch student list");
+          setStudentList([]);
       }
-    } catch (error) {
-      console.error("Error fetching students:", error);
-      message.error("Failed to fetch student list");
-      setStudentList([]);
-    }
   };
 
   const handleStudentClick = (student) => {
-    setSelectedStudent(student);
-    setSelectedListItem(student._id);
+      setSelectedStudent(student);
+      setSelectedListItem(student._id);
   };
 
   const handleModalCancel = () => {
-    setIsModalVisible(false);
-    setSelectedStudent(null);
-    setSelectedListItem(null);
+      setIsModalVisible(false);
+      setSelectedStudent(null);
+      setSelectedListItem(null);
   };
 
   const userMenu = (
-    <Menu
-      items={[
-        {
-          key: "profile",
-          label: "Profile",
-          icon: <UserOutlined />,
-          onClick: () => navigate("/tutor/profile"),
-        },
-        {
-          key: "liststudent",
-          label: "Information of Student",
-          icon: <InfoCircleOutlined />,
-          onClick: handleInformationOfStudent,
-        },
-        {
-          key: "logout",
-          label: "Log out",
-          icon: <LogoutOutlined />,
-          onClick: handleLogout,
-        },
-      ]}
-    />
+      <Menu
+          items={[
+              {
+                  key: "profile",
+                  label: "Profile",
+                  icon: <UserOutlined />,
+                  onClick: () => navigate("/tutor/profile"),
+              },
+              {
+                  key: "liststudent",
+                  label: "Information of Student",
+                  icon: <InfoCircleOutlined />,
+                  onClick: handleInformationOfStudent,
+              },
+              {
+                  key: "logout",
+                  label: "Log out",
+                  icon: <LogoutOutlined />,
+                  onClick: handleLogout,
+              },
+          ]}
+      />
   );
 
   const filteredAndSortedStudents = studentList
@@ -309,27 +310,26 @@ export default function TutorLayout() {
           )}
         </Modal>
       </Layout>
-    </Layout>
   );
 }
 
 const inlineStyles = {
   siderStyle: {
-    overflow: "auto",
-    height: "100vh",
-    position: "sticky",
-    insetInlineStart: 0,
-    top: 0,
-    bottom: 0,
-    scrollbarWidth: "thin",
-    scrollbarGutter: "stable",
+      overflow: "auto",
+      height: "100vh",
+      position: "sticky",
+      insetInlineStart: 0,
+      top: 0,
+      bottom: 0,
+      scrollbarWidth: "thin",
+      scrollbarGutter: "stable",
   },
   headerStyle: {
-    display: "flex",
-    alignItems: "center",
-    padding: "0 1.6rem",
-    height: "7rem",
-    background: "#1890ff",
-    color: "#fff",
+      display: "flex",
+      alignItems: "center",
+      padding: "0 1.6rem",
+      height: "7rem",
+      background: "#1890ff",
+      color: "#fff",
   },
 };
