@@ -4,7 +4,7 @@ import { viewListUser } from "../../../api_service/admin_service.js";
 import CardUserOverview from "../../components/admin/AccountsManagementPage/CardUserOverview.jsx";
 import CardBlogOverView from "../../components/admin/AccountsManagementPage/CardBlogOverview.jsx";
 import { getBlogs } from "../../../api_service/blog_service.js";
-import CardDocumentOverview from "../../components/admin/AccountsManagementPage/CardDocumentOverView.jsx";
+import CardDocumentOverview from "../../components/admin/AccountsManagementPage/CardDocumentOverview.jsx";
 import { getDocuments } from "../../../api_service/document_service.js";
 import { fetchMeetingsByTutor } from "../../../api_service/meeting_service.js";
 import CardMeetingOverview from "../../components/admin/AccountsManagementPage/CardMeetingOverview.jsx";
