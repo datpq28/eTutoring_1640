@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5090";
+const API_URL = "https://etutoring-1640-1.onrender.com";
 
 export const createBlog = async (blogData) => {
   try {

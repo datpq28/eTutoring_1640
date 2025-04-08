@@ -15,7 +15,7 @@ export default function MeetingPage() {
   const [messageInput, setMessageInput] = useState("");
 
   const peer = useRef(null);
-  const socket = useRef(io("http://localhost:5090"));
+  const socket = useRef(io("https://etutoring-1640-1.onrender.com"));
   const userStream = useRef(null);
   const videoRefs = useRef({});
 
