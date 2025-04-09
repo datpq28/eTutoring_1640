@@ -31,12 +31,6 @@ export default function AdminLayout() {
     <Menu
       items={[
         {
-          key: "profile",
-          label: "Profile",
-          icon: <UserOutlined />,
-          onClick: () => navigate("/admin/profile"),
-        },
-        {
           key: "logout",
           label: "Log out",
           icon: <LogoutOutlined />,
