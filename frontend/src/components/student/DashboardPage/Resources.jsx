@@ -19,7 +19,6 @@ export default function Resources() {
     fetchDocuments();
   }, []);
 
-  console.log("documents", documents);
   return (
     <Card
       title={

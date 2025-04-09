@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { viewListStudentByTutor } from "../../../../api_service/admin_service";
 
 const { Title, Text } = Typography;
+const userId = localStorage.getItem("userId");
 
 const columns = [
   {
@@ -23,17 +24,17 @@ const columns = [
   },
 ];
 
-export default function StudentTable({ user }) {
+export default function StudentTable() {
   const [students, setStudents] = useState([]);
 
   useEffect(() => {
     const fetchStudents = async () => {
-      const students = await viewListStudentByTutor(user._id);
+      const students = await viewListStudentByTutor(userId);
       console.log("students", students);
       setStudents(students);
     };
     fetchStudents();
-  }, [user]);
+  }, []);
 
   const dataSource = students.map((student, index) => ({
     key: student._id || index,

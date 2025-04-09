@@ -13,7 +13,8 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchUser = async () => {
       const users = await getAllUser();
-      const user = users.tutors.find((user) => user._id === userId);
+      const { tutors } = users;
+      const user = tutors.find((user) => user?._id === userId);
       setUser(user);
     };
 
@@ -41,7 +42,7 @@ export default function DashboardPage() {
             </Flex>
             <Flex gap="middle" vertical style={{ flex: 1 }}>
               <ActivitySummary />
-              <StudentTable user={user} />
+              <StudentTable />
             </Flex>
           </Flex>
         </Flex>

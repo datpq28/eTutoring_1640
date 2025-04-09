@@ -5,7 +5,6 @@ import {
   CalendarOutlined,
   MessageOutlined,
   FileOutlined,
-  SettingOutlined,
   LogoutOutlined,
   FolderOpenOutlined,
   VideoCameraOutlined,
@@ -21,7 +20,6 @@ const menuItems = [
 ];
 
 const bottomItems = [
-  { key: "setting", label: "Setting", icon: <SettingOutlined /> },
   { key: "logout", label: "Log out", icon: <LogoutOutlined /> },
 ];
 
@@ -32,7 +30,13 @@ export default function MenuList() {
   const currentKey = location.pathname.split("/")[2] || "dashboard";
 
   return (
-      <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 6rem)' }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "calc(100vh - 6rem)",
+      }}
+    >
       {/* Menu chính */}
       <Menu
         theme="dark"

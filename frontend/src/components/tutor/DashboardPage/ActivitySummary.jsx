@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { getConversations } from "../../../../api_service/mesages_service";
 import { getBlogs } from "../../../../api_service/blog_service";
 import { getDocuments } from "../../../../api_service/document_service";
+import { fetchMeetingsByTutor } from "../../../../api_service/meeting_service";
 
 const { Title, Text } = Typography;
 const userId = localStorage.getItem("userId");
@@ -17,6 +18,8 @@ export default function ActivitySummary() {
   const [conversations, setConversations] = useState([]);
   const [blogs, setBlogs] = useState([]);
   const [documents, setDocuments] = useState([]);
+  const [meetings, setMeetings] = useState([]);
+
   useEffect(() => {
     const fetchConversations = async () => {
       const conversations = await getConversations(userId, role);
@@ -37,9 +40,18 @@ export default function ActivitySummary() {
       );
       setDocuments(filteredDocuments);
     };
+
+    const getMeetings = async () => {
+      const data = await fetchMeetingsByTutor(userId);
+      if (data) {
+        setMeetings(data);
+      }
+    };
+
     fetchConversations();
     fetchBlogs();
     fetchDocuments();
+    getMeetings();
   }, []);
   return (
     <Card
@@ -89,7 +101,7 @@ export default function ActivitySummary() {
               />
             }
             title="Meetings"
-            value={10}
+            value={meetings?.length || 1}
           />
         </Col>
         <Col span={6}>
