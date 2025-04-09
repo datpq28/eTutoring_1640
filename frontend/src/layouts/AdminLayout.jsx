@@ -1,8 +1,8 @@
-import { Avatar, Badge, Dropdown, Layout, Menu, Space, Typography } from "antd";
+import { Avatar, Dropdown, Layout, Menu, Space, Typography } from "antd";
 import Logo from "../components/Logo/Logo.jsx";
 import MenuList from "../components/admin/AccountsManagementPage/MenuList.jsx";
 import { Outlet, useLocation, useNavigate } from "react-router";
-import { BellOutlined, LogoutOutlined, UserOutlined } from "@ant-design/icons";
+import { LogoutOutlined, UserOutlined } from "@ant-design/icons";
 import { useEffect, useState } from "react";
 const { Header, Sider } = Layout;
 const { Title } = Typography;
@@ -26,7 +26,6 @@ export default function AdminLayout() {
     "/admin/blog-management": "📁 Blog Management",
     "/admin/document-management": "📁 Document Management",
     "/admin/meeting-management": "Meeting Management",
-    "/admin/setting": "⚙️ Settings",
   };
   const userMenu = (
     <Menu
@@ -61,16 +60,12 @@ export default function AdminLayout() {
       <Layout>
         <Header style={inlineStyles.headerStyle}>
           <Title level={3} style={{ margin: 0, color: "#fff" }}>
-            {titles[location.pathname] || "Student Panel"}
+            {titles[location.pathname] || "Admin Panel"}
           </Title>
           <Space
             size="large"
             style={{ marginLeft: "auto", alignItems: "center" }}
           >
-            <Badge count={5} size="small">
-              <Avatar icon={<BellOutlined />} />
-            </Badge>
-
             <Dropdown overlay={userMenu} placement="bottomRight">
               <Avatar icon={<UserOutlined />} />
             </Dropdown>

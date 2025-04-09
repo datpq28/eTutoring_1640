@@ -39,7 +39,6 @@ export default function StudentLayout() {
     "/student/calendar": "📅 Calendar",
     "/student/messages": "💬 Messages",
     "/student/documents": "📁 Documents",
-    "/student/setting": "⚙️ Settings",
     "/student/blog": "📁 Blog",
   };
 
