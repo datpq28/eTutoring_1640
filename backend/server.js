@@ -143,10 +143,6 @@ io.on("connection", (socket) => {
   });
 });
 
-app.get("*", (req, res) => {
-  res.sendFile(path.join(buildPath, "index.html"));
-});
-
 app.use("/api/auth", authRoutes);
 app.use("/api/meeting", meetingRoutes);
 app.use("/api/messages", messageRoutes);
