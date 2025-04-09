@@ -7,7 +7,6 @@ const messageRoutes = require("./api/messages");
 const blogRoutes = require("./api/blog");
 const commentRoutes = require("./api/comment");
 const documentRoutes = require("./api/document");
-const path = require("path");
 
 const commentDocumentRoutes = require("./api/commentdocument");
 const notificationRoutes = require("./api/notification");
@@ -150,13 +149,7 @@ app.use("/api/commentdocument", commentDocumentRoutes);
 
 app.use("/api/notification", notificationRoutes);
 
-// Serve React static files
-app.use(express.static(path.join(__dirname, "build")));
 
-// Fallback route: trả về index.html cho các route không phải API
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "build", "index.html"));
-});
 
 
 const PORT = process.env.PORT;
