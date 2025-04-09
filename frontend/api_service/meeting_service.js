@@ -62,7 +62,7 @@ export const fetchStudentsByTutor = async (tutorId) => {
   
   export const fetchTutors = async () => {
     try {
-      const response = await fetch("http://localhost:5090/api/meeting/tutors");
+      const response = await fetch(`${API_URL}/api/meeting/tutors`);
       if (!response.ok) throw new Error("Error getting tutor list");
   
       const data = await response.json();

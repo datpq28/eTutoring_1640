@@ -146,7 +146,7 @@ export default function AdminCalendarPage() {
     <Content style={{ padding: "2rem" }}>
       <Card>
         <Button type="primary" onClick={() => setIsCreateMeetingVisible(true)} style={{ marginBottom: "1rem" }}>
-          Tạo cuộc họp mới
+          Create a new meeting
         </Button>
         <Calendar dateCellRender={dateCellRender} />
       </Card>
