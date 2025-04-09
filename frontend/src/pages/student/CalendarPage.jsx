@@ -11,8 +11,8 @@ const socket = io("https://etutoring-1640-1.onrender.com");
 const { Content } = Layout;
 
 export default function CalendarPage() {
-  const [meetings, setMeetings] = useState([]); // Danh sách cuộc họp của học sinh
-  const [selectedDateMeetings, setSelectedDateMeetings] = useState([]); // Danh sách cuộc họp cho pop-up
+  const [meetings, setMeetings] = useState([]);
+  const [selectedDateMeetings, setSelectedDateMeetings] = useState([]);
   const [isMeetingListVisible, setIsMeetingListVisible] = useState(false);
   const navigate = useNavigate();
 
@@ -21,14 +21,13 @@ export default function CalendarPage() {
   const [storedStudentId, setStudentId] = useState(null);
 
   useEffect(() => {
-    const storedStudentId = localStorage.getItem("userId"); // Lấy studentId từ localStorage
+    const storedStudentId = localStorage.getItem("userId");
     if (storedStudentId) {
       setStudentId(storedStudentId);
       loadMeetings(storedStudentId);
       loadNotifications(storedStudentId); 
     }
 
-    // Lắng nghe sự kiện tutor bắt đầu cuộc gọi
     socket.on("meeting_started", ({ meetingId }) => {
       setMeetings((prev) =>
         prev.map((m) => (m._id === meetingId ? { ...m, isLive: true } : m))
@@ -40,15 +39,14 @@ export default function CalendarPage() {
     };
   }, []);
 
-  // Lấy danh sách cuộc họp từ API
   const loadMeetings = async (studentId) => {
     const data = await fetchMeetingsByStudent(studentId);
-    setMeetings(data); // Directly set all meetings for the student
+    setMeetings(data); 
   };
 
   const loadNotifications = async (studentId) => {
     try {
-      const notifications = await getNotificationsByStudent(studentId); // API returns an array
+      const notifications = await getNotificationsByStudent(studentId); 
       setNotifications(notifications || []); // Ensure notifications is always an array
       const unreadCount = notifications.filter((notif) => !notif.isRead).length; // Calculate unread count
       setUnreadCount(unreadCount);
@@ -79,12 +77,12 @@ export default function CalendarPage() {
     }
   };
 
-  // Khi student ấn "Join Call"
+
   const handleJoinMeeting = (meetingId) => {
     navigate(`/student/meeting/${meetingId}`);
   };
 
-  // Render danh sách cuộc họp trên từng ngày của Calendar
+
   const dateCellRender = (value) => {
     const formattedDate = value.format("YYYY-MM-DD");
     const meetingsOnThisDay = meetings.filter(
@@ -134,7 +132,7 @@ export default function CalendarPage() {
           background: "#f0f2f5",
         }}
       >
-        Thông báo
+       Notification
       </Menu.Item>
       {(notifications || []).length > 0 ? (
         notifications.map((notif, index) => (
@@ -166,7 +164,7 @@ export default function CalendarPage() {
             color: "#888",
           }}
         >
-          Không có thông báo
+          No notification
         </Menu.Item>
       )}
     </Menu>
@@ -185,9 +183,9 @@ export default function CalendarPage() {
         <Calendar dateCellRender={dateCellRender} />
       </Card>
 
-      {/* Modal danh sách cuộc họp trong ngày */}
+      {/* List of meetings by day method */}
       <Modal
-        title="Danh sách cuộc họp"
+        title="List of meetings"
         open={isMeetingListVisible}
         onCancel={() => setIsMeetingListVisible(false)}
         footer={null}
@@ -199,19 +197,19 @@ export default function CalendarPage() {
             <List.Item key={meeting._id}>
               <h3>{meeting.name}</h3>
               <p>
-                <strong>Thời gian:</strong>{" "}
+                <strong>Time:</strong>{" "}
                 {dayjs(meeting.startTime).format("HH:mm")} -{" "}
                 {dayjs(meeting.endTime).format("HH:mm")}
               </p>
               <p>
-                <strong>Mô tả:</strong> {meeting.description || "Không có mô tả"}
+                <strong>Description:</strong> {meeting.description || "No description"}
               </p>
               <p>
-                <strong>Giáo viên:</strong> {meeting.tutorId?.firstname}{" "}
+                <strong>Tutor:</strong> {meeting.tutorId?.firstname}{" "}
                 {meeting.tutorId?.lastname}
               </p>
 
-              {/* Nút "Join Call" nếu meeting đang live */}
+              {/*"Join Call" button if the meeting is live */}
               {meeting.isLive && (
                 <Button type="primary" onClick={() => handleJoinMeeting(meeting._id)}>
                   Join Call
