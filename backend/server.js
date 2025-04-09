@@ -35,22 +35,20 @@ const io = new Server(server, {
   cors: {
     origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true, 
+    credentials: true,
   },
 });
 
-const meetings = {}; 
+const meetings = {};
 const userSocketMap = new Map();
 
 io.on("connection", (socket) => {
   console.log("User connected:>>>>>>>>>>>>", socket.id);
 
-  
-
   socket.on("send_notification", ({ userId, notification }) => {
     const targetSocketId = userSocketMap.get(userId);
     if (targetSocketId) {
-      io.to(targetSocketId).emit("receive_notification", notification); 
+      io.to(targetSocketId).emit("receive_notification", notification);
       console.log(`📩 Notification sent to user ${userId}:`, notification);
     } else {
       console.log(`❌ User ${userId} is not connected.`);
@@ -63,14 +61,14 @@ io.on("connection", (socket) => {
   });
 
   socket.on("start_call", ({ meetingId }) => {
-    console.log("Start Call Triggered for Meeting:", meetingId); 
-    io.emit("meeting_started", { meetingId }); 
+    console.log("Start Call Triggered for Meeting:", meetingId);
+    io.emit("meeting_started", { meetingId });
   });
-  
+
   socket.on("register_user", ({ userId }) => {
-      userSocketMap.set(userId, socket.id);
-      console.log(`User ${userId} connected with socket ID: ${socket.id}`);
-    });
+    userSocketMap.set(userId, socket.id);
+    console.log(`User ${userId} connected with socket ID: ${socket.id}`);
+  });
 
   socket.on("join_room", ({ meetingId }) => {
     socket.join(meetingId);
@@ -80,10 +78,15 @@ io.on("connection", (socket) => {
     if (!meetings[meetingId].includes(socket.id)) {
       meetings[meetingId].push(socket.id);
     }
-    console.log(`User ${socket.id} joined room ${meetingId}. Users in room:`, meetings[meetingId]);
+    console.log(
+      `User ${socket.id} joined room ${meetingId}. Users in room:`,
+      meetings[meetingId]
+    );
     socket.to(meetingId).emit("user_joined", { userId: socket.id });
 
-    io.to(meetingId).emit("room_participants", { participants: meetings[meetingId].filter(id => id !== socket.id) });
+    io.to(meetingId).emit("room_participants", {
+      participants: meetings[meetingId].filter((id) => id !== socket.id),
+    });
   });
 
   socket.on("offer", ({ userId, offer }) => {
@@ -109,9 +112,14 @@ io.on("connection", (socket) => {
   socket.on("leave_room", ({ meetingId }) => {
     socket.leave(meetingId);
     if (meetings[meetingId]) {
-      meetings[meetingId] = meetings[meetingId].filter((id) => id !== socket.id);
+      meetings[meetingId] = meetings[meetingId].filter(
+        (id) => id !== socket.id
+      );
       socket.to(meetingId).emit("user_left", { userId: socket.id });
-      console.log(`User ${socket.id} left room ${meetingId}. Remaining users:`, meetings[meetingId]);
+      console.log(
+        `User ${socket.id} left room ${meetingId}. Remaining users:`,
+        meetings[meetingId]
+      );
       if (meetings[meetingId].length === 0) {
         delete meetings[meetingId];
       }
@@ -135,6 +143,10 @@ io.on("connection", (socket) => {
   });
 });
 
+app.get("*", (req, res) => {
+  res.sendFile(path.join(buildPath, "index.html"));
+});
+
 app.use("/api/auth", authRoutes);
 app.use("/api/meeting", meetingRoutes);
 app.use("/api/messages", messageRoutes);
@@ -145,9 +157,6 @@ app.use("/api/document", documentRoutes);
 app.use("/api/commentdocument", commentDocumentRoutes);
 
 app.use("/api/notification", notificationRoutes);
-
-
-
 
 const PORT = process.env.PORT;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
