@@ -316,7 +316,7 @@ export default function MeetingPageShared() {
           dataSource={messages}
           renderItem={(item) => (
             <List.Item>
-              <strong>{item.sender === socket.current?.id ? "You" : item.sender}:</strong> {item.text}
+              <strong>{item.sender === socket.current?.id ? "You" : "Participant"}:</strong> {item.text}
             </List.Item>
           )}
           style={{ height: "300px", overflowY: "auto" }}

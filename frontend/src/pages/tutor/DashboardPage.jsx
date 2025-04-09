@@ -8,7 +8,7 @@ const { Content } = Layout;
 const { Title, Text } = Typography;
 const userId = localStorage.getItem("userId");
 const role = localStorage.getItem("role");
-export default function DashboardPage() {
+const DashboardPage = () => {
   const [user, setUser] = useState(null);
   useEffect(() => {
     const fetchUser = async () => {
@@ -48,7 +48,8 @@ export default function DashboardPage() {
       </Flex>
     </Content>
   );
-}
+};
+export default DashboardPage;
 
 const stylesInline = {
   content: {

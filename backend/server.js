@@ -35,42 +35,42 @@ const io = new Server(server, {
   cors: {
     origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true, // Hỗ trợ gửi cookie
+    credentials: true, 
   },
 });
 
-const meetings = {}; // Lưu danh sách người tham gia mỗi cuộc họp
+const meetings = {}; 
 const userSocketMap = new Map();
 
 io.on("connection", (socket) => {
   console.log("User connected:>>>>>>>>>>>>", socket.id);
 
-  socket.on("register_user", ({ userId }) => {
-    userSocketMap.set(userId, socket.id);
-    console.log(`User ${userId} connected with socket ID: ${socket.id}`);
-  });
+  
 
-  // Gửi thông báo đến user cụ thể
   socket.on("send_notification", ({ userId, notification }) => {
-    const targetSocketId = userSocketMap.get(userId); // Lấy socket ID của user
+    const targetSocketId = userSocketMap.get(userId);
     if (targetSocketId) {
-      io.to(targetSocketId).emit("receive_notification", notification); // Gửi thông báo đến user
+      io.to(targetSocketId).emit("receive_notification", notification); 
       console.log(`📩 Notification sent to user ${userId}:`, notification);
     } else {
       console.log(`❌ User ${userId} is not connected.`);
     }
   });
-  
-  // Nhận tin nhắn từ client
+
   socket.on("sendMessage", (message) => {
     console.log("Message received:", message);
-    io.emit("receiveMessage", message); // Gửi lại tất cả client
+    io.emit("receiveMessage", message);
   });
 
   socket.on("start_call", ({ meetingId }) => {
-    console.log("Start Call Triggered for Meeting:", meetingId); // ✅ Debug
-    io.emit("meeting_started", { meetingId }); // Gửi sự kiện đến tất cả student
+    console.log("Start Call Triggered for Meeting:", meetingId); 
+    io.emit("meeting_started", { meetingId }); 
   });
+  
+  socket.on("register_user", ({ userId }) => {
+      userSocketMap.set(userId, socket.id);
+      console.log(`User ${userId} connected with socket ID: ${socket.id}`);
+    });
 
   socket.on("join_room", ({ meetingId }) => {
     socket.join(meetingId);
@@ -81,11 +81,8 @@ io.on("connection", (socket) => {
       meetings[meetingId].push(socket.id);
     }
     console.log(`User ${socket.id} joined room ${meetingId}. Users in room:`, meetings[meetingId]);
-
-    // Inform existing users about the new joiner
     socket.to(meetingId).emit("user_joined", { userId: socket.id });
 
-    // Send the list of all participants (including the new one) to everyone in the room
     io.to(meetingId).emit("room_participants", { participants: meetings[meetingId].filter(id => id !== socket.id) });
   });
 
