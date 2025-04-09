@@ -137,7 +137,7 @@ export default function CalendarPage() {
   const notificationMenu = (
     <Menu style={{ width: 320, maxHeight: 400, overflowY: "auto", borderRadius: 8, boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)" }}>
         <Menu.Item style={{ fontWeight: "bold", textAlign: "center", background: "#f0f2f5" }}>
-            Thông báo
+            Notification
         </Menu.Item>
         {Array.isArray(notifications) && notifications.length > 0 ?  (
             notifications.map((notif) => (
